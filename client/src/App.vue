@@ -3,10 +3,12 @@ import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { onMounted, onUnmounted } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
 import { useAuthStore } from '@/stores/auth'
+import { useLocaleStore } from '@/stores/locale'
 
 const router = useRouter()
 const store = usePrayerStore()
 const authStore = useAuthStore()
+const localeStore = useLocaleStore()
 
 // Poll/Load Qaza count for global badge
 const loadQazaCount = async () => {
@@ -86,7 +88,7 @@ const handleLogout = () => {
               class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
               active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
             >
-              Dashboard
+              {{ localeStore.t('dashboard') }}
             </RouterLink>
 
             <RouterLink
@@ -94,7 +96,7 @@ const handleLogout = () => {
               class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900 relative"
               active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
             >
-              Qaza
+              {{ localeStore.t('qaza') }}
               <!-- Badge count -->
               <span
                 v-if="store.pendingQazas.length > 0"
@@ -109,7 +111,7 @@ const handleLogout = () => {
               class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
               active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
             >
-              Analytics
+              {{ localeStore.t('analytics') }}
             </RouterLink>
 
             <RouterLink
@@ -117,12 +119,19 @@ const handleLogout = () => {
               class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
               active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
             >
-              Guide
+              {{ localeStore.t('guide') }}
             </RouterLink>
           </nav>
 
           <!-- User Display & Logout -->
           <div class="flex items-center gap-2 border-l border-slate-900 pl-3">
+            <button
+              @click="localeStore.toggleLocale"
+              class="flex items-center justify-center h-8 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[10px] sm:text-xs font-black text-slate-300 transition-all duration-200 cursor-pointer"
+              title="Switch Language / ভাষা পরিবর্তন করুন"
+            >
+              🌐 {{ localeStore.currentLocale === 'en' ? 'EN' : 'বাং' }}
+            </button>
             <span class="hidden md:inline text-xs font-bold text-slate-400">
               {{ authStore.user?.username }}
             </span>
@@ -130,7 +139,7 @@ const handleLogout = () => {
               @click="handleLogout"
               class="bg-slate-900 hover:bg-rose-500/25 hover:text-rose-400 border border-slate-800 text-slate-400 font-bold text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer"
             >
-              Logout
+              {{ localeStore.t('logout') }}
             </button>
           </div>
         </div>
