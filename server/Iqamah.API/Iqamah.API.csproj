@@ -24,4 +24,9 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Iqamah.Application\Iqamah.Application.csproj" />
+    <ProjectReference Include="..\Iqamah.Infrastructure\Iqamah.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

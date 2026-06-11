@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Iqamah.API/Iqamah.API.csproj" />
+  <Project Path="Iqamah.Application/Iqamah.Application.csproj" />
+  <Project Path="Iqamah.Domain/Iqamah.Domain.csproj" />
+  <Project Path="Iqamah.Infrastructure/Iqamah.Infrastructure.csproj" />
+  <Project Path="Iqamah.Tests.Unit/Iqamah.Tests.Unit.csproj" />
+</Solution>
