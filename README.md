@@ -6,7 +6,7 @@
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.x-336791.svg)](https://www.postgresql.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 **Iqamah (إقامة)** is a highly specialized, data-driven web application designed to help Muslims build, establish, and analyze their daily prayer (Salah/Namaz) habits. The system provides granular tracking for prayer punctuality, situational missed reasons, state machines for make-up (Qaza) tracking, and multi-year analytics.
 
@@ -158,4 +158,4 @@ Please review our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) to understand the gui
 
 ## 📄 License
 
-Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+Distributed under the GNU GPLv3 License. See [LICENSE](LICENSE) for more information.
