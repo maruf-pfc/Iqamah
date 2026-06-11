@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import type {
   PrayerLogDto,
   QazaLogDto,
@@ -9,6 +10,7 @@ import type {
 } from '@/types/prayer.types'
 
 export const usePrayerStore = defineStore('prayer', () => {
+  const authStore = useAuthStore()
   const prayerLogs = ref<PrayerLogDto[]>([])
   const pendingQazas = ref<QazaLogDto[]>([])
   const analytics = ref<AnalyticsResponseDto | null>(null)
@@ -20,13 +22,23 @@ export const usePrayerStore = defineStore('prayer', () => {
     error.value = null
   }
 
+  const getHeaders = (headers: Record<string, string> = {}) => {
+    const baseHeaders: Record<string, string> = { ...headers }
+    if (authStore.token) {
+      baseHeaders['Authorization'] = `Bearer ${authStore.token}`
+    }
+    return baseHeaders
+  }
+
   // ── Actions ──────────────────────────────────────────────────────────────
 
-  const fetchPrayerLogs = async (userId: number, from: string, to: string) => {
+  const fetchPrayerLogs = async (from: string, to: string) => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`/api/prayers?userId=${userId}&from=${from}&to=${to}`)
+      const response = await fetch(`/api/prayers?from=${from}&to=${to}`, {
+        headers: getHeaders(),
+      })
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}))
         throw new Error(errData.detail || 'Failed to fetch prayer logs.')
@@ -42,22 +54,16 @@ export const usePrayerStore = defineStore('prayer', () => {
     }
   }
 
-  const logPrayer = async (
-    userId: number,
-    request: LogOfferedPrayerRequest | LogMissedPrayerRequest,
-  ) => {
+  const logPrayer = async (request: LogOfferedPrayerRequest | LogMissedPrayerRequest) => {
     loading.value = true
     error.value = null
     try {
       const response = await fetch('/api/prayers', {
         method: 'POST',
-        headers: {
+        headers: getHeaders({
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          ...request,
         }),
+        body: JSON.stringify(request),
       })
 
       if (!response.ok) {
@@ -75,11 +81,13 @@ export const usePrayerStore = defineStore('prayer', () => {
     }
   }
 
-  const fetchPendingQazas = async (userId: number) => {
+  const fetchPendingQazas = async () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`/api/qazas/pending?userId=${userId}`)
+      const response = await fetch('/api/qazas/pending', {
+        headers: getHeaders(),
+      })
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}))
         throw new Error(errData.detail || 'Failed to fetch pending Qaza logs.')
@@ -95,17 +103,14 @@ export const usePrayerStore = defineStore('prayer', () => {
     }
   }
 
-  const fulfillQaza = async (qazaLogId: string, userId: number) => {
+  const fulfillQaza = async (qazaLogId: string) => {
     loading.value = true
     error.value = null
     try {
       const response = await fetch(`/api/qazas/${qazaLogId}/fulfill`, {
         method: 'POST',
-        headers: {
+        headers: getHeaders({
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
         }),
       })
 
@@ -121,11 +126,13 @@ export const usePrayerStore = defineStore('prayer', () => {
     }
   }
 
-  const fetchAnalytics = async (userId: number, from: string, to: string) => {
+  const fetchAnalytics = async (from: string, to: string) => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`/api/analytics?userId=${userId}&from=${from}&to=${to}`)
+      const response = await fetch(`/api/analytics?from=${from}&to=${to}`, {
+        headers: getHeaders(),
+      })
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}))
         throw new Error(errData.detail || 'Failed to fetch analytics.')

@@ -17,9 +17,6 @@ import type {
 
 const store = usePrayerStore()
 
-// Mock current logged in user
-const currentUserId = ref(1)
-
 // Date selection: Default to today
 const selectedDate = ref<string>(new Date().toISOString().split('T')[0] ?? '')
 
@@ -56,7 +53,7 @@ const calendarDays = getPastDays()
 
 const loadDailyLogs = async () => {
   try {
-    await store.fetchPrayerLogs(currentUserId.value, selectedDate.value, selectedDate.value)
+    await store.fetchPrayerLogs(selectedDate.value, selectedDate.value)
     // Map to dictionary
     const mapped: Record<number, PrayerLogDto> = {}
     store.prayerLogs.forEach((log) => {
@@ -68,9 +65,9 @@ const loadDailyLogs = async () => {
   }
 }
 
-// Watch selectedDate or currentUserId
+// Watch selectedDate
 watch(
-  [selectedDate, currentUserId],
+  selectedDate,
   () => {
     loadDailyLogs()
   },
@@ -125,7 +122,7 @@ const handleSaveLog = async () => {
       }
     }
 
-    await store.logPrayer(currentUserId.value, payload)
+    await store.logPrayer(payload)
     await loadDailyLogs()
     isModalOpen.value = false
   } catch (err) {
@@ -157,19 +154,6 @@ const isFuturePrayer = () => {
         <p class="text-slate-400 text-sm mt-1">
           Track punctuality, log situational absences, and fulfill obligations.
         </p>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider"
-          >Demo User:</span
-        >
-        <select
-          v-model="currentUserId"
-          class="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-        >
-          <option :value="1">Brother Ahmed</option>
-          <option :value="2">Sister Fatima</option>
-        </select>
       </div>
     </div>
 

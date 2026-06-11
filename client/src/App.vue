@@ -1,32 +1,66 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import { onMounted } from 'vue'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { onMounted, onUnmounted } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
+import { useAuthStore } from '@/stores/auth'
 
+const router = useRouter()
 const store = usePrayerStore()
+const authStore = useAuthStore()
 
 // Poll/Load Qaza count for global badge
 const loadQazaCount = async () => {
+  if (!authStore.isAuthenticated) return
   try {
-    await store.fetchPendingQazas(1) // Demo User Ahmed
+    await store.fetchPendingQazas()
   } catch {
     // Silent fail
   }
 }
 
+let pollInterval: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
-  loadQazaCount()
-  // Poll every 15 seconds to keep badge fresh
-  setInterval(loadQazaCount, 15000)
+  if (authStore.isAuthenticated) {
+    loadQazaCount()
+    pollInterval = setInterval(loadQazaCount, 15000)
+  }
 })
+
+// Listen for auth changes to set/clear intervals
+authStore.$subscribe((mutation, state) => {
+  if (state.token) {
+    loadQazaCount()
+    if (!pollInterval) {
+      pollInterval = setInterval(loadQazaCount, 15000)
+    }
+  } else {
+    if (pollInterval) {
+      clearInterval(pollInterval)
+      pollInterval = null
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+  }
+})
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
 </script>
 
 <template>
   <div
     class="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-slate-950 font-sans antialiased"
   >
-    <!-- Navbar -->
+    <!-- Navbar (Only visible if authenticated) -->
     <header
+      v-if="authStore.isAuthenticated"
       class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-900 shadow-md"
     >
       <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -45,43 +79,58 @@ onMounted(() => {
         </RouterLink>
 
         <!-- Navigation Links -->
-        <nav class="flex items-center gap-1">
-          <RouterLink
-            to="/"
-            class="text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
-            active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
-          >
-            Dashboard
-          </RouterLink>
-
-          <RouterLink
-            to="/qaza"
-            class="text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900 relative"
-            active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
-          >
-            Qaza
-            <!-- Badge count -->
-            <span
-              v-if="store.pendingQazas.length > 0"
-              class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-slate-950 border border-slate-950 animate-pulse"
+        <div class="flex items-center gap-3">
+          <nav class="flex items-center gap-1">
+            <RouterLink
+              to="/"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
+              active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
             >
-              {{ store.pendingQazas.length }}
-            </span>
-          </RouterLink>
+              Dashboard
+            </RouterLink>
 
-          <RouterLink
-            to="/analytics"
-            class="text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
-            active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
-          >
-            Analytics
-          </RouterLink>
-        </nav>
+            <RouterLink
+              to="/qaza"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900 relative"
+              active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
+            >
+              Qaza
+              <!-- Badge count -->
+              <span
+                v-if="store.pendingQazas.length > 0"
+                class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-slate-950 border border-slate-950 animate-pulse"
+              >
+                {{ store.pendingQazas.length }}
+              </span>
+            </RouterLink>
+
+            <RouterLink
+              to="/analytics"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
+              active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
+            >
+              Analytics
+            </RouterLink>
+          </nav>
+
+          <!-- User Display & Logout -->
+          <div class="flex items-center gap-2 border-l border-slate-900 pl-3">
+            <span class="hidden md:inline text-xs font-bold text-slate-400">
+              {{ authStore.user?.username }}
+            </span>
+            <button
+              @click="handleLogout"
+              class="bg-slate-900 hover:bg-rose-500/25 hover:text-rose-400 border border-slate-800 text-slate-400 font-bold text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
       </div>
     </header>
 
     <!-- Main View Wrapper -->
-    <main class="flex-grow py-6 sm:py-10">
+    <main class="flex-grow flex flex-col justify-stretch">
       <RouterView v-slot="{ Component }">
         <transition
           name="fade"
@@ -97,7 +146,10 @@ onMounted(() => {
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-900 py-6 text-center text-slate-600 text-xs">
+    <footer
+      v-if="authStore.isAuthenticated"
+      class="border-t border-slate-900 py-6 text-center text-slate-600 text-xs mt-auto"
+    >
       <p>
         © {{ new Date().getFullYear() }} Iqamah (إقامة) Salah Tracker. Built with Clean Architecture
         & Vue 3.

@@ -1,4 +1,5 @@
 using Iqamah.Domain.Interfaces.Repositories;
+using Iqamah.Infrastructure.Auth;
 using Iqamah.Infrastructure.Data;
 using Iqamah.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,16 @@ public static class DependencyInjection
 
         services.AddScoped<IPrayerLogRepository, PrayerLogRepository>();
         services.AddScoped<IQazaLogRepository, QazaLogRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+
+        services.Configure<JwtOptions>(options =>
+        {
+            var section = configuration.GetSection("Jwt");
+            options.Issuer = section["Issuer"] ?? string.Empty;
+            options.Audience = section["Audience"] ?? string.Empty;
+            options.SecretKey = section["SecretKey"] ?? string.Empty;
+        });
+        services.AddScoped<Application.Common.Interfaces.IJwtProvider, Auth.JwtProvider>();
 
         return services;
     }

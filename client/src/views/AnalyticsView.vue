@@ -4,9 +4,6 @@ import { usePrayerStore } from '@/stores/prayer'
 
 const store = usePrayerStore()
 
-// Mock current logged in user
-const currentUserId = ref(1)
-
 // Date Range selection
 const activeRange = ref<'7d' | '30d' | '365d' | 'custom'>('30d')
 const fromDate = ref('')
@@ -34,14 +31,14 @@ setRange('30d')
 
 const loadAnalytics = async () => {
   try {
-    await store.fetchAnalytics(currentUserId.value, fromDate.value, toDate.value)
+    await store.fetchAnalytics(fromDate.value, toDate.value)
   } catch (err) {
     console.error('Failed to load analytics', err)
   }
 }
 
 watch(
-  [currentUserId, fromDate, toDate],
+  [fromDate, toDate],
   () => {
     loadAnalytics()
   },
@@ -70,19 +67,6 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
         <p class="text-slate-400 text-sm mt-1">
           Deep analytics on prayer habits, punctuality, and make-up progression.
         </p>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider"
-          >Demo User:</span
-        >
-        <select
-          v-model="currentUserId"
-          class="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-        >
-          <option :value="1">Brother Ahmed</option>
-          <option :value="2">Sister Fatima</option>
-        </select>
       </div>
     </div>
 

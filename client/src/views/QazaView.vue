@@ -1,33 +1,23 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { computed } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
 import { PrayerName, PRAYER_LABELS } from '@/types/prayer.types'
 
 const store = usePrayerStore()
 
-// Mock current logged in user
-const currentUserId = ref(1)
-
 const loadQazas = async () => {
   try {
-    await store.fetchPendingQazas(currentUserId.value)
+    await store.fetchPendingQazas()
   } catch (err) {
     console.error('Failed to load pending Qazas', err)
   }
 }
 
-// Watch user ID changes
-watch(
-  currentUserId,
-  () => {
-    loadQazas()
-  },
-  { immediate: true },
-)
+loadQazas()
 
 const handleFulfillQaza = async (qazaLogId: string) => {
   try {
-    await store.fulfillQaza(qazaLogId, currentUserId.value)
+    await store.fulfillQaza(qazaLogId)
     // Reload Qazas
     await loadQazas()
   } catch (err) {
@@ -77,19 +67,6 @@ const qazaSummary = computed<Record<number, number>>(() => {
         <p class="text-slate-400 text-sm mt-1">
           Rectify missed obligations. Fulfill pending make-up prayers.
         </p>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider"
-          >Demo User:</span
-        >
-        <select
-          v-model="currentUserId"
-          class="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-        >
-          <option :value="1">Brother Ahmed</option>
-          <option :value="2">Sister Fatima</option>
-        </select>
       </div>
     </div>
 

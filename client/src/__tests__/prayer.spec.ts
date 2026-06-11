@@ -1,12 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { usePrayerStore } from '../stores/prayer'
+import { useAuthStore } from '../stores/auth'
 import { PrayerName, WaqtStatus, QazaState } from '../types/prayer.types'
 
 describe('Prayer Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.restoreAllMocks()
+
+    // Setup dummy auth credentials for headers in tests
+    const authStore = useAuthStore()
+    authStore.token = 'test_token'
   })
 
   it('fetchPrayerLogs successfully populates prayerLogs state', async () => {
@@ -35,9 +40,16 @@ describe('Prayer Store', () => {
     )
 
     const store = usePrayerStore()
-    await store.fetchPrayerLogs(1, '2025-05-01', '2025-05-02')
+    await store.fetchPrayerLogs('2025-05-01', '2025-05-02')
 
-    expect(fetchSpy).toHaveBeenCalledWith('/api/prayers?userId=1&from=2025-05-01&to=2025-05-02')
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/prayers?from=2025-05-01&to=2025-05-02',
+      expect.objectContaining({
+        headers: {
+          Authorization: 'Bearer test_token',
+        },
+      }),
+    )
     expect(store.prayerLogs).toEqual(mockLogs)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
@@ -52,7 +64,7 @@ describe('Prayer Store', () => {
     )
 
     const store = usePrayerStore()
-    await expect(store.fetchPrayerLogs(1, '2025-05-01', '2025-05-02')).rejects.toThrow(
+    await expect(store.fetchPrayerLogs('2025-05-01', '2025-05-02')).rejects.toThrow(
       'Database connection failed',
     )
 
@@ -77,13 +89,17 @@ describe('Prayer Store', () => {
       isJamaah: true,
     }
 
-    const newId = await store.logPrayer(1, request)
+    const newId = await store.logPrayer(request)
 
     expect(fetchSpy).toHaveBeenCalledWith(
       '/api/prayers',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ userId: 1, ...request }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test_token',
+        },
+        body: JSON.stringify(request),
       }),
     )
     expect(newId).toBe('22222222-3333-4444-5555-666666666666')
@@ -105,7 +121,7 @@ describe('Prayer Store', () => {
       },
     ]
 
-    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockQazas),
@@ -113,8 +129,16 @@ describe('Prayer Store', () => {
     )
 
     const store = usePrayerStore()
-    await store.fetchPendingQazas(1)
+    await store.fetchPendingQazas()
 
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/qazas/pending',
+      expect.objectContaining({
+        headers: {
+          Authorization: 'Bearer test_token',
+        },
+      }),
+    )
     expect(store.pendingQazas).toEqual(mockQazas)
     expect(store.error).toBeNull()
   })
@@ -153,7 +177,7 @@ describe('Prayer Store', () => {
       },
     }
 
-    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockAnalytics),
@@ -161,8 +185,16 @@ describe('Prayer Store', () => {
     )
 
     const store = usePrayerStore()
-    await store.fetchAnalytics(1, '2025-05-01', '2025-05-10')
+    await store.fetchAnalytics('2025-05-01', '2025-05-10')
 
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/analytics?from=2025-05-01&to=2025-05-10',
+      expect.objectContaining({
+        headers: {
+          Authorization: 'Bearer test_token',
+        },
+      }),
+    )
     expect(store.analytics).toEqual(mockAnalytics)
     expect(store.error).toBeNull()
   })
