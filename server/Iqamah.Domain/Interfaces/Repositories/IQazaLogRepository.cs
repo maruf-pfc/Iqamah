@@ -12,5 +12,6 @@ public interface IQazaLogRepository
         int userId, QazaState state, CancellationToken ct = default);
     Task<int> CountPendingAsync(int userId, CancellationToken ct = default);
     Task AddAsync(QazaLog log, CancellationToken ct = default);
+    void Delete(QazaLog log);
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 }

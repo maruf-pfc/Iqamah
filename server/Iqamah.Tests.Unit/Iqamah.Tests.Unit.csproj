@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Iqamah.Domain\Iqamah.Domain.csproj" />
+    <ProjectReference Include="..\Iqamah.Application\Iqamah.Application.csproj" />
   </ItemGroup>
 
 </Project>

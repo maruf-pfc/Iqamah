@@ -10,4 +10,4 @@ public sealed record QazaFulfilledDomainEvent(
     Guid QazaLogId,
     int UserId,
     PrayerName PrayerName,
-    TimeSpan TimeToResolution);
+    TimeSpan TimeToResolution) : MediatR.INotification;

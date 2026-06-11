@@ -12,4 +12,4 @@ public sealed record PrayerMissedDomainEvent(
     int UserId,
     PrayerName PrayerName,
     DateOnly PrayerDate,
-    MissedReason MissedReason);
+    MissedReason MissedReason) : MediatR.INotification;
