@@ -1,10 +1,12 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Iqamah.API.Middleware;
 using Iqamah.Application;
 using Iqamah.Infrastructure;
 using Iqamah.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,14 +40,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtOptions?.Issuer,
-            ValidAudience = jwtOptions?.Audience,
+            ValidIssuer = jwtOptions?.Issuer ?? throw new InvalidOperationException("JWT Issuer is missing from configuration."),
+            ValidAudience = jwtOptions?.Audience ?? throw new InvalidOperationException("JWT Audience is missing from configuration."),
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtOptions?.SecretKey ?? "this_is_a_very_secret_key_used_only_for_iqamah_Salah_tracker_2026_!!"))
+                Encoding.UTF8.GetBytes(jwtOptions?.SecretKey ?? throw new InvalidOperationException("JWT SecretKey is missing from configuration.")))
         };
     });
 
 builder.Services.AddAuthorization();
+
+// Configure Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? httpContext.Request.Headers.Host.ToString();
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            AutoReplenishment = true,
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+});
 
 // Global Exception Handler using modern IExceptionHandler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -63,6 +82,8 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

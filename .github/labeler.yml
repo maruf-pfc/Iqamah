@@ -1,0 +1,12 @@
+# Labeler configuration
+
+client:
+  - 'client/**/*'
+
+server:
+  - 'server/**/*'
+
+ci-cd:
+  - '.github/**/*'
+  - 'Dockerfile'
+  - '.dockerignore'
