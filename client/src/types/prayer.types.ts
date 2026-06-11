@@ -148,3 +148,53 @@ export const isExcusedMissedReason = (reason: MissedReason): boolean =>
 
 export const requiresQaza = (reason: MissedReason): boolean =>
   reason !== MissedReason.ExcusedImpurity
+
+// ── Analytics DTOs ──────────────────────────────────────────────────────────
+
+export interface PunctualityStatsDto {
+  readonly awwalAlWaqtCount: number
+  readonly wastAlWaqtCount: number
+  readonly akhirAlWaqtCount: number
+  readonly awwalAlWaqtPercentage: number
+  readonly wastAlWaqtPercentage: number
+  readonly akhirAlWaqtPercentage: number
+}
+
+export interface MissedReasonsStatsDto {
+  readonly excusedImpurityCount: number
+  readonly excusedSleepCount: number
+  readonly excusedForgetfulnessCount: number
+  readonly unexcusedSituationalCount: number
+  readonly unexcusedLazinessCount: number
+  readonly unexcusedDistractionCount: number
+  readonly totalExcused: number
+  readonly totalUnexcused: number
+}
+
+export interface PrayerSpecificStatsDto {
+  readonly totalObligated: number
+  readonly totalOffered: number
+  readonly offeredPercentage: number
+  readonly jamaahCount: number
+  readonly jamaahPercentage: number
+  readonly travelingCount: number
+}
+
+export interface QazaSummaryStatsDto {
+  readonly totalPending: number
+  readonly totalFulfilled: number
+  readonly totalIncurred: number
+  readonly averageResolutionTimeHours: number
+}
+
+export interface AnalyticsResponseDto {
+  readonly totalLogged: number
+  readonly totalObligated: number
+  readonly totalOffered: number
+  readonly totalMissed: number
+  readonly offeredPercentage: number
+  readonly punctuality: PunctualityStatsDto
+  readonly missedReasons: MissedReasonsStatsDto
+  readonly prayerStats: Record<string, PrayerSpecificStatsDto>
+  readonly qazaSummary: QazaSummaryStatsDto
+}
