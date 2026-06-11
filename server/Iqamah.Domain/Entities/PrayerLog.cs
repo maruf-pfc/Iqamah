@@ -139,4 +139,52 @@ public sealed class PrayerLog
 
     /// <summary>Links the generated <see cref="QazaLog"/> after it has been persisted.</summary>
     internal void AttachQazaLog(QazaLog qazaLog) => QazaLog = qazaLog;
+
+    /// <summary>
+    /// Updates the prayer log parameters and enforces domain invariants.
+    /// Raises domain events if state transitions necessitate a new Qaza.
+    /// </summary>
+    public void Update(
+        bool isOffered,
+        WaqtStatus? waqtStatus = null,
+        MissedReason? missedReason = null,
+        bool isJamaah = false,
+        bool isTraveling = false,
+        bool isJummah = false)
+    {
+        // ── Invariant checks ──────────────────────────────────────────────────
+        if (isOffered && waqtStatus is null)
+            throw new DomainException("WaqtStatus is required when a prayer is offered.");
+
+        if (!isOffered && missedReason is null)
+            throw new DomainException("MissedReason is required when a prayer is missed.");
+
+        if (isOffered && missedReason is not null)
+            throw new DomainException("MissedReason must not be set when a prayer is offered.");
+
+        if (!isOffered && waqtStatus is not null)
+            throw new DomainException("WaqtStatus must not be set when a prayer is missed.");
+
+        if (isJummah && PrayerName != PrayerName.Dhuhr)
+            throw new DomainException("IsJummah is only applicable to the Dhuhr prayer.");
+
+        var wasRequiringQaza = RequiresQaza();
+
+        IsOffered = isOffered;
+        WaqtStatus = waqtStatus;
+        MissedReason = missedReason;
+        IsJamaah = isJamaah;
+        IsTraveling = isTraveling;
+        IsJummah = isJummah;
+        UpdatedAt = DateTime.UtcNow;
+
+        var isNowRequiringQaza = RequiresQaza();
+
+        // If it transitioned from not requiring Qaza to requiring Qaza
+        if (isNowRequiringQaza && !wasRequiringQaza)
+        {
+            _domainEvents.Add(new PrayerMissedDomainEvent(
+                Id, UserId, PrayerName, PrayerDate, missedReason!.Value));
+        }
+    }
 }
