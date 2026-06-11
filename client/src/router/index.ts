@@ -34,7 +34,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
   // Try to load current user if authenticated but state is empty
@@ -49,11 +49,9 @@ router.beforeEach(async (to, from, next) => {
   const isAuth = authStore.isAuthenticated
 
   if (to.meta.requiresAuth && !isAuth) {
-    next('/login')
+    return '/login'
   } else if (to.name === 'login' && isAuth) {
-    next('/')
-  } else {
-    next()
+    return '/'
   }
 })
 
