@@ -1,10 +1,12 @@
 # إقامة | Iqamah — Salah Habit Establishment Platform
 
-[![.NET 9](https://img.shields.io/badge/.NET-9.0-blueviolet.svg)](https://dotnet.microsoft.com/)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-blueviolet.svg)](https://dotnet.microsoft.com/)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-emerald.svg)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-yellow.svg)](https://vite.dev/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.x-336791.svg)](https://www.postgresql.org/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Iqamah (إقامة)** is a highly specialized, data-driven web application designed to help Muslims build, establish, and analyze their daily prayer (Salah/Namaz) habits. The system provides granular tracking for prayer punctuality, situational missed reasons, state machines for make-up (Qaza) tracking, and multi-year analytics.
 
@@ -26,11 +28,11 @@ The project is structured as a modern, decoupled web application:
 
 ```mermaid
 graph TD
-    Client[Vue 3 SPA Client] <-->|JSON + JWT Authorization| API[ASP.NET Core 9 Web API]
+    Client[Vue 3 SPA Client] <-->|JSON + JWT Authorization| API[ASP.NET Core 10 Web API]
     API <-->|EF Core| DB[(Postgres / NeonDB)]
 ```
 
-### 1. Server-Side (.NET 9)
+### 1. Server-Side (.NET 10)
 Built following **Clean Architecture** patterns:
 *   **Iqamah.Domain:** Contains core entities (`PrayerLog`, `QazaLog`, `User`), value objects, domain exceptions, and repository contracts.
 *   **Iqamah.Application:** Implements the CQRS pattern using **MediatR** and contains handlers, commands, queries, and **FluentValidation** rules.
@@ -65,7 +67,7 @@ client/
 ```
 
 ### 🛠️ State Management & JSON Normalization
-1. **The Enum Deserialization Challenge:** The backend `.NET 9` server is configured to serialize C# enums as string values in JSON payloads for API readability. For example, `PrayerName.Fajr` (value `0`) is serialized as `"Fajr"`. However, the client-side lookup arrays (`PRAYER_LABELS`, `WAQT_LABELS`, and `MISSED_REASON_LABELS`) are keyed using numeric values (`0`, `1`, etc.) to maintain type-safe enum patterns. Looking up properties using a string value (e.g., `PRAYER_LABELS["Fajr"]`) causes `TypeError: Cannot read properties of undefined` in JavaScript.
+1. **The Enum Deserialization Challenge:** The backend `.NET 10` server is configured to serialize C# enums as string values in JSON payloads for API readability. For example, `PrayerName.Fajr` (value `0`) is serialized as `"Fajr"`. However, the client-side lookup arrays (`PRAYER_LABELS`, `WAQT_LABELS`, and `MISSED_REASON_LABELS`) are keyed using numeric values (`0`, `1`, etc.) to maintain type-safe enum patterns. Looking up properties using a string value (e.g., `PRAYER_LABELS["Fajr"]`) causes `TypeError: Cannot read properties of undefined` in JavaScript.
 2. **The Solution (Store Normalization Layer):** To decouple the view templates from deserialization types, `stores/prayer.ts` implements a mapping/normalization layer. Every response fetched from backend endpoints is automatically passed through normalizers:
    * `normalizePrayerLog()`: Normalizes enums `prayerName`, `waqtStatus`, and `missedReason` into integers.
    * `normalizeQazaLog()`: Maps pending make-up logs.
@@ -86,7 +88,7 @@ The application implements a stateless **JWT Bearer Authentication** model:
 ## 🚀 Getting Started
 
 ### Prerequisites
-*   [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
+*   [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 *   [Node.js (v20+ or v22+)](https://nodejs.org/)
 
 ### Backend Setup (.NET)
@@ -143,3 +145,17 @@ npm run test:unit -- --run  # Run Vitest test suite
 npm run lint                # Run ESLint & Oxlint code style checks
 npm run format              # Run Prettier code formatting
 ```
+
+---
+
+## 🤝 Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on setting up local environments, branch naming conventions, coding standards, and how to submit a pull request.
+
+Please review our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) to understand the guidelines for interacting within our community.
+
+## 📄 License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
