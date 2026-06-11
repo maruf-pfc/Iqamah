@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
+import { useLocaleStore } from '@/stores/locale'
 
 const store = usePrayerStore()
+const localeStore = useLocaleStore()
+
+const getLocalizedPrayerNameStr = (pName: string) => {
+  return localeStore.t(pName as any)
+}
 
 // Date Range selection
 const activeRange = ref<'7d' | '30d' | '365d' | 'custom'>('30d')
@@ -62,10 +68,10 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
         <h1
           class="text-3xl font-extrabold bg-gradient-to-r from-emerald-400 to-indigo-400 bg-clip-text text-transparent tracking-tight"
         >
-          Insight Analytics (بصيرة)
+          {{ localeStore.t('salah_analytics') }}
         </h1>
         <p class="text-slate-400 text-sm mt-1">
-          Deep analytics on prayer habits, punctuality, and make-up progression.
+          {{ localeStore.t('analytics_tagline') }}
         </p>
       </div>
     </div>
@@ -86,7 +92,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
               : 'text-slate-400 hover:text-slate-200',
           ]"
         >
-          {{ r === '7d' ? '7 Days' : r === '30d' ? '30 Days' : '1 Year' }}
+          {{ r === '7d' ? localeStore.t('days_7') : r === '30d' ? localeStore.t('days_30') : localeStore.t('year_1') }}
         </button>
         <button
           @click="activeRange = 'custom'"
@@ -97,7 +103,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
               : 'text-slate-400 hover:text-slate-200',
           ]"
         >
-          Custom
+          {{ localeStore.t('custom') }}
         </button>
       </div>
 
@@ -111,7 +117,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
           v-model="fromDate"
           class="bg-slate-900 border border-slate-800 text-slate-200 rounded-lg px-3 py-1 text-xs focus:outline-none focus:border-emerald-500"
         />
-        <span class="text-slate-600 text-xs">to</span>
+        <span class="text-slate-600 text-xs">{{ localeStore.t('to') }}</span>
         <input
           type="date"
           v-model="toDate"
@@ -122,11 +128,11 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
 
     <div v-if="store.loading" class="flex flex-col items-center py-24">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mb-4"></div>
-      <p class="text-slate-400 text-sm">Processing multi-year analytics...</p>
+      <p class="text-slate-400 text-sm">{{ localeStore.t('processing_analytics') }}</p>
     </div>
 
     <div v-else-if="!store.analytics" class="text-center py-16">
-      <p class="text-slate-500">No analytics data available for the selected range.</p>
+      <p class="text-slate-500">{{ localeStore.t('no_analytics_data') }}</p>
     </div>
 
     <!-- Analytics Dashboard Content -->
@@ -159,10 +165,10 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
               >{{ store.analytics.offeredPercentage }}%</span
             >
             <span class="text-[9px] uppercase tracking-widest text-slate-400 font-bold"
-              >Offer Rate</span
+              >{{ localeStore.t('offered_ratio') }}</span
             >
           </div>
-          <span class="text-[10px] text-slate-500 mt-4 block">Excludes Excused Impurity</span>
+          <span class="text-[10px] text-slate-500 mt-4 block">{{ localeStore.t('offered_percentage_desc') }}</span>
         </div>
 
         <!-- Metric Cards Grid -->
@@ -171,48 +177,48 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
             class="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between"
           >
             <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider"
-              >Total Logged</span
+              >{{ localeStore.t('total_logged') }}</span
             >
             <span class="text-3xl font-extrabold text-slate-100 mt-2">{{
               store.analytics.totalLogged
             }}</span>
-            <span class="text-[10px] text-slate-500 mt-1">Salah entries</span>
+            <span class="text-[10px] text-slate-500 mt-1">{{ localeStore.t('salahs_entries') }}</span>
           </div>
 
           <div
             class="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between"
           >
             <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider"
-              >Offered (Ada')</span
+              >{{ localeStore.t('offered') }}</span
             >
             <span class="text-3xl font-extrabold text-emerald-400 mt-2">{{
               store.analytics.totalOffered
             }}</span>
-            <span class="text-[10px] text-slate-500 mt-1">Salahs performed</span>
+            <span class="text-[10px] text-slate-500 mt-1">{{ localeStore.t('salahs_performed') }}</span>
           </div>
 
           <div
             class="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between"
           >
             <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider"
-              >Missed</span
+              >{{ localeStore.t('missed') }}</span
             >
             <span class="text-3xl font-extrabold text-rose-400 mt-2">{{
               store.analytics.totalMissed
             }}</span>
-            <span class="text-[10px] text-slate-500 mt-1">Salahs missed</span>
+            <span class="text-[10px] text-slate-500 mt-1">{{ localeStore.t('salahs_missed') }}</span>
           </div>
 
           <div
             class="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between"
           >
             <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider"
-              >Qaza Cleared</span
+              >{{ localeStore.t('qaza_made_up') }}</span
             >
             <span class="text-3xl font-extrabold text-indigo-400 mt-2">{{
               store.analytics.qazaSummary.totalFulfilled
             }}</span>
-            <span class="text-[10px] text-slate-500 mt-1">Make-up prayers logged</span>
+            <span class="text-[10px] text-slate-500 mt-1">{{ localeStore.t('makeup_prayers_logged') }}</span>
           </div>
         </div>
       </div>
@@ -221,12 +227,12 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Punctuality Breakdown -->
         <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl shadow-lg">
-          <h3 class="text-base font-bold text-slate-200 mb-6">Punctuality (Waqt Distribution)</h3>
+          <h3 class="text-base font-bold text-slate-200 mb-6">{{ localeStore.t('waqt_distribution') }}</h3>
 
           <div class="space-y-4">
             <div>
               <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1.5">
-                <span>Awwal al-Waqt (First 15-20 min)</span>
+                <span>{{ localeStore.t('awwal_waqt_title') }}</span>
                 <span
                   >{{ store.analytics.punctuality.awwalAlWaqtCount }} ({{
                     store.analytics.punctuality.awwalAlWaqtPercentage
@@ -243,7 +249,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
 
             <div>
               <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1.5">
-                <span>Wast al-Waqt (Middle Window)</span>
+                <span>{{ localeStore.t('wast_waqt_title') }}</span>
                 <span
                   >{{ store.analytics.punctuality.wastAlWaqtCount }} ({{
                     store.analytics.punctuality.wastAlWaqtPercentage
@@ -260,7 +266,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
 
             <div>
               <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1.5">
-                <span>Akhir al-Waqt (Late Window)</span>
+                <span>{{ localeStore.t('akhir_waqt_title') }}</span>
                 <span
                   >{{ store.analytics.punctuality.akhirAlWaqtCount }} ({{
                     store.analytics.punctuality.akhirAlWaqtPercentage
@@ -279,17 +285,17 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
 
         <!-- Missed Reasons Breakdown -->
         <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl shadow-lg">
-          <h3 class="text-base font-bold text-slate-200 mb-4">Situational Absences</h3>
+          <h3 class="text-base font-bold text-slate-200 mb-4">{{ localeStore.t('situational_absences') }}</h3>
           <div
             class="flex items-center gap-4 text-xs font-semibold text-slate-400 mb-6 border-b border-slate-800 pb-3"
           >
             <span
-              >Excused Total:
+              >{{ localeStore.t('excused_total') }}:
               <b class="text-indigo-400">{{ store.analytics.missedReasons.totalExcused }}</b></span
             >
             <span class="text-slate-700">|</span>
             <span
-              >Unexcused Total:
+              >{{ localeStore.t('unexcused_total') }}:
               <b class="text-rose-400">{{ store.analytics.missedReasons.totalUnexcused }}</b></span
             >
           </div>
@@ -297,7 +303,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
           <div class="grid grid-cols-2 gap-x-6 gap-y-4">
             <!-- Sleep -->
             <div>
-              <span class="text-[10px] text-slate-400 font-semibold block">Excused Sleep</span>
+              <span class="text-[10px] text-slate-400 font-semibold block">{{ localeStore.t('sleep') }}</span>
               <span class="text-lg font-bold text-slate-200 mt-0.5 block">{{
                 store.analytics.missedReasons.excusedSleepCount
               }}</span>
@@ -305,7 +311,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
             <!-- Forget -->
             <div>
               <span class="text-[10px] text-slate-400 font-semibold block"
-                >Excused Forgetfulness</span
+                >{{ localeStore.t('forgetfulness') }}</span
               >
               <span class="text-lg font-bold text-slate-200 mt-0.5 block">{{
                 store.analytics.missedReasons.excusedForgetfulnessCount
@@ -314,7 +320,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
             <!-- Impurity -->
             <div>
               <span class="text-[10px] text-slate-400 font-semibold block"
-                >Excused Impurity (Hayd)</span
+                >{{ localeStore.t('impurity') }}</span
               >
               <span class="text-lg font-bold text-slate-200 mt-0.5 block">{{
                 store.analytics.missedReasons.excusedImpurityCount
@@ -322,7 +328,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
             </div>
             <!-- Laziness -->
             <div>
-              <span class="text-[10px] text-slate-400 font-semibold block">Unexcused Laziness</span>
+              <span class="text-[10px] text-slate-400 font-semibold block">{{ localeStore.t('laziness') }}</span>
               <span class="text-lg font-bold text-rose-400 mt-0.5 block">{{
                 store.analytics.missedReasons.unexcusedLazinessCount
               }}</span>
@@ -330,7 +336,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
             <!-- Distraction -->
             <div>
               <span class="text-[10px] text-slate-400 font-semibold block"
-                >Unexcused Distraction</span
+                >{{ localeStore.t('distraction') }}</span
               >
               <span class="text-lg font-bold text-rose-400 mt-0.5 block">{{
                 store.analytics.missedReasons.unexcusedDistractionCount
@@ -339,7 +345,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
             <!-- Situational -->
             <div>
               <span class="text-[10px] text-slate-400 font-semibold block"
-                >Unexcused Situational</span
+                >{{ localeStore.t('situational') }}</span
               >
               <span class="text-lg font-bold text-rose-400 mt-0.5 block">{{
                 store.analytics.missedReasons.unexcusedSituationalCount
@@ -352,7 +358,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
       <!-- Lower Section: Prayer Specific Statistics -->
       <div class="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
         <div class="p-6 border-b border-slate-800">
-          <h3 class="text-base font-bold text-slate-200">Salah Breakdown Metrics</h3>
+          <h3 class="text-base font-bold text-slate-200">{{ localeStore.t('salah_breakdown_metrics') }}</h3>
         </div>
 
         <div class="overflow-x-auto">
@@ -361,13 +367,13 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
               class="bg-slate-950 text-slate-400 font-bold uppercase tracking-wider text-[10px]"
             >
               <tr>
-                <th class="p-4">Salah Name</th>
-                <th class="p-4">Obligated</th>
-                <th class="p-4">Offered</th>
-                <th class="p-4">Offer Rate</th>
-                <th class="p-4">Jamaah Count</th>
-                <th class="p-4">Jamaah Rate</th>
-                <th class="p-4">Travel (Musafir)</th>
+                <th class="p-4">{{ localeStore.t('prayer_name') }}</th>
+                <th class="p-4">{{ localeStore.t('obligated') }}</th>
+                <th class="p-4">{{ localeStore.t('offered') }}</th>
+                <th class="p-4">{{ localeStore.t('offered_ratio') }}</th>
+                <th class="p-4">{{ localeStore.t('jamaah_count') }}</th>
+                <th class="p-4">{{ localeStore.t('jamaah_rate') }}</th>
+                <th class="p-4">{{ localeStore.t('travel_count') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800/50">
@@ -376,7 +382,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
                 :key="pName"
                 class="hover:bg-slate-950/20"
               >
-                <td class="p-4 font-bold text-slate-200 capitalize">{{ pName }}</td>
+                <td class="p-4 font-bold text-slate-200">{{ getLocalizedPrayerNameStr(pName) }}</td>
                 <td class="p-4 text-slate-400">
                   {{ store.analytics.prayerStats[pName]?.totalObligated ?? 0 }}
                 </td>
@@ -414,37 +420,37 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
 
       <!-- Qaza Lifecycle Analysis -->
       <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl shadow-lg">
-        <h3 class="text-base font-bold text-slate-200 mb-4">Qaza (Make-up) Resolution Analytics</h3>
+        <h3 class="text-base font-bold text-slate-200 mb-4">{{ localeStore.t('lifetime_resolution') }}</h3>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div class="bg-slate-950/30 border border-slate-900 p-4 rounded-xl text-center">
             <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider"
-              >Avg Resolution Time</span
+              >{{ localeStore.t('average_resolution') }}</span
             >
             <span class="text-2xl font-black block mt-2 text-indigo-400">
-              {{ store.analytics.qazaSummary.averageResolutionTimeHours }} hrs
+              {{ localeStore.t('hours_abbr', { hours: store.analytics.qazaSummary.averageResolutionTimeHours }) }}
             </span>
-            <span class="text-[10px] text-slate-500 mt-1 block">From missed to make-up</span>
+            <span class="text-[10px] text-slate-500 mt-1 block">{{ localeStore.t('from_missed_to_makeup') }}</span>
           </div>
 
           <div class="bg-slate-950/30 border border-slate-900 p-4 rounded-xl text-center">
             <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider"
-              >Total Debts Incurred</span
+              >{{ localeStore.t('total_incurred') }}</span
             >
             <span class="text-2xl font-black block mt-2 text-slate-100">
               {{ store.analytics.qazaSummary.totalIncurred }}
             </span>
-            <span class="text-[10px] text-slate-500 mt-1 block">Total lifetime missed</span>
+            <span class="text-[10px] text-slate-500 mt-1 block">{{ localeStore.t('total_lifetime_missed') }}</span>
           </div>
 
           <div class="bg-slate-950/30 border border-slate-900 p-4 rounded-xl text-center">
             <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider"
-              >Unfulfilled Debt</span
+              >{{ localeStore.t('total_pending') }}</span
             >
             <span class="text-2xl font-black block mt-2 text-rose-400">
               {{ store.analytics.qazaSummary.totalPending }}
             </span>
-            <span class="text-[10px] text-slate-500 mt-1 block">Pending in current ledger</span>
+            <span class="text-[10px] text-slate-500 mt-1 block">{{ localeStore.t('pending_in_current_ledger') }}</span>
           </div>
         </div>
       </div>

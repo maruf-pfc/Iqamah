@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
-import { PrayerName, PRAYER_LABELS } from '@/types/prayer.types'
+import { useLocaleStore } from '@/stores/locale'
+import { PrayerName } from '@/types/prayer.types'
 
 const store = usePrayerStore()
+const localeStore = useLocaleStore()
+
+const ARABIC_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء']
+
+const getLocalizedPrayerName = (prayer: number) => {
+  const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+  const key = keys[prayer] || 'fajr'
+  return localeStore.t(key as any)
+}
 
 const loadQazas = async () => {
   try {
@@ -27,11 +37,15 @@ const handleFulfillQaza = async (qazaLogId: string) => {
 
 const getRelativeTime = (dateStr: string) => {
   const date = new Date(dateStr)
-  const now = new Date()
-  const diffTime = Math.abs(now.getTime() - date.getTime())
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  if (diffDays === 1) return 'Yesterday'
-  return `${diffDays} days ago`
+  // Strip time for clean day diff
+  const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const today = new Date()
+  const d2 = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const diffTime = d2.getTime() - d1.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+  if (diffDays <= 0) return localeStore.t('today')
+  if (diffDays === 1) return localeStore.t('yesterday')
+  return localeStore.t('days_ago', { count: diffDays })
 }
 
 // Group pending Qaza logs by prayer name for summary
@@ -62,10 +76,10 @@ const qazaSummary = computed<Record<number, number>>(() => {
         <h1
           class="text-3xl font-extrabold bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent tracking-tight"
         >
-          Qaza Ledger (قضاء)
+          {{ localeStore.t('qaza_ledger') }}
         </h1>
         <p class="text-slate-400 text-sm mt-1">
-          Rectify missed obligations. Fulfill pending make-up prayers.
+          {{ localeStore.t('qaza_tagline') }}
         </p>
       </div>
     </div>
@@ -84,7 +98,7 @@ const qazaSummary = computed<Record<number, number>>(() => {
         class="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-4 text-center"
       >
         <span class="text-xs text-slate-400 block font-semibold">{{
-          PRAYER_LABELS[pName].split(' ')[0]
+          getLocalizedPrayerName(pName)
         }}</span>
         <span
           class="text-3xl font-extrabold block mt-2"
@@ -93,7 +107,7 @@ const qazaSummary = computed<Record<number, number>>(() => {
           {{ qazaSummary[pName] ?? 0 }}
         </span>
         <span class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider block font-bold"
-          >Pending</span
+          >{{ localeStore.t('pending') }}</span
         >
       </div>
     </div>
@@ -115,11 +129,11 @@ const qazaSummary = computed<Record<number, number>>(() => {
     <!-- Pending Qazas List -->
     <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 shadow-lg">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-bold text-slate-100">Outstanding Qaza Debt</h2>
+        <h2 class="text-lg font-bold text-slate-100">{{ localeStore.t('outstanding_debt') }}</h2>
         <span
           class="text-xs font-bold bg-indigo-950/50 text-indigo-400 border border-indigo-900/50 px-3 py-1 rounded-full"
         >
-          {{ store.pendingQazas.length }} Prayers Due
+          {{ localeStore.t('prayers_due', { count: store.pendingQazas.length }) }}
         </span>
       </div>
 
@@ -151,9 +165,9 @@ const qazaSummary = computed<Record<number, number>>(() => {
           </svg>
         </div>
         <div>
-          <h3 class="text-slate-200 font-bold text-lg">No Pending Qaza!</h3>
+          <h3 class="text-slate-200 font-bold text-lg">{{ localeStore.t('no_pending') }}</h3>
           <p class="text-slate-500 text-sm mt-1">
-            Praise be to Allah, all your missed prayers are cleared.
+            {{ localeStore.t('no_pending_desc') }}
           </p>
         </div>
       </div>
@@ -166,9 +180,9 @@ const qazaSummary = computed<Record<number, number>>(() => {
         >
           <div>
             <span class="font-bold text-slate-200 flex items-center gap-2">
-              {{ PRAYER_LABELS[qaza.prayerName].split(' ')[0] }}
+              {{ getLocalizedPrayerName(qaza.prayerName) }}
               <span class="text-xs font-normal text-slate-500 font-arabic">{{
-                PRAYER_LABELS[qaza.prayerName].split(' ')[1]
+                ARABIC_NAMES[qaza.prayerName]
               }}</span>
             </span>
             <div class="flex items-center gap-2 mt-1">
@@ -184,7 +198,7 @@ const qazaSummary = computed<Record<number, number>>(() => {
             @click="handleFulfillQaza(qaza.id)"
             class="bg-indigo-950/40 hover:bg-emerald-500 border border-indigo-900/50 hover:border-emerald-400 text-indigo-300 hover:text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md cursor-pointer"
           >
-            Fulfill (Offered)
+            {{ localeStore.t('fulfill') }}
           </button>
         </div>
       </div>

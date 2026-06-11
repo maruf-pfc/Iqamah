@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
+import { useLocaleStore } from '@/stores/locale'
 import {
   PrayerName,
   WaqtStatus,
@@ -16,6 +17,27 @@ import type {
 } from '@/types/prayer.types'
 
 const store = usePrayerStore()
+const localeStore = useLocaleStore()
+
+const ARABIC_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء']
+
+const getLocalizedPrayerName = (prayer: number) => {
+  const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+  const key = keys[prayer] || 'fajr'
+  return localeStore.t(key as any)
+}
+
+const getLocalizedWaqt = (status: number) => {
+  const keys = ['awwal', 'wast', 'akhir']
+  const key = keys[status] || 'awwal'
+  return localeStore.t(key as any)
+}
+
+const getLocalizedMissedReason = (reason: number) => {
+  const keys = ['impurity', 'sleep', 'forgetfulness', 'situational', 'laziness', 'distraction']
+  const key = keys[reason] || 'laziness'
+  return localeStore.t(key as any)
+}
 
 // Date selection: Default to today
 const selectedDate = ref<string>(new Date().toISOString().split('T')[0] ?? '')
@@ -149,10 +171,10 @@ const isFuturePrayer = () => {
         <h1
           class="text-3xl font-extrabold bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent tracking-tight"
         >
-          Establish Salah (إقامة)
+          {{ localeStore.t('establish_salah') }}
         </h1>
         <p class="text-slate-400 text-sm mt-1">
-          Track punctuality, log situational absences, and fulfill obligations.
+          {{ localeStore.t('salah_tagline') }}
         </p>
       </div>
     </div>
@@ -160,7 +182,7 @@ const isFuturePrayer = () => {
     <!-- Calendar Date Strip -->
     <div class="bg-slate-900/40 border border-slate-800/80 p-4 rounded-2xl shadow-lg">
       <div class="flex items-center justify-between mb-4">
-        <span class="text-slate-200 font-bold text-sm tracking-wide">Select Date</span>
+        <span class="text-slate-200 font-bold text-sm tracking-wide">{{ localeStore.t('select_date') }}</span>
         <input
           type="date"
           v-model="selectedDate"
@@ -226,9 +248,9 @@ const isFuturePrayer = () => {
             <!-- Left Name / Arabic -->
             <div>
               <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-                {{ PRAYER_LABELS[prayer].split(' ')[0] }}
+                {{ getLocalizedPrayerName(prayer) }}
                 <span class="text-xs font-normal text-slate-500 font-arabic">{{
-                  PRAYER_LABELS[prayer].split(' ')[1]
+                  ARABIC_NAMES[prayer]
                 }}</span>
               </h3>
               <!-- Logs info metadata -->
@@ -236,17 +258,17 @@ const isFuturePrayer = () => {
                 <span
                   v-if="dailyLogs[prayer]?.isTraveling"
                   class="text-[10px] bg-sky-950/40 text-sky-400 border border-sky-900/50 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
-                  >Musafir</span
+                  >{{ localeStore.t('traveling') }}</span
                 >
                 <span
                   v-if="dailyLogs[prayer]?.isJamaah"
                   class="text-[10px] bg-emerald-950/40 text-emerald-400 border border-emerald-900/50 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
-                  >Jamaah</span
+                  >{{ localeStore.t('jamaah') }}</span
                 >
                 <span
                   v-if="dailyLogs[prayer]?.isJummah"
                   class="text-[10px] bg-teal-950/40 text-teal-400 border border-teal-900/50 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
-                  >Jumu'ah</span
+                  >{{ localeStore.t('friday_prayer') }}</span
                 >
               </div>
             </div>
@@ -260,7 +282,7 @@ const isFuturePrayer = () => {
                 <span
                   class="text-xs text-emerald-400 font-bold bg-emerald-950/50 border border-emerald-900/50 px-3 py-1 rounded-full shadow-inner shadow-emerald-950"
                 >
-                  Offered ({{ WAQT_LABELS[dailyLogs[prayer].waqtStatus!] }})
+                  {{ localeStore.t('offered') }} ({{ getLocalizedWaqt(dailyLogs[prayer].waqtStatus!) }})
                 </span>
                 <span class="text-[10px] text-slate-500 mt-1"
                   >Ada' • logged
@@ -286,15 +308,15 @@ const isFuturePrayer = () => {
                         : 'text-rose-400 bg-rose-950/50 border-rose-900/50 shadow-rose-950',
                   ]"
                 >
-                  Missed ({{
-                    MISSED_REASON_LABELS[dailyLogs[prayer].missedReason!].split(' — ')[0]
+                  {{ localeStore.t('missed') }} ({{
+                    getLocalizedMissedReason(dailyLogs[prayer].missedReason!)
                   }})
                 </span>
                 <span class="text-[10px] text-slate-500 mt-1">
                   {{
                     dailyLogs[prayer].missedReason === MissedReason.ExcusedImpurity
-                      ? 'No Qaza required'
-                      : 'Qaza Generated'
+                      ? localeStore.t('no_qaza_required')
+                      : localeStore.t('qaza_generated')
                   }}
                 </span>
               </div>
@@ -304,7 +326,7 @@ const isFuturePrayer = () => {
               <span
                 class="text-xs font-semibold text-slate-500 italic bg-slate-900/40 border border-slate-900 px-3 py-1 rounded-full"
               >
-                Not Logged
+                {{ localeStore.t('not_logged') }}
               </span>
             </template>
           </div>
@@ -316,7 +338,7 @@ const isFuturePrayer = () => {
               :disabled="isFuturePrayer()"
               class="bg-slate-900 hover:bg-emerald-500 hover:text-slate-950 border border-slate-800 hover:border-emerald-400 text-slate-300 font-semibold text-sm px-4 py-2 rounded-xl transition-all duration-300 shadow-md disabled:opacity-40 disabled:hover:bg-slate-900 disabled:hover:text-slate-300 disabled:hover:border-slate-800 cursor-pointer disabled:cursor-not-allowed"
             >
-              {{ dailyLogs[prayer] ? 'Edit' : 'Log' }}
+              {{ dailyLogs[prayer] ? localeStore.t('edit') : localeStore.t('log') }}
             </button>
           </div>
         </div>
@@ -336,7 +358,7 @@ const isFuturePrayer = () => {
           class="bg-slate-950/60 px-6 py-4 border-b border-slate-800 flex items-center justify-between"
         >
           <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-            Log {{ PRAYER_LABELS[editingPrayerName!].split(' ')[0] }}
+            {{ localeStore.t('log_salah', { salah: getLocalizedPrayerName(editingPrayerName!) }) }}
             <span class="text-xs text-slate-500 font-normal">for {{ selectedDate }}</span>
           </h2>
           <button
@@ -361,7 +383,7 @@ const isFuturePrayer = () => {
                   : 'text-slate-400 hover:text-slate-200',
               ]"
             >
-              Offered (Ada')
+              {{ localeStore.t('offered') }}
             </button>
             <button
               type="button"
@@ -373,7 +395,7 @@ const isFuturePrayer = () => {
                   : 'text-slate-400 hover:text-slate-200',
               ]"
             >
-              Missed (Qaza)
+              {{ localeStore.t('missed') }}
             </button>
           </div>
 
@@ -385,15 +407,15 @@ const isFuturePrayer = () => {
             <div>
               <label
                 class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2"
-                >Punctuality (Waqt)</label
+                >{{ localeStore.t('waqt_punctuality') }}</label
               >
               <select
                 v-model="formWaqtStatus"
                 class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
               >
-                <option :value="WaqtStatus.AwwalAlWaqt">First 15-20 min (Awwal al-Waqt)</option>
-                <option :value="WaqtStatus.WastAlWaqt">Middle window (Wast al-Waqt)</option>
-                <option :value="WaqtStatus.AkhirAlWaqt">Late near expiry (Akhir al-Waqt)</option>
+                <option :value="WaqtStatus.AwwalAlWaqt">{{ localeStore.t('awwal_waqt_title') }}</option>
+                <option :value="WaqtStatus.WastAlWaqt">{{ localeStore.t('wast_waqt_title') }}</option>
+                <option :value="WaqtStatus.AkhirAlWaqt">{{ localeStore.t('akhir_waqt_title') }}</option>
               </select>
             </div>
 
@@ -407,7 +429,7 @@ const isFuturePrayer = () => {
                   v-model="formIsJamaah"
                   class="rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500"
                 />
-                <span class="text-xs font-semibold text-slate-300">Jamaah (Congregation)</span>
+                <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('congregation') }}</span>
               </label>
 
               <label
@@ -418,7 +440,7 @@ const isFuturePrayer = () => {
                   v-model="formIsTraveling"
                   class="rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500"
                 />
-                <span class="text-xs font-semibold text-slate-300">Traveling (Musafir)</span>
+                <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('traveling') }}</span>
               </label>
 
               <label
@@ -430,7 +452,7 @@ const isFuturePrayer = () => {
                   v-model="formIsJummah"
                   class="rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500"
                 />
-                <span class="text-xs font-semibold text-slate-300">Friday Jumu'ah Prayer</span>
+                <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('friday_prayer') }}</span>
               </label>
             </div>
           </div>
@@ -440,30 +462,30 @@ const isFuturePrayer = () => {
             <div>
               <label
                 class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2"
-                >Absence Reason</label
+                >{{ localeStore.t('reason_missed') }}</label
               >
               <select
                 v-model="formMissedReason"
                 class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
               >
-                <optgroup label="Excused (No Sin)">
+                <optgroup :label="localeStore.t('excused_optgroup')">
                   <option :value="MissedReason.ExcusedImpurity">
-                    Menstruation/Impurity (Hayd) — NO Qaza
+                    {{ localeStore.t('impurity') }}
                   </option>
-                  <option :value="MissedReason.ExcusedSleep">Unintentional Sleep (Nawm)</option>
+                  <option :value="MissedReason.ExcusedSleep">{{ localeStore.t('sleep') }}</option>
                   <option :value="MissedReason.ExcusedForgetfulness">
-                    Genuine Forgetfulness (Nisyan)
+                    {{ localeStore.t('forgetfulness') }}
                   </option>
                 </optgroup>
-                <optgroup label="Unexcused">
+                <optgroup :label="localeStore.t('unexcused_optgroup')">
                   <option :value="MissedReason.UnexcusedLaziness">
-                    Laziness / Procrastination (Kasl)
+                    {{ localeStore.t('laziness') }}
                   </option>
                   <option :value="MissedReason.UnexcusedDistraction">
-                    Distraction / Entertainment (Ghaflah)
+                    {{ localeStore.t('distraction') }}
                   </option>
                   <option :value="MissedReason.UnexcusedSituational">
-                    Busy / Work / Worldly Preoccupations (Shughl)
+                    {{ localeStore.t('situational') }}
                   </option>
                 </optgroup>
               </select>
@@ -478,7 +500,7 @@ const isFuturePrayer = () => {
                   v-model="formIsTraveling"
                   class="rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500"
                 />
-                <span class="text-xs font-semibold text-slate-300">Traveling (Musafir)</span>
+                <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('traveling') }}</span>
               </label>
             </div>
           </div>
@@ -493,7 +515,7 @@ const isFuturePrayer = () => {
             @click="isModalOpen = false"
             class="text-xs font-bold text-slate-400 hover:text-slate-200 px-4 py-2 rounded-xl border border-slate-800 hover:bg-slate-850 cursor-pointer"
           >
-            Cancel
+            {{ localeStore.t('cancel') }}
           </button>
           <button
             type="button"
@@ -501,7 +523,7 @@ const isFuturePrayer = () => {
             :disabled="store.loading"
             class="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl shadow-md cursor-pointer disabled:cursor-not-allowed"
           >
-            Save Log
+            {{ localeStore.t('save') }}
           </button>
         </div>
       </div>
