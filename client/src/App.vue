@@ -111,6 +111,14 @@ const handleLogout = () => {
             >
               Analytics
             </RouterLink>
+
+            <RouterLink
+              to="/guide"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
+              active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
+            >
+              Guide
+            </RouterLink>
           </nav>
 
           <!-- User Display & Logout -->

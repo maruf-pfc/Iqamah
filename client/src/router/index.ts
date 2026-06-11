@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 import DashboardView from '../views/DashboardView.vue'
 import QazaView from '../views/QazaView.vue'
 import AnalyticsView from '../views/AnalyticsView.vue'
+import GuideView from '../views/GuideView.vue'
 import LoginView from '../views/LoginView.vue'
 
 const router = createRouter({
@@ -24,6 +25,12 @@ const router = createRouter({
       path: '/analytics',
       name: 'analytics',
       component: AnalyticsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/guide',
+      name: 'guide',
+      component: GuideView,
       meta: { requiresAuth: true },
     },
     {
