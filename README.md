@@ -118,11 +118,11 @@ The application implements a stateless **JWT Bearer Authentication** model:
    ```
 2. Install npm dependencies:
    ```bash
-   npm install
+   bun install
    ```
 3. Launch development server:
    ```bash
-   npm run dev
+   bun run dev
    ```
    *The client will start listening at `http://localhost:5173`.*
 
@@ -141,9 +141,9 @@ dotnet test
 Run Vite verification commands using:
 ```bash
 cd client
-npm run test:unit -- --run  # Run Vitest test suite
-npm run lint                # Run ESLint & Oxlint code style checks
-npm run format              # Run Prettier code formatting
+bun run test:unit -- --run  # Run Vitest test suite
+bun run lint                # Run ESLint & Oxlint code style checks
+bun run format              # Run Prettier code formatting
 ```
 
 ---
