@@ -85,6 +85,7 @@ describe('Prayer Store', () => {
     const request = {
       prayerName: PrayerName.Fajr,
       prayerDate: '2025-05-01',
+      isOffered: true,
       waqtStatus: WaqtStatus.AwwalAlWaqt,
       isJamaah: true,
     }
@@ -103,6 +104,41 @@ describe('Prayer Store', () => {
       }),
     )
     expect(newId).toBe('22222222-3333-4444-5555-666666666666')
+    expect(store.error).toBeNull()
+  })
+
+  it('logPrayer with Quran notes and Tasbih posts successfully', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve('33333333-4444-5555-6666-777777777777'),
+      } as Response),
+    )
+
+    const store = usePrayerStore()
+    const request = {
+      prayerName: PrayerName.Asr,
+      prayerDate: '2025-05-01',
+      isOffered: true,
+      waqtStatus: WaqtStatus.AwwalAlWaqt,
+      quranNotes: 'Surah Ya-Sin',
+      hasTasbih: true,
+    }
+
+    const newId = await store.logPrayer(request)
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/prayers',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test_token',
+        },
+        body: JSON.stringify(request),
+      }),
+    )
+    expect(newId).toBe('33333333-4444-5555-6666-777777777777')
     expect(store.error).toBeNull()
   })
 

@@ -46,6 +46,15 @@ public sealed class PrayerLog
     /// <summary>Friday Jumu'ah prayer replaces Dhuhr. Only valid for <see cref="PrayerName.Dhuhr"/>.</summary>
     public bool IsJummah { get; private set; }
 
+    /// <summary>Prayer performed at home instead of the mosque.</summary>
+    public bool IsHome { get; private set; }
+
+    /// <summary>Notes on Quran pages, ayats, or surah read after or during this prayer window.</summary>
+    public string? QuranNotes { get; private set; }
+
+    /// <summary>Tracks whether Tasbih was performed after this prayer.</summary>
+    public bool HasTasbih { get; private set; }
+
     // ── Audit ─────────────────────────────────────────────────────────────────
     public DateTime LoggedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
@@ -75,7 +84,10 @@ public sealed class PrayerLog
         MissedReason? missedReason = null,
         bool isJamaah = false,
         bool isTraveling = false,
-        bool isJummah = false)
+        bool isJummah = false,
+        bool isHome = false,
+        string? quranNotes = null,
+        bool hasTasbih = false)
     {
         // ── Invariant checks ──────────────────────────────────────────────────
         if (isOffered && waqtStatus is null)
@@ -105,6 +117,9 @@ public sealed class PrayerLog
             IsJamaah = isJamaah,
             IsTraveling = isTraveling,
             IsJummah = isJummah,
+            IsHome = isHome,
+            QuranNotes = quranNotes,
+            HasTasbih = hasTasbih,
             LoggedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -150,7 +165,10 @@ public sealed class PrayerLog
         MissedReason? missedReason = null,
         bool isJamaah = false,
         bool isTraveling = false,
-        bool isJummah = false)
+        bool isJummah = false,
+        bool isHome = false,
+        string? quranNotes = null,
+        bool hasTasbih = false)
     {
         // ── Invariant checks ──────────────────────────────────────────────────
         if (isOffered && waqtStatus is null)
@@ -176,6 +194,9 @@ public sealed class PrayerLog
         IsJamaah = isJamaah;
         IsTraveling = isTraveling;
         IsJummah = isJummah;
+        IsHome = isHome;
+        QuranNotes = quranNotes;
+        HasTasbih = hasTasbih;
         UpdatedAt = DateTime.UtcNow;
 
         var isNowRequiringQaza = RequiresQaza();

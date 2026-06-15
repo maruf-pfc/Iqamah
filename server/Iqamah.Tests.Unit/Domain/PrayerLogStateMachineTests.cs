@@ -49,6 +49,27 @@ public sealed class PrayerLogStateMachineTests
         log.Id.Should().NotBeEmpty();
     }
 
+    [Fact]
+    public void Create_OfferedPrayer_WithIsHome_SetsCorrectProperties()
+    {
+        var log = PrayerLog.Create(UserId, PrayerName.Isha, Today,
+            isOffered: true, waqtStatus: WaqtStatus.AwwalAlWaqt,
+            isHome: true);
+
+        log.IsHome.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Create_OfferedPrayer_WithQuranNotesAndTasbih_SetsCorrectProperties()
+    {
+        var log = PrayerLog.Create(UserId, PrayerName.Fajr, Today,
+            isOffered: true, waqtStatus: WaqtStatus.AwwalAlWaqt,
+            quranNotes: "Surah Al-Mulk", hasTasbih: true);
+
+        log.QuranNotes.Should().Be("Surah Al-Mulk");
+        log.HasTasbih.Should().BeTrue();
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Qaza state-machine — missed prayer
     // ─────────────────────────────────────────────────────────────────────────

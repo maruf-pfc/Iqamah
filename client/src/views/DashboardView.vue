@@ -48,7 +48,7 @@ const dailyLogs = ref<Record<number, PrayerLogDto>>({})
 // Logging Modal state
 const isModalOpen = ref(false)
 const editingPrayerName = ref<PrayerName | null>(null)
-const logType = ref<'offered' | 'missed'>('offered')
+const logType = ref<'offered' | 'missed' | 'period'>('offered')
 
 // Form inputs
 const formWaqtStatus = ref<WaqtStatus>(WaqtStatus.AwwalAlWaqt)
@@ -56,6 +56,9 @@ const formMissedReason = ref<MissedReason>(MissedReason.UnexcusedLaziness)
 const formIsJamaah = ref(false)
 const formIsTraveling = ref(false)
 const formIsJummah = ref(false)
+const formIsHome = ref(false)
+const formQuranNotes = ref('')
+const formHasTasbih = ref(false)
 
 // Generate list of past 7 days for the calendar bar
 const getPastDays = () => {
@@ -101,12 +104,19 @@ const openLoggingModal = (prayer: PrayerName) => {
   const existing = dailyLogs.value[prayer]
 
   if (existing) {
-    logType.value = existing.isOffered ? 'offered' : 'missed'
+    if (!existing.isOffered && existing.missedReason === MissedReason.ExcusedImpurity) {
+      logType.value = 'period'
+    } else {
+      logType.value = existing.isOffered ? 'offered' : 'missed'
+    }
     formWaqtStatus.value = existing.waqtStatus ?? WaqtStatus.AwwalAlWaqt
     formMissedReason.value = existing.missedReason ?? MissedReason.UnexcusedLaziness
     formIsJamaah.value = existing.isJamaah
     formIsTraveling.value = existing.isTraveling
     formIsJummah.value = existing.isJummah
+    formIsHome.value = existing.isHome
+    formQuranNotes.value = existing.quranNotes ?? ''
+    formHasTasbih.value = existing.hasTasbih ?? false
   } else {
     // Defaults
     logType.value = 'offered'
@@ -115,6 +125,9 @@ const openLoggingModal = (prayer: PrayerName) => {
     formIsJamaah.value = false
     formIsTraveling.value = false
     formIsJummah.value = false
+    formIsHome.value = false
+    formQuranNotes.value = ''
+    formHasTasbih.value = false
   }
 
   isModalOpen.value = true
@@ -130,15 +143,28 @@ const handleSaveLog = async () => {
       payload = {
         prayerName: editingPrayerName.value,
         prayerDate: selectedDate.value,
+        isOffered: true,
         waqtStatus: formWaqtStatus.value,
         isJamaah: formIsJamaah.value,
         isTraveling: formIsTraveling.value,
         isJummah: formIsJummah.value,
+        isHome: formIsHome.value,
+        quranNotes: formQuranNotes.value || undefined,
+        hasTasbih: formHasTasbih.value,
+      }
+    } else if (logType.value === 'period') {
+      payload = {
+        prayerName: editingPrayerName.value,
+        prayerDate: selectedDate.value,
+        isOffered: false,
+        missedReason: MissedReason.ExcusedImpurity,
+        isTraveling: false,
       }
     } else {
       payload = {
         prayerName: editingPrayerName.value,
         prayerDate: selectedDate.value,
+        isOffered: false,
         missedReason: formMissedReason.value,
         isTraveling: formIsTraveling.value,
       }
@@ -270,6 +296,22 @@ const isFuturePrayer = () => {
                   class="text-[10px] bg-teal-950/30 text-teal-400 border border-teal-900/30 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
                   >{{ localeStore.t('friday_prayer') }}</span
                 >
+                <span
+                  v-if="dailyLogs[prayer]?.isHome"
+                  class="text-[10px] bg-amber-950/30 text-amber-400 border border-amber-900/30 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
+                  >{{ localeStore.t('prayed_at_home') }}</span
+                >
+                <span
+                  v-if="dailyLogs[prayer]?.hasTasbih"
+                  class="text-[10px] bg-pink-950/30 text-pink-400 border border-pink-900/30 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
+                  >📿 Tasbih</span
+                >
+                <span
+                  v-if="dailyLogs[prayer]?.quranNotes"
+                  class="text-[10px] bg-purple-950/30 text-purple-400 border border-purple-900/30 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
+                  :title="dailyLogs[prayer]?.quranNotes"
+                  >📖 Quran</span
+                >
               </div>
             </div>
           </div>
@@ -371,12 +413,12 @@ const isFuturePrayer = () => {
 
         <!-- Modal Body -->
         <div class="p-6 space-y-6">
-          <!-- Switch: Offered vs Missed -->
+          <!-- Switch: Offered vs Missed vs Period -->
           <div class="flex bg-islamic-deep p-1.5 rounded-xl border border-gold-500/15">
             <button
               type="button"
               @click="logType = 'offered'"
-              class="flex-1 text-center py-2 text-sm font-bold rounded-lg transition-all cursor-pointer"
+              class="flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all cursor-pointer"
               :class="[
                 logType === 'offered'
                   ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-islamic-deep shadow-md'
@@ -388,7 +430,7 @@ const isFuturePrayer = () => {
             <button
               type="button"
               @click="logType = 'missed'"
-              class="flex-1 text-center py-2 text-sm font-bold rounded-lg transition-all cursor-pointer"
+              class="flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all cursor-pointer"
               :class="[
                 logType === 'missed'
                   ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-islamic-deep shadow-md'
@@ -396,6 +438,18 @@ const isFuturePrayer = () => {
               ]"
             >
               {{ localeStore.t('missed') }}
+            </button>
+            <button
+              type="button"
+              @click="logType = 'period'"
+              class="flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all cursor-pointer"
+              :class="[
+                logType === 'period'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-islamic-deep shadow-md'
+                  : 'text-gold-300/60 hover:text-gold-200',
+              ]"
+            >
+              {{ localeStore.t('period_hayd').split(' ')[0] }}
             </button>
           </div>
 
@@ -444,8 +498,20 @@ const isFuturePrayer = () => {
               </label>
 
               <label
+                :class="editingPrayerName === PrayerName.Dhuhr ? 'col-span-1' : 'col-span-2'"
+                class="flex items-center gap-3 bg-islamic-deep/60 border border-gold-500/10 p-3 rounded-xl cursor-pointer hover:border-gold-500/20 transition-colors select-none"
+              >
+                <input
+                  type="checkbox"
+                  v-model="formIsHome"
+                  class="rounded text-gold-500 bg-islamic-deep border-gold-500/20 focus:ring-gold-500"
+                />
+                <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('prayed_at_home') }}</span>
+              </label>
+
+              <label
                 v-if="editingPrayerName === PrayerName.Dhuhr"
-                class="col-span-2 flex items-center gap-3 bg-islamic-deep/60 border border-gold-500/10 p-3 rounded-xl cursor-pointer hover:border-gold-500/20 transition-colors select-none"
+                class="col-span-1 flex items-center gap-3 bg-islamic-deep/60 border border-gold-500/10 p-3 rounded-xl cursor-pointer hover:border-gold-500/20 transition-colors select-none"
               >
                 <input
                   type="checkbox"
@@ -455,10 +521,39 @@ const isFuturePrayer = () => {
                 <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('friday_prayer') }}</span>
               </label>
             </div>
+
+            <!-- Quran notes & Tasbih tracking -->
+            <div class="space-y-4 pt-4 border-t border-gold-500/10">
+              <div class="grid grid-cols-1 gap-3">
+                <label
+                  class="flex items-center gap-3 bg-islamic-deep/60 border border-gold-500/10 p-3 rounded-xl cursor-pointer hover:border-gold-500/20 transition-colors select-none"
+                >
+                  <input
+                    type="checkbox"
+                    v-model="formHasTasbih"
+                    class="rounded text-gold-500 bg-islamic-deep border-gold-500/20 focus:ring-gold-500"
+                  />
+                  <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('track_tasbih') }}</span>
+                </label>
+              </div>
+
+              <div>
+                <label
+                  class="block text-xs font-bold text-gold-200/80 uppercase tracking-wider mb-2"
+                  >{{ localeStore.t('quran_notes') }}</label
+                >
+                <input
+                  type="text"
+                  v-model="formQuranNotes"
+                  :placeholder="localeStore.t('quran_notes_placeholder')"
+                  class="w-full bg-islamic-deep border border-gold-500/20 text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold-500"
+                />
+              </div>
+            </div>
           </div>
 
           <!-- MISSED FORM FIELDS -->
-          <div v-else class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div v-else-if="logType === 'missed'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
             <div>
               <label
                 class="block text-xs font-bold text-gold-200/80 uppercase tracking-wider mb-2"
@@ -502,6 +597,20 @@ const isFuturePrayer = () => {
                 />
                 <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('traveling') }}</span>
               </label>
+            </div>
+          </div>
+
+          <!-- PERIOD / IMPURITY FORM FIELDS -->
+          <div v-else-if="logType === 'period'" class="p-6 bg-gold-500/5 border border-gold-500/10 rounded-2xl space-y-3 text-center animate-in fade-in slide-in-from-top-2 duration-150">
+            <div class="text-3xl">🌸</div>
+            <h4 class="text-sm font-bold text-gold-300">
+              {{ localeStore.t('period_hayd') }}
+            </h4>
+            <p class="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
+              During menstruation or post-natal bleeding (Hayd/Nifas), a woman is legally excused from performing prayers, and no make-up (Qaza) prayers are required.
+            </p>
+            <div class="text-xs text-gold-400/80 font-bold bg-gold-500/10 inline-block px-3 py-1 rounded-full border border-gold-500/20">
+              {{ localeStore.t('no_qaza_required') }}
             </div>
           </div>
         </div>

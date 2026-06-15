@@ -97,6 +97,9 @@ export interface PrayerLogDto {
   readonly isJamaah: boolean
   readonly isTraveling: boolean
   readonly isJummah: boolean
+  readonly isHome: boolean
+  readonly quranNotes?: string
+  readonly hasTasbih?: boolean
   readonly loggedAt: string // ISO 8601 UTC
   readonly qazaLog: QazaLogDto | null
 }
@@ -121,9 +124,13 @@ export interface LogOfferedPrayerRequest {
   prayerName: PrayerName
   prayerDate: string // "YYYY-MM-DD"
   waqtStatus: WaqtStatus
+  isOffered: boolean
   isJamaah?: boolean
   isTraveling?: boolean
   isJummah?: boolean
+  isHome?: boolean
+  quranNotes?: string
+  hasTasbih?: boolean
 }
 
 /** Request body for logging a missed prayer. */
@@ -131,6 +138,7 @@ export interface LogMissedPrayerRequest {
   prayerName: PrayerName
   prayerDate: string // "YYYY-MM-DD"
   missedReason: MissedReason
+  isOffered: boolean
   isTraveling?: boolean
 }
 
@@ -178,6 +186,7 @@ export interface PrayerSpecificStatsDto {
   readonly jamaahCount: number
   readonly jamaahPercentage: number
   readonly travelingCount: number
+  readonly homeCount: number
 }
 
 export interface QazaSummaryStatsDto {

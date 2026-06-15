@@ -45,6 +45,18 @@ public sealed class PrayerLogConfiguration : IEntityTypeConfiguration<PrayerLog>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(x => x.IsHome)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.QuranNotes)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
+        builder.Property(x => x.HasTasbih)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(x => x.LoggedAt)
             .IsRequired();
 

@@ -16,7 +16,10 @@ public sealed record LogPrayerCommand(
     MissedReason? MissedReason = null,
     bool IsJamaah = false,
     bool IsTraveling = false,
-    bool IsJummah = false) : IRequest<Guid>;
+    bool IsJummah = false,
+    bool IsHome = false,
+    string? QuranNotes = null,
+    bool HasTasbih = false) : IRequest<Guid>;
 
 public sealed class LogPrayerCommandValidator : AbstractValidator<LogPrayerCommand>
 {
@@ -40,6 +43,9 @@ public sealed class LogPrayerCommandValidator : AbstractValidator<LogPrayerComma
         RuleFor(x => x.IsJummah)
             .Must((cmd, isJummah) => !isJummah || cmd.PrayerName == PrayerName.Dhuhr)
             .WithMessage("IsJummah can only be set for the Dhuhr prayer.");
+
+        RuleFor(x => x.QuranNotes)
+            .MaximumLength(500).WithMessage("Quran notes cannot exceed 500 characters.");
     }
 }
 
@@ -72,7 +78,10 @@ public sealed class LogPrayerCommandHandler : IRequestHandler<LogPrayerCommand, 
                 request.MissedReason,
                 request.IsJamaah,
                 request.IsTraveling,
-                request.IsJummah
+                request.IsJummah,
+                request.IsHome,
+                request.QuranNotes,
+                request.HasTasbih
             );
 
             await _prayerLogRepository.AddAsync(newLog, cancellationToken);
@@ -90,7 +99,10 @@ public sealed class LogPrayerCommandHandler : IRequestHandler<LogPrayerCommand, 
             request.MissedReason,
             request.IsJamaah,
             request.IsTraveling,
-            request.IsJummah
+            request.IsJummah,
+            request.IsHome,
+            request.QuranNotes,
+            request.HasTasbih
         );
 
         var isNowRequiringQaza = existingLog.RequiresQaza();

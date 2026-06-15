@@ -33,6 +33,9 @@ public sealed record PrayerLogResponse(
     bool IsJamaah,
     bool IsTraveling,
     bool IsJummah,
+    bool IsHome,
+    string? QuranNotes,
+    bool HasTasbih,
     DateTime LoggedAt,
     QazaLogResponse? QazaLog);
 
@@ -72,6 +75,9 @@ public sealed class GetPrayerLogsQueryHandler : IRequestHandler<GetPrayerLogsQue
             x.IsJamaah,
             x.IsTraveling,
             x.IsJummah,
+            x.IsHome,
+            x.QuranNotes,
+            x.HasTasbih,
             x.LoggedAt,
             x.QazaLog == null ? null : new QazaLogResponse(
                 x.QazaLog.Id,

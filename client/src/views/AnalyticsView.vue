@@ -375,6 +375,7 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
                 <th class="p-4">{{ localeStore.t('jamaah_count') }}</th>
                 <th class="p-4">{{ localeStore.t('jamaah_rate') }}</th>
                 <th class="p-4">{{ localeStore.t('travel_count') }}</th>
+                <th class="p-4">{{ localeStore.t('home_count') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gold-500/10">
@@ -412,6 +413,9 @@ const strokeDashOffset = (percentage: number, radius = 50) => {
                 </td>
                 <td class="p-4 text-slate-400">
                   {{ store.analytics.prayerStats[pName]?.travelingCount ?? 0 }}
+                </td>
+                <td class="p-4 text-slate-400">
+                  {{ store.analytics.prayerStats[pName]?.homeCount ?? 0 }}
                 </td>
               </tr>
             </tbody>

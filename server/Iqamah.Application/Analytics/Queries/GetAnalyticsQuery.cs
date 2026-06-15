@@ -57,7 +57,8 @@ public sealed record PrayerSpecificStats(
     double OfferedPercentage,
     int JamaahCount,
     double JamaahPercentage,
-    int TravelingCount);
+    int TravelingCount,
+    int HomeCount);
 
 public sealed record QazaSummaryStats(
     int TotalPending,
@@ -144,6 +145,7 @@ public sealed class GetAnalyticsQueryHandler : IRequestHandler<GetAnalyticsQuery
             var pOffered = prayerLogs.Count(x => x.IsOffered);
             var pJamaah = prayerLogs.Count(x => x.IsOffered && x.IsJamaah);
             var pTraveling = prayerLogs.Count(x => x.IsTraveling);
+            var pHome = prayerLogs.Count(x => x.IsOffered && x.IsHome);
 
             prayerStats[name.ToString().ToLower()] = new PrayerSpecificStats(
                 pObligated,
@@ -151,7 +153,8 @@ public sealed class GetAnalyticsQueryHandler : IRequestHandler<GetAnalyticsQuery
                 pObligated > 0 ? Math.Round((double)pOffered / pObligated * 100, 2) : 0,
                 pJamaah,
                 pOffered > 0 ? Math.Round((double)pJamaah / pOffered * 100, 2) : 0,
-                pTraveling
+                pTraveling,
+                pHome
             );
         }
 

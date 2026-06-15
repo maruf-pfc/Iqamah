@@ -27,7 +27,10 @@ public sealed class PrayersController : ApiControllerBase
             request.MissedReason,
             request.IsJamaah,
             request.IsTraveling,
-            request.IsJummah
+            request.IsJummah,
+            request.IsHome,
+            request.QuranNotes,
+            request.HasTasbih
         );
 
         var result = await Mediator.Send(command, ct);
@@ -54,4 +57,7 @@ public sealed record LogPrayerRequest(
     MissedReason? MissedReason,
     bool IsJamaah,
     bool IsTraveling,
-    bool IsJummah);
+    bool IsJummah,
+    bool IsHome = false,
+    string? QuranNotes = null,
+    bool HasTasbih = false);
