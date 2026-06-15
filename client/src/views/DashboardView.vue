@@ -6,9 +6,6 @@ import {
   PrayerName,
   WaqtStatus,
   MissedReason,
-  PRAYER_LABELS,
-  WAQT_LABELS,
-  MISSED_REASON_LABELS,
 } from '@/types/prayer.types'
 import type {
   LogOfferedPrayerRequest,
@@ -24,18 +21,21 @@ const ARABIC_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 
 const getLocalizedPrayerName = (prayer: number) => {
   const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
   const key = keys[prayer] || 'fajr'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return localeStore.t(key as any)
 }
 
 const getLocalizedWaqt = (status: number) => {
   const keys = ['awwal', 'wast', 'akhir']
   const key = keys[status] || 'awwal'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return localeStore.t(key as any)
 }
 
 const getLocalizedMissedReason = (reason: number) => {
   const keys = ['impurity', 'sleep', 'forgetfulness', 'situational', 'laziness', 'distraction']
   const key = keys[reason] || 'laziness'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return localeStore.t(key as any)
 }
 

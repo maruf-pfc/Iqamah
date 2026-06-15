@@ -7,6 +7,7 @@ const store = usePrayerStore()
 const localeStore = useLocaleStore()
 
 const getLocalizedPrayerNameStr = (pName: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return localeStore.t(pName as any)
 }
 

@@ -12,6 +12,7 @@ const ARABIC_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 
 const getLocalizedPrayerName = (prayer: number) => {
   const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
   const key = keys[prayer] || 'fajr'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return localeStore.t(key as any)
 }
 
