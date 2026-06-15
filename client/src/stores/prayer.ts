@@ -86,6 +86,8 @@ const normalizeAnalytics = (data: any): any => {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') || '/api'
+
 export const usePrayerStore = defineStore('prayer', () => {
   const authStore = useAuthStore()
   const prayerLogs = ref<PrayerLogDto[]>([])
@@ -113,7 +115,7 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`/api/prayers?from=${from}&to=${to}`, {
+      const response = await fetch(`${API_BASE_URL}/prayers?from=${from}&to=${to}`, {
         headers: getHeaders(),
       })
       if (!response.ok) {
@@ -135,7 +137,7 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch('/api/prayers', {
+      const response = await fetch(`${API_BASE_URL}/prayers`, {
         method: 'POST',
         headers: getHeaders({
           'Content-Type': 'application/json',
@@ -162,7 +164,7 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch('/api/qazas/pending', {
+      const response = await fetch(`${API_BASE_URL}/qazas/pending`, {
         headers: getHeaders(),
       })
       if (!response.ok) {
@@ -184,7 +186,7 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`/api/qazas/${qazaLogId}/fulfill`, {
+      const response = await fetch(`${API_BASE_URL}/qazas/${qazaLogId}/fulfill`, {
         method: 'POST',
         headers: getHeaders({
           'Content-Type': 'application/json',
@@ -207,7 +209,7 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`/api/analytics?from=${from}&to=${to}`, {
+      const response = await fetch(`${API_BASE_URL}/analytics?from=${from}&to=${to}`, {
         headers: getHeaders(),
       })
       if (!response.ok) {
