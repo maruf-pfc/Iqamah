@@ -14,7 +14,11 @@ export interface AuthResponse {
   token: string
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') || '/api'
+let rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+if (rawApiUrl && !rawApiUrl.endsWith('/api')) {
+  rawApiUrl = `${rawApiUrl}/api`
+}
+const API_BASE_URL = rawApiUrl || '/api'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)

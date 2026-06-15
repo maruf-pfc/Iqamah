@@ -86,7 +86,11 @@ const normalizeAnalytics = (data: any): any => {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') || '/api'
+let rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+if (rawApiUrl && !rawApiUrl.endsWith('/api')) {
+  rawApiUrl = `${rawApiUrl}/api`
+}
+const API_BASE_URL = rawApiUrl || '/api'
 
 export const usePrayerStore = defineStore('prayer', () => {
   const authStore = useAuthStore()

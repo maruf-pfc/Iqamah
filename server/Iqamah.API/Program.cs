@@ -56,7 +56,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowClient", policy =>
     {
-        var origins = new List<string> { "http://localhost:5173", "http://localhost:3000" };
+        var origins = new List<string> 
+        { 
+            "http://localhost:5173", 
+            "http://localhost:3000",
+            "https://iqamaah.vercel.app"
+        };
         var clientUrl = Environment.GetEnvironmentVariable("CLIENT_URL");
         if (!string.IsNullOrEmpty(clientUrl))
         {
