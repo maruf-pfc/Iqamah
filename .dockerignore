@@ -3,7 +3,8 @@
 **/bin
 **/obj
 **/node_modules
-client/
+client/node_modules/
+client/dist/
 docs/
 Dockerfile
 .dockerignore

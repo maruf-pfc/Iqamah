@@ -112,11 +112,15 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();

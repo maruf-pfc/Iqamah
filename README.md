@@ -148,6 +148,41 @@ bun run format              # Run Prettier code formatting
 
 ---
 
+## 🐳 Container Deployment (Coolify)
+
+Iqamah is configured to compile and run as a single unified container (serving both the Vue 3 SPA frontend and ASP.NET Core 10 Web API backend from the same port). This design simplifies routing, eliminates CORS configuration issues, and minimizes deployment footprints.
+
+### 1. Build and Run Locally with Docker
+You can build and test the production Docker container locally:
+```bash
+# Build the Docker image
+docker build -t iqamah-app .
+
+# Run the container (injecting DB and JWT variables)
+docker run -p 8080:8080 \
+  -e ConnectionStrings__DefaultConnection="Host=your_host;Database=your_db;Username=your_user;Password=your_password;SSL Mode=Require;" \
+  -e Jwt__Issuer="IqamahServer" \
+  -e Jwt__Audience="IqamahClient" \
+  -e Jwt__SecretKey="your_production_secure_jwt_secret_key_at_least_32_characters" \
+  iqamah-app
+```
+*The application will be accessible at `http://localhost:8080`.*
+
+### 2. Deploying to Coolify
+To deploy the application to Coolify:
+1. In the Coolify Dashboard, click **New Resource** and select **Git Repository**.
+2. Select your repository and target the `main` branch.
+3. Under **Build Pack**, select **Dockerfile**. Coolify will automatically locate the `Dockerfile` at the root of the project.
+4. Set up the following environment variables in the Coolify resource configuration panel:
+   * `ConnectionStrings__DefaultConnection` (with your PostgreSQL connection details)
+   * `Jwt__Issuer` (e.g., `IqamahServer`)
+   * `Jwt__Audience` (e.g., `IqamahClient`)
+   * `Jwt__SecretKey` (a secure random string at least 32 characters long)
+5. Set the public domain/port mapping (the container exposes port `8080`).
+6. Save and click **Deploy**.
+
+---
+
 ## 🤝 Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
