@@ -9,6 +9,35 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 
+// Load environment variables from .env file if it exists
+var currentDir = Directory.GetCurrentDirectory();
+var pathsToTry = new[]
+{
+    Path.Combine(currentDir, ".env"),
+    Path.Combine(currentDir, "Iqamah.API", ".env"),
+    Path.Combine(currentDir, "..", ".env"),
+    Path.Combine(AppContext.BaseDirectory, ".env")
+};
+
+foreach (var path in pathsToTry)
+{
+    if (File.Exists(path))
+    {
+        foreach (var line in File.ReadAllLines(path))
+        {
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#')) continue;
+            var parts = line.Split('=', 2);
+            if (parts.Length == 2)
+            {
+                var key = parts[0].Trim();
+                var value = parts[1].Trim().Trim('"').Trim('\'');
+                Environment.SetEnvironmentVariable(key, value);
+            }
+        }
+        break; // Stop at first .env file found
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

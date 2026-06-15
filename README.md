@@ -116,7 +116,7 @@ The application implements a stateless **JWT Bearer Authentication** model:
    ```bash
    cd client
    ```
-2. Install npm dependencies:
+2. Install bun dependencies:
    ```bash
    bun install
    ```
