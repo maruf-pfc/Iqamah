@@ -51,6 +51,25 @@ builder.Services.AddControllers()
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowClient", policy =>
+    {
+        var origins = new List<string> { "http://localhost:5173", "http://localhost:3000" };
+        var clientUrl = Environment.GetEnvironmentVariable("CLIENT_URL");
+        if (!string.IsNullOrEmpty(clientUrl))
+        {
+            origins.AddRange(clientUrl.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        }
+
+        policy.WithOrigins(origins.ToArray())
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 // Register Clean Architecture Layers
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -111,6 +130,8 @@ if (app.Environment.IsDevelopment())
 
 // Global Exception Handling Middleware
 app.UseExceptionHandler();
+
+app.UseCors("AllowClient");
 
 app.UseHttpsRedirection();
 

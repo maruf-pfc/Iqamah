@@ -116,7 +116,7 @@ const handleSubmit = async () => {
           <label
             for="username"
             class="text-xs font-bold text-gold-200/80 uppercase tracking-wider block"
-            >Username</label
+            >Name</label
           >
           <input
             id="username"
