@@ -36,8 +36,8 @@ WORKDIR /app
 COPY --from=server-build /app/out .
 
 # Expose default ASP.NET Core port
-EXPOSE 8080
-ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 5229
+ENV ASPNETCORE_URLS=http://+:5229
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "Iqamah.API.dll"]
