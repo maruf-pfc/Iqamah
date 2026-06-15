@@ -1,1 +1,110 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cinzel", "Amiri", Georgia, serif;
+  --font-sans: "Outfit", sans-serif;
+  --font-arabic: "Amiri", serif;
+  
+  --color-islamic-deep: #030c08;
+  --color-islamic-card: #061710;
+  --color-islamic-hover: #0c261b;
+  --color-islamic-border: rgba(212, 175, 55, 0.15);
+  
+  --color-gold-50: #fdfbf7;
+  --color-gold-100: #fbf5e6;
+  --color-gold-200: #f4e6c1;
+  --color-gold-300: #ead296;
+  --color-gold-400: #dcba6b;
+  --color-gold-500: #d4af37; /* Metallic Gold */
+  --color-gold-600: #b8912d;
+  --color-gold-700: #937024;
+  --color-gold-800: #6e501d;
+  --color-gold-900: #4a3416;
+}
+
+/* Base style overrides */
+html, body {
+  background-color: #030c08;
+  color: #f1f5f9;
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #030c08;
+}
+::-webkit-scrollbar-thumb {
+  background: #0c261b;
+  border-radius: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.1);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #123828;
+}
+
+/* Glowing text effects */
+.text-glow-gold {
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+.text-glow-emerald {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+/* Premium card styles */
+.islamic-card {
+  background: linear-gradient(135deg, #061710 0%, #04120c 100%);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+}
+.islamic-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.islamic-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.05);
+}
+
+/* Islamic Border Accent */
+.islamic-border-top {
+  position: relative;
+}
+.islamic-border-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #d4af37, transparent);
+}
+
+/* Arabic typography styling */
+.font-arabic {
+  font-family: var(--font-arabic);
+  direction: rtl;
+}
+
+/* Islamic arch divider line */
+.islamic-divider {
+  height: 2px;
+  background: radial-gradient(circle, #d4af37 0%, transparent 70%);
+  margin: 1.5rem 0;
+  position: relative;
+}
+.islamic-divider::after {
+  content: '✦';
+  color: #d4af37;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #030c08;
+  padding: 0 8px;
+  font-size: 0.75rem;
+}

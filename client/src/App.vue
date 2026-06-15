@@ -58,23 +58,26 @@ const handleLogout = () => {
 
 <template>
   <div
-    class="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-slate-950 font-sans antialiased"
+    class="min-h-screen bg-islamic-deep text-slate-200 flex flex-col selection:bg-gold-500 selection:text-islamic-deep font-sans antialiased relative overflow-hidden"
   >
+    <!-- Top gold glow -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[350px] bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.08)_0%,transparent_70%)] pointer-events-none"></div>
+
     <!-- Navbar (Only visible if authenticated) -->
     <header
       v-if="authStore.isAuthenticated"
-      class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-900 shadow-md"
+      class="sticky top-0 z-40 bg-islamic-deep/80 backdrop-blur-md border-b border-gold-500/10 shadow-lg shadow-islamic-deep/50 islamic-border-top"
     >
       <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
         <!-- Brand logo -->
         <RouterLink to="/" class="flex items-center gap-2.5 group">
           <div
-            class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-black text-slate-950 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300"
+            class="w-9 h-9 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center font-serif text-lg font-bold text-islamic-deep shadow-lg shadow-gold-500/10 border border-gold-300/30 group-hover:rotate-6 transition-all duration-300"
           >
             إ
           </div>
           <span
-            class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent group-hover:text-emerald-400 transition-colors duration-300"
+            class="font-serif font-bold text-xl tracking-wide bg-gradient-to-r from-gold-100 via-gold-300 to-gold-500 bg-clip-text text-transparent group-hover:brightness-110 transition-all duration-300"
           >
             Iqamah
           </span>
@@ -85,22 +88,22 @@ const handleLogout = () => {
           <nav class="flex items-center gap-1">
             <RouterLink
               to="/"
-              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
-              active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl border border-transparent transition-all duration-300 flex items-center gap-2 hover:bg-islamic-hover hover:text-gold-300"
+              active-class="bg-gold-500/10 text-gold-400 border border-gold-500/20 font-bold shadow-[0_0_15px_rgba(212,175,55,0.05)]"
             >
               {{ localeStore.t('dashboard') }}
             </RouterLink>
 
             <RouterLink
               to="/qaza"
-              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900 relative"
-              active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl border border-transparent transition-all duration-300 flex items-center gap-2 hover:bg-islamic-hover hover:text-gold-300 relative"
+              active-class="bg-gold-500/10 text-gold-400 border border-gold-500/20 font-bold shadow-[0_0_15px_rgba(212,175,55,0.05)]"
             >
               {{ localeStore.t('qaza') }}
               <!-- Badge count -->
               <span
                 v-if="store.pendingQazas.length > 0"
-                class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-slate-950 border border-slate-950 animate-pulse"
+                class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[8px] font-black text-white border border-islamic-deep animate-pulse"
               >
                 {{ store.pendingQazas.length }}
               </span>
@@ -108,36 +111,36 @@ const handleLogout = () => {
 
             <RouterLink
               to="/analytics"
-              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
-              active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl border border-transparent transition-all duration-300 flex items-center gap-2 hover:bg-islamic-hover hover:text-gold-300"
+              active-class="bg-gold-500/10 text-gold-400 border border-gold-500/20 font-bold shadow-[0_0_15px_rgba(212,175,55,0.05)]"
             >
               {{ localeStore.t('analytics') }}
             </RouterLink>
 
             <RouterLink
               to="/guide"
-              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 hover:bg-slate-900"
-              active-class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl border border-transparent transition-all duration-300 flex items-center gap-2 hover:bg-islamic-hover hover:text-gold-300"
+              active-class="bg-gold-500/10 text-gold-400 border border-gold-500/20 font-bold shadow-[0_0_15px_rgba(212,175,55,0.05)]"
             >
               {{ localeStore.t('guide') }}
             </RouterLink>
           </nav>
 
           <!-- User Display & Logout -->
-          <div class="flex items-center gap-2 border-l border-slate-900 pl-3">
+          <div class="flex items-center gap-2 border-l border-gold-500/10 pl-3">
             <button
               @click="localeStore.toggleLocale"
-              class="flex items-center justify-center h-8 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[10px] sm:text-xs font-black text-slate-300 transition-all duration-200 cursor-pointer"
+              class="flex items-center justify-center h-8 px-2.5 rounded-lg bg-islamic-hover hover:bg-gold-500/20 border border-gold-500/20 hover:border-gold-500/50 text-[10px] sm:text-xs font-bold text-gold-300 hover:text-gold-200 transition-all duration-200 cursor-pointer"
               title="Switch Language / ভাষা পরিবর্তন করুন"
             >
               🌐 {{ localeStore.currentLocale === 'en' ? 'EN' : 'বাং' }}
             </button>
-            <span class="hidden md:inline text-xs font-bold text-slate-400">
+            <span class="hidden md:inline text-xs font-bold text-gold-200/70">
               {{ authStore.user?.username }}
             </span>
             <button
               @click="handleLogout"
-              class="bg-slate-900 hover:bg-rose-500/25 hover:text-rose-400 border border-slate-800 text-slate-400 font-bold text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer"
+              class="bg-islamic-hover hover:bg-rose-950/40 hover:text-rose-400 border border-gold-500/10 hover:border-rose-500/20 text-slate-400 font-bold text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer"
             >
               {{ localeStore.t('logout') }}
             </button>
@@ -147,7 +150,7 @@ const handleLogout = () => {
     </header>
 
     <!-- Main View Wrapper -->
-    <main class="flex-grow flex flex-col justify-stretch">
+    <main class="flex-grow flex flex-col justify-stretch z-10">
       <RouterView v-slot="{ Component }">
         <transition
           name="fade"
@@ -165,11 +168,10 @@ const handleLogout = () => {
     <!-- Footer -->
     <footer
       v-if="authStore.isAuthenticated"
-      class="border-t border-slate-900 py-6 text-center text-slate-600 text-xs mt-auto"
+      class="border-t border-gold-500/10 py-6 text-center text-slate-500 text-xs mt-auto bg-islamic-deep/40 z-10"
     >
       <p>
-        © {{ new Date().getFullYear() }} Iqamah (إقامة) Salah Tracker. Built with Clean Architecture
-        & Vue 3.
+        © {{ new Date().getFullYear() }} Iqamah (إقامة) Salah Tracker. Elegant & Devoted tracking platform.
       </p>
     </footer>
   </div>
@@ -179,6 +181,6 @@ const handleLogout = () => {
 /* Global reset overrides */
 html,
 body {
-  background-color: #020617; /* bg-slate-950 */
+  background-color: #030c08;
 }
 </style>

@@ -40,11 +40,11 @@ const sections = computed<Section[]>(() => [
       <!-- Page Header -->
       <div class="text-center mb-10">
         <h1
-          class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 tracking-tight"
+          class="text-3xl sm:text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-gold-100 via-gold-300 to-gold-500 tracking-wide"
         >
           {{ localeStore.t('guide_title') }}
         </h1>
-        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+        <p class="mt-2 text-gold-200/60 text-sm sm:text-base max-w-xl mx-auto">
           {{ localeStore.t('guide_tagline') }}
         </p>
       </div>
@@ -60,16 +60,16 @@ const sections = computed<Section[]>(() => [
             class="w-full text-left p-4 rounded-2xl transition-all duration-300 border flex items-start gap-4 group cursor-pointer"
             :class="
               activeTab === section.id
-                ? 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-500/30 text-emerald-400 shadow-md shadow-emerald-950/20'
-                : 'bg-slate-900/40 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                ? 'bg-gradient-to-r from-gold-500/10 to-gold-600/10 border-gold-500/30 text-gold-400 shadow-[0_0_15px_rgba(212,175,55,0.05)]'
+                : 'bg-islamic-deep/40 border-gold-500/10 text-gold-200/50 hover:text-gold-200 hover:bg-gold-500/5'
             "
           >
             <div
               class="p-2.5 rounded-xl transition-all duration-300 flex-shrink-0"
               :class="
                 activeTab === section.id
-                  ? 'bg-emerald-500/20 text-emerald-300'
-                  : 'bg-slate-800/50 text-slate-500 group-hover:text-slate-400'
+                  ? 'bg-gold-500/20 text-gold-300'
+                  : 'bg-gold-500/5 text-gold-500 group-hover:text-gold-400'
               "
             >
               <svg
@@ -84,16 +84,16 @@ const sections = computed<Section[]>(() => [
             </div>
             <div>
               <h3
-                class="font-bold text-sm sm:text-base transition-colors duration-200"
+                class="font-serif font-bold text-sm sm:text-base transition-colors duration-200"
                 :class="
                   activeTab === section.id
                     ? 'text-slate-100'
-                    : 'text-slate-300 group-hover:text-slate-200'
+                    : 'text-gold-300/80 group-hover:text-slate-200'
                 "
               >
                 {{ section.title }}
               </h3>
-              <p class="text-xs text-slate-500 mt-1 line-clamp-2">
+              <p class="text-xs text-gold-200/40 mt-1 line-clamp-2">
                 {{ section.tagline }}
               </p>
             </div>
@@ -102,15 +102,15 @@ const sections = computed<Section[]>(() => [
 
         <!-- Content Panel -->
         <div
-          class="lg:col-span-8 bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-3xl p-6 sm:p-8 min-h-[450px] transition-all duration-300"
+          class="lg:col-span-8 islamic-card p-6 sm:p-8 min-h-[450px] transition-all duration-300 border-t border-gold-500/10"
         >
           <!-- TAB 1: QAZA RULES -->
           <div v-if="activeTab === 'qaza-rules'" class="space-y-6 animate-fade-in">
-            <div class="flex items-center gap-3 border-b border-slate-800/80 pb-4">
+            <div class="flex items-center gap-3 border-b border-gold-500/10 pb-4">
               <span class="text-2xl">⚖️</span>
               <div>
-                <h2 class="text-xl font-bold text-slate-100">{{ localeStore.t('qaza_rules_heading') }}</h2>
-                <p class="text-xs text-slate-500">
+                <h2 class="text-xl font-serif font-bold text-slate-100">{{ localeStore.t('qaza_rules_heading') }}</h2>
+                <p class="text-xs text-gold-200/50">
                   {{ localeStore.t('qaza_rules_sub') }}
                 </p>
               </div>
@@ -123,8 +123,8 @@ const sections = computed<Section[]>(() => [
             <!-- Grid Classifications -->
             <div class="space-y-4">
               <!-- Category 1: Excused but Obligatory -->
-              <div class="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
-                <div class="flex items-center gap-2 text-indigo-400 font-bold text-sm">
+              <div class="p-4 rounded-2xl bg-gold-500/5 border border-gold-500/10">
+                <div class="flex items-center gap-2 text-gold-400 font-bold text-sm">
                   <span>💤</span>
                   <span>{{ localeStore.t('excused_sleep_title') }}</span>
                 </div>
@@ -159,11 +159,11 @@ const sections = computed<Section[]>(() => [
 
           <!-- TAB 2: PUNCTUALITY -->
           <div v-if="activeTab === 'punctuality'" class="space-y-6 animate-fade-in">
-            <div class="flex items-center gap-3 border-b border-slate-800/80 pb-4">
+            <div class="flex items-center gap-3 border-b border-gold-500/10 pb-4">
               <span class="text-2xl">⏳</span>
               <div>
-                <h2 class="text-xl font-bold text-slate-100">{{ localeStore.t('punctuality_title') }}</h2>
-                <p class="text-xs text-slate-500">{{ localeStore.t('punctuality_sub') }}</p>
+                <h2 class="text-xl font-serif font-bold text-slate-100">{{ localeStore.t('punctuality_title') }}</h2>
+                <p class="text-xs text-gold-200/50">{{ localeStore.t('punctuality_sub') }}</p>
               </div>
             </div>
 
@@ -171,13 +171,13 @@ const sections = computed<Section[]>(() => [
               {{ localeStore.t('punctuality_desc') }}
             </p>
 
-            <div class="relative border-l-2 border-slate-800 pl-6 ml-3 space-y-6 py-2">
+            <div class="relative border-l-2 border-gold-500/10 pl-6 ml-3 space-y-6 py-2">
               <!-- Waqt 1 -->
               <div class="relative">
                 <span
-                  class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-emerald-500 ring-4 ring-emerald-950"
+                  class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-gold-500 ring-4 ring-gold-950"
                 ></span>
-                <h3 class="text-emerald-400 font-bold text-sm sm:text-base">
+                <h3 class="text-gold-400 font-bold text-sm sm:text-base">
                   {{ localeStore.t('awwal_waqt_title') }}
                 </h3>
                 <p class="text-slate-400 text-xs mt-1 leading-relaxed">
@@ -188,9 +188,9 @@ const sections = computed<Section[]>(() => [
               <!-- Waqt 2 -->
               <div class="relative">
                 <span
-                  class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-indigo-500 ring-4 ring-indigo-950"
+                  class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-emerald-500 ring-4 ring-emerald-950"
                 ></span>
-                <h3 class="text-indigo-400 font-bold text-sm sm:text-base">
+                <h3 class="text-emerald-400 font-bold text-sm sm:text-base">
                   {{ localeStore.t('wast_waqt_title') }}
                 </h3>
                 <p class="text-slate-400 text-xs mt-1 leading-relaxed">
@@ -201,9 +201,9 @@ const sections = computed<Section[]>(() => [
               <!-- Waqt 3 -->
               <div class="relative">
                 <span
-                  class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-amber-500 ring-4 ring-amber-950"
+                  class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-rose-500 ring-4 ring-rose-950"
                 ></span>
-                <h3 class="text-amber-400 font-bold text-sm sm:text-base">
+                <h3 class="text-rose-400 font-bold text-sm sm:text-base">
                   {{ localeStore.t('akhir_waqt_title') }}
                 </h3>
                 <p class="text-slate-400 text-xs mt-1 leading-relaxed">
@@ -215,11 +215,11 @@ const sections = computed<Section[]>(() => [
 
           <!-- TAB 3: APP USAGE -->
           <div v-if="activeTab === 'app-usage'" class="space-y-6 animate-fade-in">
-            <div class="flex items-center gap-3 border-b border-slate-800/80 pb-4">
+            <div class="flex items-center gap-3 border-b border-gold-500/10 pb-4">
               <span class="text-2xl">📱</span>
               <div>
-                <h2 class="text-xl font-bold text-slate-100">{{ localeStore.t('using_platform_title') }}</h2>
-                <p class="text-xs text-slate-500">{{ localeStore.t('using_platform_sub') }}</p>
+                <h2 class="text-xl font-serif font-bold text-slate-100">{{ localeStore.t('using_platform_title') }}</h2>
+                <p class="text-xs text-gold-200/50">{{ localeStore.t('using_platform_sub') }}</p>
               </div>
             </div>
 
@@ -227,7 +227,7 @@ const sections = computed<Section[]>(() => [
               <!-- Log daily -->
               <div class="flex gap-3 items-start">
                 <div
-                  class="h-6 w-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5"
+                  class="h-6 w-6 rounded-lg bg-gold-500/10 border border-gold-500/20 text-gold-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5"
                 >
                   1
                 </div>
@@ -242,7 +242,7 @@ const sections = computed<Section[]>(() => [
               <!-- Qaza Ledger -->
               <div class="flex gap-3 items-start">
                 <div
-                  class="h-6 w-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5"
+                  class="h-6 w-6 rounded-lg bg-gold-500/10 border border-gold-500/20 text-gold-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5"
                 >
                   2
                 </div>
@@ -257,7 +257,7 @@ const sections = computed<Section[]>(() => [
               <!-- Analytics Denominator -->
               <div class="flex gap-3 items-start">
                 <div
-                  class="h-6 w-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5"
+                  class="h-6 w-6 rounded-lg bg-gold-500/10 border border-gold-500/20 text-gold-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5"
                 >
                   3
                 </div>

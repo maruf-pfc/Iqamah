@@ -165,28 +165,28 @@ const isFuturePrayer = () => {
   <div class="space-y-8 max-w-4xl mx-auto px-4 py-6">
     <!-- Header with user switcher -->
     <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900/60 backdrop-blur-md border border-slate-800 p-6 rounded-2xl shadow-xl"
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 islamic-card p-6 rounded-2xl shadow-xl islamic-border-top"
     >
       <div>
         <h1
-          class="text-3xl font-extrabold bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent tracking-tight"
+          class="text-3xl font-serif font-bold bg-gradient-to-r from-gold-100 via-gold-300 to-gold-500 bg-clip-text text-transparent tracking-wide"
         >
           {{ localeStore.t('establish_salah') }}
         </h1>
-        <p class="text-slate-400 text-sm mt-1">
+        <p class="text-gold-200/60 text-sm mt-1">
           {{ localeStore.t('salah_tagline') }}
         </p>
       </div>
     </div>
 
     <!-- Calendar Date Strip -->
-    <div class="bg-slate-900/40 border border-slate-800/80 p-4 rounded-2xl shadow-lg">
+    <div class="islamic-card p-4 rounded-2xl shadow-lg border-t border-gold-500/10">
       <div class="flex items-center justify-between mb-4">
-        <span class="text-slate-200 font-bold text-sm tracking-wide">{{ localeStore.t('select_date') }}</span>
+        <span class="text-gold-200 font-serif font-semibold text-sm tracking-wide">{{ localeStore.t('select_date') }}</span>
         <input
           type="date"
           v-model="selectedDate"
-          class="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-emerald-500"
+          class="bg-islamic-deep border border-gold-500/20 text-gold-200 rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-gold-500"
         />
       </div>
 
@@ -196,11 +196,11 @@ const isFuturePrayer = () => {
           v-for="day in calendarDays"
           :key="day.dateStr"
           @click="selectedDate = day.dateStr"
-          class="flex flex-col items-center py-2.5 rounded-xl border transition-all duration-300"
+          class="flex flex-col items-center py-2.5 rounded-xl border transition-all duration-300 cursor-pointer"
           :class="[
             selectedDate === day.dateStr
-              ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-md shadow-emerald-950/40 font-bold'
-              : 'border-slate-800 bg-slate-950/40 hover:bg-slate-800/50 hover:border-slate-700 text-slate-400',
+              ? 'bg-gold-500/10 border-gold-500 text-gold-300 shadow-[0_0_15px_rgba(212,175,55,0.08)] font-bold'
+              : 'border-gold-500/5 bg-islamic-deep/40 hover:bg-gold-500/10 hover:border-gold-500/30 text-slate-400',
           ]"
         >
           <span class="text-[10px] uppercase tracking-wider opacity-80 mb-1">{{
@@ -214,12 +214,12 @@ const isFuturePrayer = () => {
     <!-- Error indicator -->
     <div
       v-if="store.error"
-      class="bg-rose-950/30 border border-rose-900/60 p-4 rounded-xl flex items-center justify-between"
+      class="bg-rose-950/20 border border-rose-500/20 p-4 rounded-xl flex items-center justify-between"
     >
       <p class="text-rose-300 text-sm font-medium">{{ store.error }}</p>
       <button
         @click="store.clearError()"
-        class="text-rose-400 hover:text-rose-200 text-xs font-semibold"
+        class="text-rose-400 hover:text-rose-200 text-xs font-semibold cursor-pointer"
       >
         Dismiss
       </button>
@@ -236,20 +236,20 @@ const isFuturePrayer = () => {
           PrayerName.Isha,
         ]"
         :key="prayer"
-        class="group relative overflow-hidden bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-5 shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-slate-950/50"
+        class="group relative overflow-hidden islamic-card islamic-card-hover rounded-2xl p-5 shadow-md transition-all duration-300"
       >
         <!-- Glow decoration -->
         <div
-          class="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
+          class="absolute inset-0 bg-gradient-to-r from-gold-500/0 via-gold-500/0 to-gold-500/0 opacity-0 group-hover:opacity-10 transition-opacity duration-500"
         ></div>
 
         <div class="flex items-center justify-between relative z-10">
           <div class="flex items-center gap-4">
             <!-- Left Name / Arabic -->
             <div>
-              <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <h3 class="text-lg font-serif font-bold text-slate-100 flex items-center gap-2">
                 {{ getLocalizedPrayerName(prayer) }}
-                <span class="text-xs font-normal text-slate-500 font-arabic">{{
+                <span class="text-sm font-normal text-gold-400 font-arabic">{{
                   ARABIC_NAMES[prayer]
                 }}</span>
               </h3>
@@ -257,17 +257,17 @@ const isFuturePrayer = () => {
               <div class="flex items-center gap-2 mt-1">
                 <span
                   v-if="dailyLogs[prayer]?.isTraveling"
-                  class="text-[10px] bg-sky-950/40 text-sky-400 border border-sky-900/50 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
+                  class="text-[10px] bg-sky-950/30 text-sky-400 border border-sky-900/30 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
                   >{{ localeStore.t('traveling') }}</span
                 >
                 <span
                   v-if="dailyLogs[prayer]?.isJamaah"
-                  class="text-[10px] bg-emerald-950/40 text-emerald-400 border border-emerald-900/50 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
+                  class="text-[10px] bg-emerald-950/30 text-emerald-400 border border-emerald-900/30 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
                   >{{ localeStore.t('jamaah') }}</span
                 >
                 <span
                   v-if="dailyLogs[prayer]?.isJummah"
-                  class="text-[10px] bg-teal-950/40 text-teal-400 border border-teal-900/50 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
+                  class="text-[10px] bg-teal-950/30 text-teal-400 border border-teal-900/30 px-1.5 py-0.5 rounded font-medium uppercase tracking-wider"
                   >{{ localeStore.t('friday_prayer') }}</span
                 >
               </div>
@@ -280,7 +280,7 @@ const isFuturePrayer = () => {
               <!-- Offered on time -->
               <div v-if="dailyLogs[prayer].isOffered" class="flex flex-col items-end">
                 <span
-                  class="text-xs text-emerald-400 font-bold bg-emerald-950/50 border border-emerald-900/50 px-3 py-1 rounded-full shadow-inner shadow-emerald-950"
+                  class="text-xs text-emerald-400 font-bold bg-emerald-950/30 border border-emerald-900/40 px-3 py-1 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.05)]"
                 >
                   {{ localeStore.t('offered') }} ({{ getLocalizedWaqt(dailyLogs[prayer].waqtStatus!) }})
                 </span>
@@ -301,11 +301,11 @@ const isFuturePrayer = () => {
                   class="text-xs px-3 py-1 rounded-full border font-bold shadow-inner"
                   :class="[
                     dailyLogs[prayer].missedReason === MissedReason.ExcusedImpurity
-                      ? 'text-purple-400 bg-purple-950/50 border-purple-900/50 shadow-purple-950'
+                      ? 'text-purple-400 bg-purple-950/30 border-purple-900/40'
                       : dailyLogs[prayer].missedReason === MissedReason.ExcusedSleep ||
                           dailyLogs[prayer].missedReason === MissedReason.ExcusedForgetfulness
-                        ? 'text-indigo-400 bg-indigo-950/50 border-indigo-900/50 shadow-indigo-950'
-                        : 'text-rose-400 bg-rose-950/50 border-rose-900/50 shadow-rose-950',
+                        ? 'text-indigo-400 bg-indigo-950/30 border-indigo-900/40'
+                        : 'text-rose-400 bg-rose-950/30 border-rose-900/40',
                   ]"
                 >
                   {{ localeStore.t('missed') }} ({{
@@ -324,7 +324,7 @@ const isFuturePrayer = () => {
 
             <template v-else>
               <span
-                class="text-xs font-semibold text-slate-500 italic bg-slate-900/40 border border-slate-900 px-3 py-1 rounded-full"
+                class="text-xs font-semibold text-gold-300/40 italic bg-gold-950/5 border border-gold-500/5 px-3 py-1 rounded-full"
               >
                 {{ localeStore.t('not_logged') }}
               </span>
@@ -336,7 +336,7 @@ const isFuturePrayer = () => {
             <button
               @click="openLoggingModal(prayer)"
               :disabled="isFuturePrayer()"
-              class="bg-slate-900 hover:bg-emerald-500 hover:text-slate-950 border border-slate-800 hover:border-emerald-400 text-slate-300 font-semibold text-sm px-4 py-2 rounded-xl transition-all duration-300 shadow-md disabled:opacity-40 disabled:hover:bg-slate-900 disabled:hover:text-slate-300 disabled:hover:border-slate-800 cursor-pointer disabled:cursor-not-allowed"
+              class="bg-islamic-hover hover:bg-gold-500 hover:text-islamic-deep border border-gold-500/20 hover:border-gold-400 text-gold-300 font-bold text-sm px-4 py-2 rounded-xl transition-all duration-300 shadow-md disabled:opacity-40 disabled:hover:bg-islamic-hover disabled:hover:text-gold-300 disabled:hover:border-gold-500/20 cursor-pointer disabled:cursor-not-allowed"
             >
               {{ dailyLogs[prayer] ? localeStore.t('edit') : localeStore.t('log') }}
             </button>
@@ -348,22 +348,22 @@ const isFuturePrayer = () => {
     <!-- Logging Modal (Glassmorphism backdrop) -->
     <div
       v-if="isModalOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-all duration-300"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-islamic-deep/80 backdrop-blur-sm transition-all duration-300"
     >
       <div
-        class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+        class="islamic-card rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 islamic-border-top"
       >
         <!-- Modal Title -->
         <div
-          class="bg-slate-950/60 px-6 py-4 border-b border-slate-800 flex items-center justify-between"
+          class="bg-islamic-deep/60 px-6 py-4 border-b border-gold-500/10 flex items-center justify-between"
         >
-          <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+          <h2 class="text-lg font-serif font-bold text-slate-100 flex items-center gap-2">
             {{ localeStore.t('log_salah', { salah: getLocalizedPrayerName(editingPrayerName!) }) }}
-            <span class="text-xs text-slate-500 font-normal">for {{ selectedDate }}</span>
+            <span class="text-xs text-gold-200/50 font-normal">for {{ selectedDate }}</span>
           </h2>
           <button
             @click="isModalOpen = false"
-            class="text-slate-400 hover:text-slate-200 text-xl font-bold p-1"
+            class="text-gold-400 hover:text-gold-200 text-xl font-bold p-1 cursor-pointer"
           >
             &times;
           </button>
@@ -372,15 +372,15 @@ const isFuturePrayer = () => {
         <!-- Modal Body -->
         <div class="p-6 space-y-6">
           <!-- Switch: Offered vs Missed -->
-          <div class="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+          <div class="flex bg-islamic-deep p-1.5 rounded-xl border border-gold-500/15">
             <button
               type="button"
               @click="logType = 'offered'"
-              class="flex-1 text-center py-2 text-sm font-semibold rounded-lg transition-all"
+              class="flex-1 text-center py-2 text-sm font-bold rounded-lg transition-all cursor-pointer"
               :class="[
                 logType === 'offered'
-                  ? 'bg-emerald-500 text-slate-950 shadow-md font-bold'
-                  : 'text-slate-400 hover:text-slate-200',
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-islamic-deep shadow-md'
+                  : 'text-gold-300/60 hover:text-gold-200',
               ]"
             >
               {{ localeStore.t('offered') }}
@@ -388,11 +388,11 @@ const isFuturePrayer = () => {
             <button
               type="button"
               @click="logType = 'missed'"
-              class="flex-1 text-center py-2 text-sm font-semibold rounded-lg transition-all"
+              class="flex-1 text-center py-2 text-sm font-bold rounded-lg transition-all cursor-pointer"
               :class="[
                 logType === 'missed'
-                  ? 'bg-emerald-500 text-slate-950 shadow-md font-bold'
-                  : 'text-slate-400 hover:text-slate-200',
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-islamic-deep shadow-md'
+                  : 'text-gold-300/60 hover:text-gold-200',
               ]"
             >
               {{ localeStore.t('missed') }}
@@ -406,12 +406,12 @@ const isFuturePrayer = () => {
           >
             <div>
               <label
-                class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2"
+                class="block text-xs font-bold text-gold-200/80 uppercase tracking-wider mb-2"
                 >{{ localeStore.t('waqt_punctuality') }}</label
               >
               <select
                 v-model="formWaqtStatus"
-                class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+                class="w-full bg-islamic-deep border border-gold-500/20 text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold-500"
               >
                 <option :value="WaqtStatus.AwwalAlWaqt">{{ localeStore.t('awwal_waqt_title') }}</option>
                 <option :value="WaqtStatus.WastAlWaqt">{{ localeStore.t('wast_waqt_title') }}</option>
@@ -422,35 +422,35 @@ const isFuturePrayer = () => {
             <!-- Modifiers switches -->
             <div class="grid grid-cols-2 gap-3 pt-2">
               <label
-                class="flex items-center gap-3 bg-slate-950/40 border border-slate-800/80 p-3 rounded-xl cursor-pointer hover:border-slate-700 transition-colors select-none"
+                class="flex items-center gap-3 bg-islamic-deep/60 border border-gold-500/10 p-3 rounded-xl cursor-pointer hover:border-gold-500/20 transition-colors select-none"
               >
                 <input
                   type="checkbox"
                   v-model="formIsJamaah"
-                  class="rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500"
+                  class="rounded text-gold-500 bg-islamic-deep border-gold-500/20 focus:ring-gold-500"
                 />
                 <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('congregation') }}</span>
               </label>
 
               <label
-                class="flex items-center gap-3 bg-slate-950/40 border border-slate-800/80 p-3 rounded-xl cursor-pointer hover:border-slate-700 transition-colors select-none"
+                class="flex items-center gap-3 bg-islamic-deep/60 border border-gold-500/10 p-3 rounded-xl cursor-pointer hover:border-gold-500/20 transition-colors select-none"
               >
                 <input
                   type="checkbox"
                   v-model="formIsTraveling"
-                  class="rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500"
+                  class="rounded text-gold-500 bg-islamic-deep border-gold-500/20 focus:ring-gold-500"
                 />
                 <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('traveling') }}</span>
               </label>
 
               <label
                 v-if="editingPrayerName === PrayerName.Dhuhr"
-                class="col-span-2 flex items-center gap-3 bg-slate-950/40 border border-slate-800/80 p-3 rounded-xl cursor-pointer hover:border-slate-700 transition-colors select-none"
+                class="col-span-2 flex items-center gap-3 bg-islamic-deep/60 border border-gold-500/10 p-3 rounded-xl cursor-pointer hover:border-gold-500/20 transition-colors select-none"
               >
                 <input
                   type="checkbox"
                   v-model="formIsJummah"
-                  class="rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500"
+                  class="rounded text-gold-500 bg-islamic-deep border-gold-500/20 focus:ring-gold-500"
                 />
                 <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('friday_prayer') }}</span>
               </label>
@@ -461,12 +461,12 @@ const isFuturePrayer = () => {
           <div v-else class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-150">
             <div>
               <label
-                class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2"
+                class="block text-xs font-bold text-gold-200/80 uppercase tracking-wider mb-2"
                 >{{ localeStore.t('reason_missed') }}</label
               >
               <select
                 v-model="formMissedReason"
-                class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+                class="w-full bg-islamic-deep border border-gold-500/20 text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold-500"
               >
                 <optgroup :label="localeStore.t('excused_optgroup')">
                   <option :value="MissedReason.ExcusedImpurity">
@@ -493,12 +493,12 @@ const isFuturePrayer = () => {
 
             <div class="pt-2">
               <label
-                class="flex items-center gap-3 bg-slate-950/40 border border-slate-800/80 p-3 rounded-xl cursor-pointer hover:border-slate-700 transition-colors select-none"
+                class="flex items-center gap-3 bg-islamic-deep/60 border border-gold-500/10 p-3 rounded-xl cursor-pointer hover:border-gold-500/20 transition-colors select-none"
               >
                 <input
                   type="checkbox"
                   v-model="formIsTraveling"
-                  class="rounded text-emerald-500 bg-slate-900 border-slate-800 focus:ring-emerald-500"
+                  class="rounded text-gold-500 bg-islamic-deep border-gold-500/20 focus:ring-gold-500"
                 />
                 <span class="text-xs font-semibold text-slate-300">{{ localeStore.t('traveling') }}</span>
               </label>
@@ -508,12 +508,12 @@ const isFuturePrayer = () => {
 
         <!-- Modal Actions -->
         <div
-          class="bg-slate-950/60 px-6 py-4 border-t border-slate-800 flex items-center justify-end gap-3"
+          class="bg-islamic-deep/60 px-6 py-4 border-t border-gold-500/10 flex items-center justify-end gap-3"
         >
           <button
             type="button"
             @click="isModalOpen = false"
-            class="text-xs font-bold text-slate-400 hover:text-slate-200 px-4 py-2 rounded-xl border border-slate-800 hover:bg-slate-850 cursor-pointer"
+            class="text-xs font-bold text-gold-400 hover:text-gold-200 px-4 py-2 rounded-xl border border-gold-500/20 hover:bg-gold-500/10 cursor-pointer"
           >
             {{ localeStore.t('cancel') }}
           </button>
@@ -521,7 +521,7 @@ const isFuturePrayer = () => {
             type="button"
             @click="handleSaveLog"
             :disabled="store.loading"
-            class="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl shadow-md cursor-pointer disabled:cursor-not-allowed"
+            class="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-islamic-deep font-black text-xs px-5 py-2.5 rounded-xl shadow-md cursor-pointer disabled:cursor-not-allowed"
           >
             {{ localeStore.t('save') }}
           </button>

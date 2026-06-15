@@ -63,27 +63,31 @@ const handleSubmit = async () => {
 
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden"
+    class="min-h-screen flex items-center justify-center bg-islamic-deep p-4 relative overflow-hidden"
   >
+    <!-- Top gold glow -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[350px] bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.07)_0%,transparent_70%)] pointer-events-none"></div>
+
     <!-- Ambient glowing backgrounds -->
-    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-gold-500/5 rounded-full blur-3xl"></div>
     <div
-      class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"
+      class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl"
     ></div>
 
     <div
-      class="w-full max-w-md bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl relative z-10 transition-all duration-300"
+      class="w-full max-w-md islamic-card rounded-3xl p-8 shadow-2xl relative z-10 transition-all duration-300 islamic-border-top"
     >
       <!-- Title -->
       <div class="text-center mb-8">
-        <h1 class="text-4xl font-extrabold text-slate-100 flex items-center justify-center gap-2">
-          إقامة
+        <h1 class="text-4xl font-serif font-bold text-slate-100 flex items-center justify-center gap-2">
+          <span class="font-arabic text-gold-400 text-5xl">إقامة</span>
           <span
-            class="bg-gradient-to-r from-emerald-400 to-indigo-400 bg-clip-text text-transparent"
+            class="bg-gradient-to-r from-gold-100 via-gold-300 to-gold-500 bg-clip-text text-transparent font-serif"
             >Iqamah</span
           >
         </h1>
-        <p class="text-xs text-slate-400 mt-2 font-medium">
+        <div class="islamic-divider"></div>
+        <p class="text-xs text-gold-200/60 font-medium">
           {{
             isLoginMode
               ? 'Sign in to analyze and establish your prayer habits'
@@ -111,7 +115,7 @@ const handleSubmit = async () => {
         <div v-if="!isLoginMode" class="space-y-1">
           <label
             for="username"
-            class="text-xs font-bold text-slate-300 uppercase tracking-wider block"
+            class="text-xs font-bold text-gold-200/80 uppercase tracking-wider block"
             >Username</label
           >
           <input
@@ -120,12 +124,12 @@ const handleSubmit = async () => {
             type="text"
             required
             placeholder="e.g. Abdullah"
-            class="w-full bg-slate-950/60 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-100 text-sm px-4 py-3 rounded-xl outline-none transition-all duration-200"
+            class="w-full bg-islamic-deep/60 border border-gold-500/20 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 text-slate-100 text-sm px-4 py-3 rounded-xl outline-none transition-all duration-200"
           />
         </div>
 
         <div class="space-y-1">
-          <label for="email" class="text-xs font-bold text-slate-300 uppercase tracking-wider block"
+          <label for="email" class="text-xs font-bold text-gold-200/80 uppercase tracking-wider block"
             >Email Address</label
           >
           <input
@@ -134,14 +138,14 @@ const handleSubmit = async () => {
             type="email"
             required
             placeholder="abdullah@example.com"
-            class="w-full bg-slate-950/60 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-100 text-sm px-4 py-3 rounded-xl outline-none transition-all duration-200"
+            class="w-full bg-islamic-deep/60 border border-gold-500/20 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 text-slate-100 text-sm px-4 py-3 rounded-xl outline-none transition-all duration-200"
           />
         </div>
 
         <div class="space-y-1">
           <label
             for="password"
-            class="text-xs font-bold text-slate-300 uppercase tracking-wider block"
+            class="text-xs font-bold text-gold-200/80 uppercase tracking-wider block"
             >Password</label
           >
           <input
@@ -150,14 +154,14 @@ const handleSubmit = async () => {
             type="password"
             required
             placeholder="••••••••"
-            class="w-full bg-slate-950/60 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-slate-100 text-sm px-4 py-3 rounded-xl outline-none transition-all duration-200"
+            class="w-full bg-islamic-deep/60 border border-gold-500/20 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 text-slate-100 text-sm px-4 py-3 rounded-xl outline-none transition-all duration-200"
           />
         </div>
 
         <button
           type="submit"
           :disabled="isSubmitting"
-          class="w-full bg-gradient-to-r from-emerald-500 to-indigo-500 hover:from-emerald-400 hover:to-indigo-400 text-slate-950 font-bold py-3 rounded-xl shadow-lg transition-all duration-300 disabled:opacity-50 cursor-pointer"
+          class="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-islamic-deep font-black py-3 rounded-xl shadow-lg shadow-gold-500/10 hover:shadow-gold-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 disabled:opacity-50 cursor-pointer"
         >
           <span v-if="isSubmitting">Please wait...</span>
           <span v-else>{{ isLoginMode ? 'Sign In' : 'Sign Up' }}</span>
@@ -168,7 +172,7 @@ const handleSubmit = async () => {
       <div class="text-center mt-6">
         <button
           @click="toggleMode"
-          class="text-xs font-bold text-slate-400 hover:text-slate-100 transition-colors"
+          class="text-xs font-bold text-gold-300/70 hover:text-gold-200 transition-colors cursor-pointer"
         >
           {{ isLoginMode ? "Don't have an account? Sign Up" : 'Already have an account? Sign In' }}
         </button>

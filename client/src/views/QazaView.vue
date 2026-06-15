@@ -71,15 +71,15 @@ const qazaSummary = computed<Record<number, number>>(() => {
   <div class="space-y-8 max-w-4xl mx-auto px-4 py-6">
     <!-- Header -->
     <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900/60 backdrop-blur-md border border-slate-800 p-6 rounded-2xl shadow-xl"
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 islamic-card p-6 rounded-2xl shadow-xl islamic-border-top"
     >
       <div>
         <h1
-          class="text-3xl font-extrabold bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent tracking-tight"
+          class="text-3xl font-serif font-bold bg-gradient-to-r from-gold-100 via-gold-300 to-gold-500 bg-clip-text text-transparent tracking-wide"
         >
           {{ localeStore.t('qaza_ledger') }}
         </h1>
-        <p class="text-slate-400 text-sm mt-1">
+        <p class="text-gold-200/60 text-sm mt-1">
           {{ localeStore.t('qaza_tagline') }}
         </p>
       </div>
@@ -96,18 +96,18 @@ const qazaSummary = computed<Record<number, number>>(() => {
           PrayerName.Isha,
         ]"
         :key="pName"
-        class="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-4 text-center"
+        class="islamic-card islamic-card-hover rounded-2xl p-4 text-center"
       >
-        <span class="text-xs text-slate-400 block font-semibold">{{
+        <span class="text-xs text-gold-200/70 block font-bold font-serif">{{
           getLocalizedPrayerName(pName)
         }}</span>
         <span
-          class="text-3xl font-extrabold block mt-2"
-          :class="[(qazaSummary[pName] ?? 0) > 0 ? 'text-indigo-400' : 'text-slate-600']"
+          class="text-3xl font-serif font-bold block mt-2 text-glow-gold"
+          :class="[(qazaSummary[pName] ?? 0) > 0 ? 'text-gold-400' : 'text-slate-600']"
         >
           {{ qazaSummary[pName] ?? 0 }}
         </span>
-        <span class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider block font-bold"
+        <span class="text-[10px] text-gold-500/50 mt-1 uppercase tracking-wider block font-black"
           >{{ localeStore.t('pending') }}</span
         >
       </div>
@@ -116,23 +116,23 @@ const qazaSummary = computed<Record<number, number>>(() => {
     <!-- Error indicator -->
     <div
       v-if="store.error"
-      class="bg-rose-950/30 border border-rose-900/60 p-4 rounded-xl flex items-center justify-between"
+      class="bg-rose-950/20 border border-rose-500/20 p-4 rounded-xl flex items-center justify-between"
     >
       <p class="text-rose-300 text-sm font-medium">{{ store.error }}</p>
       <button
         @click="store.clearError()"
-        class="text-rose-400 hover:text-rose-200 text-xs font-semibold"
+        class="text-rose-400 hover:text-rose-200 text-xs font-semibold cursor-pointer"
       >
         Dismiss
       </button>
     </div>
 
     <!-- Pending Qazas List -->
-    <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 shadow-lg">
+    <div class="islamic-card rounded-2xl p-6 shadow-lg border-t border-gold-500/10">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-bold text-slate-100">{{ localeStore.t('outstanding_debt') }}</h2>
+        <h2 class="text-lg font-serif font-bold text-slate-100">{{ localeStore.t('outstanding_debt') }}</h2>
         <span
-          class="text-xs font-bold bg-indigo-950/50 text-indigo-400 border border-indigo-900/50 px-3 py-1 rounded-full"
+          class="text-xs font-bold bg-gold-500/10 text-gold-300 border border-gold-500/20 px-3 py-1 rounded-full"
         >
           {{ localeStore.t('prayers_due', { count: store.pendingQazas.length }) }}
         </span>
@@ -142,13 +142,13 @@ const qazaSummary = computed<Record<number, number>>(() => {
         v-if="store.loading && store.pendingQazas.length === 0"
         class="flex flex-col items-center py-12"
       >
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mb-2"></div>
-        <p class="text-slate-400 text-sm">Loading Qaza obligations...</p>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500 mb-2"></div>
+        <p class="text-gold-200/50 text-sm">Loading Qaza obligations...</p>
       </div>
 
       <div v-else-if="store.pendingQazas.length === 0" class="text-center py-16 space-y-4">
         <div
-          class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-900/40"
+          class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gold-500/10 text-gold-400 border border-gold-500/20 shadow-[0_0_15px_rgba(212,175,55,0.05)] animate-pulse"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -166,30 +166,30 @@ const qazaSummary = computed<Record<number, number>>(() => {
           </svg>
         </div>
         <div>
-          <h3 class="text-slate-200 font-bold text-lg">{{ localeStore.t('no_pending') }}</h3>
-          <p class="text-slate-500 text-sm mt-1">
+          <h3 class="text-gold-300 font-serif font-bold text-lg">{{ localeStore.t('no_pending') }}</h3>
+          <p class="text-gold-200/50 text-sm mt-1">
             {{ localeStore.t('no_pending_desc') }}
           </p>
         </div>
       </div>
 
-      <div v-else class="divide-y divide-slate-800/60 max-h-[500px] overflow-y-auto pr-2">
+      <div v-else class="divide-y divide-gold-500/10 max-h-[500px] overflow-y-auto pr-2">
         <div
           v-for="qaza in store.pendingQazas"
           :key="qaza.id"
           class="flex items-center justify-between py-4 first:pt-0 last:pb-0 group transition-all duration-300"
         >
           <div>
-            <span class="font-bold text-slate-200 flex items-center gap-2">
+            <span class="font-serif font-bold text-slate-200 flex items-center gap-2">
               {{ getLocalizedPrayerName(qaza.prayerName) }}
-              <span class="text-xs font-normal text-slate-500 font-arabic">{{
+              <span class="text-sm font-normal text-gold-400 font-arabic">{{
                 ARABIC_NAMES[qaza.prayerName]
               }}</span>
             </span>
             <div class="flex items-center gap-2 mt-1">
               <span class="text-xs text-slate-400">{{ qaza.originalPrayerDate }}</span>
               <span class="text-[10px] text-slate-500">•</span>
-              <span class="text-xs text-indigo-400 font-semibold">{{
+              <span class="text-xs text-gold-400 font-semibold">{{
                 getRelativeTime(qaza.originalPrayerDate)
               }}</span>
             </div>
@@ -197,7 +197,7 @@ const qazaSummary = computed<Record<number, number>>(() => {
 
           <button
             @click="handleFulfillQaza(qaza.id)"
-            class="bg-indigo-950/40 hover:bg-emerald-500 border border-indigo-900/50 hover:border-emerald-400 text-indigo-300 hover:text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md cursor-pointer"
+            class="bg-islamic-hover hover:bg-gold-500 border border-gold-500/20 hover:border-gold-400 text-gold-300 hover:text-islamic-deep font-bold text-xs px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md cursor-pointer"
           >
             {{ localeStore.t('fulfill') }}
           </button>
