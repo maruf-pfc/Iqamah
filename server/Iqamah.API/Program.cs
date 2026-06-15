@@ -56,22 +56,42 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowClient", policy =>
     {
-        var origins = new List<string> 
-        { 
-            "http://localhost:5173", 
-            "http://localhost:3000",
-            "https://iqamaah.vercel.app"
+        var allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "localhost",
+            "127.0.0.1",
+            "iqamaah.vercel.app"
         };
+
         var clientUrl = Environment.GetEnvironmentVariable("CLIENT_URL");
         if (!string.IsNullOrEmpty(clientUrl))
         {
-            origins.AddRange(clientUrl.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            foreach (var url in clientUrl.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                {
+                    allowedHosts.Add(uri.Host);
+                }
+            }
         }
 
-        policy.WithOrigins(origins.ToArray())
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.SetIsOriginAllowed(origin =>
+        {
+            if (string.IsNullOrEmpty(origin)) return false;
+            try
+            {
+                var uri = new Uri(origin);
+                var host = uri.Host;
+                return allowedHosts.Contains(host) || host.EndsWith(".trycloudflare.com", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
+        })
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 
