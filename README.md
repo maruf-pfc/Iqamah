@@ -24,12 +24,14 @@
 
 ## 🏗️ Architecture Overview
 
-The project is structured as a modern, decoupled web application:
+The project is structured as a hybrid platform featuring web services and a standalone mobile companion:
 
 ```mermaid
 graph TD
     Client[Vue 3 SPA Client] <-->|JSON + JWT Authorization| API[ASP.NET Core 10 Web API]
     API <-->|EF Core| DB[(Postgres / NeonDB)]
+    Mobile[Flutter Mobile App] <-->|Data Sandbox| LocalDB[(Local SQLite DB)]
+    Mobile <-->|JSON File Migration| Client
 ```
 
 ### 1. Server-Side (.NET 10)
@@ -44,6 +46,12 @@ Built as a highly reactive Single Page Application (SPA):
 *   **Tailwind CSS v4:** Styling engine leveraging CSS variables and fluid, modern glassmorphic designs.
 *   **Pinia Store:** Manages auth status (`stores/auth.ts`) and tracks prayer logs, pending debts, and charts data (`stores/prayer.ts`).
 *   **Vue Router:** Controls page paths and enforces route guards to redirect unauthenticated requests.
+
+### 3. Standalone Mobile Client (Flutter)
+Built as a local-first offline companion app:
+*   **Local Persistence:** Uses SQLite (`sqflite`) inside the app sandbox (data is safely wiped upon uninstallation).
+*   **Data Portability:** Implements standardized JSON export/import to migrate logs across devices or backup data.
+*   **Domain Parity:** Replicates C# state machine logic and excuse validations for accurate Qaza calculations.
 
 ---
 

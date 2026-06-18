@@ -50,9 +50,47 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
 
+  mobile-validate-and-build:
+    name: Validate and Build Mobile (Flutter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Run Unit & Widget Tests
+      run: flutter test
+
+    - name: Build Universal APK
+      run: flutter build apk
+
+    - name: Build Split APKs (per ABI)
+      run: flutter build apk --split-per-abi
+
+    - name: Upload APK Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: iqamah-apks
+        path: mobile/build/app/outputs/flutter-apk/*.apk
+
   deploy:
     name: Deploy to Coolify
-    needs: [client-validate, server-validate]
+    needs: [client-validate, server-validate, mobile-validate-and-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
