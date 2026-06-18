@@ -120,18 +120,6 @@ const isTimeBetween = (startStr: string, endStr: string) => {
   return now >= start && now < end
 }
 
-// Compute active status for each prayer dynamically
-const activePrayer = computed(() => {
-  if (!schedule.value) return null
-  const prayers = [
-    schedule.value.fajr,
-    schedule.value.dhuhr,
-    schedule.value.asr,
-    schedule.value.maghrib,
-    schedule.value.isha,
-  ]
-  return prayers.find((p) => isTimeBetween(p.start, p.end)) || null
-})
 
 // Calculate countdown to next prayer
 const countdownText = computed(() => {
