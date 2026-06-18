@@ -2,8 +2,9 @@
 
 @theme {
   --font-serif: "Cinzel", "Amiri", Georgia, serif;
-  --font-sans: "Outfit", sans-serif;
+  --font-sans: "Outfit", "Noto Sans Bengali", sans-serif;
   --font-arabic: "Amiri", serif;
+  --font-bengali: "Noto Sans Bengali", sans-serif;
   
   --color-islamic-deep: #030c08;
   --color-islamic-card: #061710;

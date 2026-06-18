@@ -10,15 +10,7 @@
 
 **Iqamah (إقامة)** is a highly specialized, data-driven web application designed to help Muslims build, establish, and analyze their daily prayer (Salah/Namaz) habits. The system provides granular tracking for prayer punctuality, situational missed reasons, state machines for make-up (Qaza) tracking, and multi-year analytics.
 
----
-<!-- 
-## 📸 Interface Preview
-
-![Dashboard View](dashboard_screenshot.png)
-*Figure 1: Fully responsive dark-mode dashboard showing daily Salah tracker.*
-
-![Qaza Ledger](qaza_screenshot.png)
-*Figure 2: Qaza make-up ledger displaying obligation status.* -->
+![Iqamah Platform Preview](assets/cover.png)
 
 ---
 

@@ -32,15 +32,19 @@ class IqamahApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF030A09), // Deep Islamic Emerald Black
-        primaryColor: const Color(0xFFC5A059), // Gold Accent
+        scaffoldBackgroundColor: const Color(0xFF030A09),
+        primaryColor: const Color(0xFFC5A059),
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFFC5A059),
           secondary: Color(0xFF104035),
           surface: Color(0xFF0A1F1B),
           background: Color(0xFF030A09),
         ),
+        // Primary Latin font stays Serif; NotoSansBengali handles all Bengali Unicode automatically
         fontFamily: 'Serif',
+        textTheme: const TextTheme().apply(
+          fontFamilyFallback: ['NotoSansBengali'],
+        ),
       ),
       home: const MainNavigationScreen(),
     );

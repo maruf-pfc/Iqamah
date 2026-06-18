@@ -94,22 +94,23 @@ jobs:
     - name: Create Git Tag for Release
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
-        TAG="mobile-$(date +'%Y%m%d-%H%M%S')"
+        VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+        TAG="v${VERSION}+${{ github.run_number }}"
         echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+        echo "RELEASE_VERSION=v${VERSION}" >> $GITHUB_ENV
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git tag "$TAG"
         git push origin "$TAG"
-      working-directory: ${{ github.workspace }}
 
     - name: Create GitHub Release with APKs
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ env.RELEASE_TAG }}
-        name: "Iqamah Mobile — ${{ env.RELEASE_TAG }}"
+        name: "Iqamah ${{ env.RELEASE_VERSION }}"
         body: |
-          🕌 **Iqamah Mobile App — Automated Build**
+          🕌 **Iqamah ${{ env.RELEASE_VERSION }} — Automated Build**
 
           Built from `main` branch commit `${{ github.sha }}`.
 
@@ -124,6 +125,7 @@ jobs:
           - Location-based prayer times & forbidden zone alerts
           - Hayd / Nifas logging (female users only)
           - Prayer log, Qaza tracking, Analytics
+          - Bangla & English language support
         draft: false
         prerelease: false
         files: mobile/build/app/outputs/flutter-apk/*.apk
