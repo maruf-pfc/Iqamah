@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+import 'dart:ui';
 import 'models/prayer_log.dart';
 import 'models/qaza_log.dart';
 import 'providers/prayer_provider.dart';
+import 'providers/salah_time_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +15,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PrayerProvider()..fetchDailyLogs()..fetchPendingQazas()),
+        ChangeNotifierProvider(create: (_) => SalahTimeProvider()),
       ],
       child: const IqamahApp(),
     ),
@@ -55,6 +60,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = [
     const DashboardTab(),
     const QazaTab(),
+    const SalahTimeTab(),
     const AnalyticsTab(),
     const SettingsTab(),
   ];
@@ -84,6 +90,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Qaza'),
+          BottomNavigationBarItem(icon: Icon(Icons.access_time_filled_rounded), label: 'Salah Time'),
           BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: 'Analytics'),
           BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Backup'),
         ],
@@ -275,7 +282,7 @@ class PrayerLogCard extends StatelessWidget {
               )
             else if (isPeriod)
               const Text(
-                'Impurity (Excused)',
+                'Period (Excused)',
                 style: TextStyle(fontSize: 12, color: Color(0xFFC5A059), fontWeight: FontWeight.w600),
               )
             else
@@ -368,11 +375,17 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
   bool _isJummah = false;
   bool _isHome = false;
   bool _hasTasbih = false;
+  bool? _isFemale; // null = not set, true = female, false = male
   final TextEditingController _quranNotesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    // Load gender preference
+    SharedPreferences.getInstance().then((prefs) {
+      final g = prefs.getString('iqamah_gender');
+      if (mounted) setState(() => _isFemale = g == 'female' ? true : g == 'male' ? false : null);
+    });
     if (widget.existing != null) {
       final log = widget.existing!;
       if (log.isOffered) {
@@ -393,6 +406,12 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
     } else {
       _logType = 'offered';
     }
+  }
+
+  Future<void> _saveGender(bool female) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('iqamah_gender', female ? 'female' : 'male');
+    if (mounted) setState(() => _isFemale = female);
   }
 
   @override
@@ -425,10 +444,50 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
               _buildTabButton('Offered', 'offered'),
               const SizedBox(width: 8),
               _buildTabButton('Missed', 'missed'),
-              const SizedBox(width: 8),
-              _buildTabButton('Period', 'period'),
+              // Hayd / Nifas tab: only for female users
+              if (_isFemale == true) ...[
+                const SizedBox(width: 8),
+                _buildTabButton('Hayd / Nifas', 'period'),
+              ],
             ],
           ),
+
+          // Gender not set banner
+          if (_isFemale == null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade900.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amber.shade700, width: 0.8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Gender Setting', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber)),
+                  const SizedBox(height: 4),
+                  const Text('Hayd / Nifas option is only shown for female users.', style: TextStyle(fontSize: 11, color: Colors.white54)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => _saveGender(false),
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.white70, side: const BorderSide(color: Colors.white24), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
+                        child: const Text('Male', style: TextStyle(fontSize: 11)),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: () => _saveGender(true),
+                        style: OutlinedButton.styleFrom(foregroundColor: Color(0xFFC5A059), side: const BorderSide(color: Color(0xFFC5A059)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
+                        child: const Text('Female', style: TextStyle(fontSize: 11)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
           if (_logType == 'offered') ...[
@@ -553,7 +612,7 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
               onChanged: (v) => setState(() => _isTraveling = v),
             ),
           ] else ...[
-            // Period / Impurity
+            // Hayd / Nifas
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -571,9 +630,15 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'During menstruation or post-natal bleeding (Hayd/Nifas), a woman is legally excused from performing prayers, and no make-up (Qaza) prayers are required.',
+                    'During menstruation (Hayd) or post-natal bleeding (Nifas), prayer obligation is fully lifted. No Qaza required.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '⚠️ Janabah (requiring Ghusl) does NOT exempt from prayer — prayer remains obligatory.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, color: Colors.amber, height: 1.4),
                   ),
                 ],
               ),
@@ -1004,6 +1069,368 @@ class SettingsTab extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class SalahTimeTab extends StatefulWidget {
+  const SalahTimeTab({Key? key}) : super(key: key);
+
+  @override
+  State<SalahTimeTab> createState() => _SalahTimeTabState();
+}
+
+class _SalahTimeTabState extends State<SalahTimeTab> {
+  DateTime _now = DateTime.now();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _now = DateTime.now();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _getCountdownText(PrayerSchedule schedule) {
+    final nowMs = _now.millisecondsSinceEpoch;
+    final prayers = [
+      {'name': 'Fajr', 'start': schedule.fajr.millisecondsSinceEpoch},
+      {'name': 'Dhuhr', 'start': schedule.dhuhr.millisecondsSinceEpoch},
+      {'name': 'Asr', 'start': schedule.asr.millisecondsSinceEpoch},
+      {'name': 'Maghrib', 'start': schedule.maghrib.millisecondsSinceEpoch},
+      {'name': 'Isha', 'start': schedule.isha.millisecondsSinceEpoch},
+    ];
+
+    final next = prayers.firstWhere((p) => (p['start'] as int) > nowMs, orElse: () => <String, Object>{});
+    String prefix = '';
+    int diff = 0;
+
+    if (next.isNotEmpty) {
+      prefix = next['name'] as String;
+      diff = (next['start'] as int) - nowMs;
+    } else {
+      prefix = 'Fajr (Tomorrow)';
+      final tomorrowFajr = schedule.fajr.add(const Duration(days: 1)).millisecondsSinceEpoch;
+      diff = tomorrowFajr - nowMs;
+    }
+
+    final secs = diff ~/ 1000;
+    final h = secs ~/ 3600;
+    final m = (secs % 3600) ~/ 60;
+    final s = secs % 60;
+
+    final pad = (int n) => n.toString().padLeft(2, '0');
+    return 'Next: $prefix in ${pad(h)}:${pad(m)}:${pad(s)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<SalahTimeProvider>();
+    final schedule = provider.schedule;
+
+    // Check active forbidden zone
+    ForbiddenZone? activeZone;
+    if (schedule != null) {
+      for (final zone in schedule.forbiddenZones) {
+        if (_now.isAfter(zone.start) && _now.isBefore(zone.end)) {
+          activeZone = zone;
+          break;
+        }
+      }
+    }
+
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Salah Schedule',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 12, color: Color(0xFFC5A059)),
+                          const SizedBox(width: 4),
+                          Text(
+                            provider.locationName,
+                            style: const TextStyle(fontSize: 11, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      provider.detectLocationAndCalculate();
+                    },
+                    icon: const Icon(Icons.gps_fixed, size: 12, color: Colors.white),
+                    label: const Text('Detect', style: TextStyle(fontSize: 11)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A1F1B),
+                      foregroundColor: const Color(0xFFC5A059),
+                      side: const BorderSide(color: Color(0xFFC5A059), width: 0.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Active Forbidden Zone Warning Banner
+              if (activeZone != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade900.withOpacity(0.25),
+                    border: Border.all(color: Colors.orange.shade700, width: 1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Colors.orange.shade400, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Forbidden Salah Period Active',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orangeAccent, fontSize: 13),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${activeZone.label}: ${activeZone.fmt}',
+                              style: TextStyle(color: Colors.orange.shade100, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade700.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.orange.shade500, width: 0.5),
+                        ),
+                        child: const Text(
+                          'FORBIDDEN',
+                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Clock and Countdown Timer
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A1F1B),
+                  border: Border.all(color: const Color(0xFFC5A059).withOpacity(0.1), width: 1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Current Time',
+                          style: TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat.jms().format(_now),
+                          style: const TextStyle(fontSize: 20, fontFeatures: [FontFeature.tabularFigures()], fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    if (schedule != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC5A059).withOpacity(0.08),
+                          border: Border.all(color: const Color(0xFFC5A059).withOpacity(0.2), width: 0.5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          _getCountdownText(schedule),
+                          style: const TextStyle(fontSize: 12, color: Color(0xFFC5A059), fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              if (provider.loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                  child: Center(
+                    child: CircularProgressIndicator(color: Color(0xFFC5A059)),
+                  ),
+                )
+              else if (schedule == null)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                  child: Center(
+                    child: Text('Click Detect to load Salah times.', style: TextStyle(color: Colors.white30)),
+                  ),
+                )
+              else ...[
+                // Prayer Cards
+                ...schedule.allPrayers.map((prayer) {
+                  final active = prayer.isActive;
+                  final showForbiddenBadge = active && activeZone != null;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: active ? const Color(0xFF1B6B3A) : const Color(0xFF0A1F1B).withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: active ? const Color(0xFFC5A059).withOpacity(0.5) : const Color(0xFFC5A059).withOpacity(0.05),
+                        width: active ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(prayer.emoji, style: const TextStyle(fontSize: 26)),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                prayer.name,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: active ? Colors.white : Colors.white70,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${prayer.startFmt} – ${prayer.endFmt}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: active ? Colors.white70 : Colors.white38,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (showForbiddenBadge)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade900,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.red.shade500, width: 0.5),
+                            ),
+                            child: const Text(
+                              '⛔ FORBIDDEN',
+                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          )
+                        else if (active)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC5A059).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'ACTIVE',
+                              style: TextStyle(color: Color(0xFFC5A059), fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+
+                const SizedBox(height: 20),
+
+                // Forbidden Times Panel
+                const Text(
+                  'Forbidden (Makruh) Prayer Windows',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
+                ),
+                const SizedBox(height: 10),
+                Column(
+                  children: schedule.forbiddenZones.map((zone) {
+                    final isZoneActive = _now.isAfter(zone.start) && _now.isBefore(zone.end);
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isZoneActive
+                            ? Colors.orange.shade900.withOpacity(0.1)
+                            : const Color(0xFF0A1F1B).withOpacity(0.2),
+                        border: Border.all(
+                          color: isZoneActive
+                              ? Colors.orange.shade500.withOpacity(0.3)
+                              : const Color(0xFFC5A059).withOpacity(0.05),
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            zone.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isZoneActive ? Colors.orangeAccent : Colors.white70,
+                            ),
+                          ),
+                          Text(
+                            zone.fmt,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                              color: isZoneActive ? Colors.orangeAccent : Colors.white38,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

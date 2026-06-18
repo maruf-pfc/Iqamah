@@ -60,6 +60,19 @@ const formIsHome = ref(false)
 const formQuranNotes = ref('')
 const formHasTasbih = ref(false)
 
+// Gender preference — persisted in localStorage. Default: null (not set yet)
+const isFemale = ref<boolean | null>(
+  localStorage.getItem('iqamah_gender') === 'female'
+    ? true
+    : localStorage.getItem('iqamah_gender') === 'male'
+      ? false
+      : null
+)
+const setGender = (female: boolean) => {
+  isFemale.value = female
+  localStorage.setItem('iqamah_gender', female ? 'female' : 'male')
+}
+
 // Generate list of past 7 days for the calendar bar
 const getPastDays = () => {
   const days = []
@@ -564,7 +577,8 @@ const isFuturePrayer = () => {
                 class="w-full bg-islamic-deep border border-gold-500/20 text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold-500"
               >
                 <optgroup :label="localeStore.t('excused_optgroup')">
-                  <option :value="MissedReason.ExcusedImpurity">
+                  <!-- Hayd/Nifas: only shown for female users -->
+                  <option v-if="isFemale" :value="MissedReason.ExcusedImpurity">
                     {{ localeStore.t('impurity') }}
                   </option>
                   <option :value="MissedReason.ExcusedSleep">{{ localeStore.t('sleep') }}</option>
@@ -600,18 +614,31 @@ const isFuturePrayer = () => {
             </div>
           </div>
 
-          <!-- PERIOD / IMPURITY FORM FIELDS -->
+          <!-- HAYD / NIFAS FORM FIELDS (female only) -->
           <div v-else-if="logType === 'period'" class="p-6 bg-gold-500/5 border border-gold-500/10 rounded-2xl space-y-3 text-center animate-in fade-in slide-in-from-top-2 duration-150">
             <div class="text-3xl">🌸</div>
             <h4 class="text-sm font-bold text-gold-300">
               {{ localeStore.t('period_hayd') }}
             </h4>
             <p class="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
-              During menstruation or post-natal bleeding (Hayd/Nifas), a woman is legally excused from performing prayers, and no make-up (Qaza) prayers are required.
+              During menstruation (Hayd) or post-natal bleeding (Nifas), prayer obligation is lifted. No Qaza is required.
+            </p>
+            <p class="text-xs text-amber-400/70 leading-relaxed max-w-xs mx-auto mt-1">
+              ⚠️ Note: Janabah (requiring Ghusl) does <strong>not</strong> exempt from prayer — prayer remains obligatory.
             </p>
             <div class="text-xs text-gold-400/80 font-bold bg-gold-500/10 inline-block px-3 py-1 rounded-full border border-gold-500/20">
               {{ localeStore.t('no_qaza_required') }}
             </div>
+          </div>
+        </div>
+
+        <!-- Gender preference notice (shown if not set) -->
+        <div v-if="isFemale === null" class="mx-6 mb-4 p-3 bg-amber-900/20 border border-amber-500/30 rounded-xl text-xs text-amber-300">
+          <div class="font-semibold mb-2">{{ localeStore.t('gender_setting') }}</div>
+          <div class="text-amber-400/80 mb-2">{{ localeStore.t('gender_note') }}</div>
+          <div class="flex gap-2">
+            <button @click="setGender(false)" class="px-3 py-1 bg-islamic-deep border border-gold-500/20 rounded-lg hover:border-gold-500/50 transition-colors">{{ localeStore.t('gender_male') }}</button>
+            <button @click="setGender(true)" class="px-3 py-1 bg-islamic-deep border border-gold-500/20 rounded-lg hover:border-gold-500/50 transition-colors">{{ localeStore.t('gender_female') }}</button>
           </div>
         </div>
 

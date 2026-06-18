@@ -67,7 +67,7 @@ export const enum MissedReason {
 }
 
 export const MISSED_REASON_LABELS: Record<MissedReason, string> = {
-  [MissedReason.ExcusedImpurity]: 'Ritual Impurity (Hayd/Nifas) — No Qaza',
+  [MissedReason.ExcusedImpurity]: 'Period (Hayd/Nifas) — No Qaza',
   [MissedReason.ExcusedSleep]: 'Sleep (Nawm) — Excused',
   [MissedReason.ExcusedForgetfulness]: 'Forgetfulness (Nisyan) — Excused',
   [MissedReason.UnexcusedSituational]: 'Busy / Situational (Shughl)',

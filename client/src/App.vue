@@ -118,6 +118,14 @@ const handleLogout = () => {
             </RouterLink>
 
             <RouterLink
+              to="/salah-time"
+              class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl border border-transparent transition-all duration-300 flex items-center gap-2 hover:bg-islamic-hover hover:text-gold-300"
+              active-class="bg-gold-500/10 text-gold-400 border border-gold-500/20 font-bold shadow-[0_0_15px_rgba(212,175,55,0.05)]"
+            >
+              {{ localeStore.t('salah_time') }}
+            </RouterLink>
+
+            <RouterLink
               to="/guide"
               class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl border border-transparent transition-all duration-300 flex items-center gap-2 hover:bg-islamic-hover hover:text-gold-300"
               active-class="bg-gold-500/10 text-gold-400 border border-gold-500/20 font-bold shadow-[0_0_15px_rgba(212,175,55,0.05)]"

@@ -41,6 +41,11 @@ dependencies:
   file_picker: ^11.0.2
   provider: ^6.1.5+1
   intl: ^0.20.2
+  adhan: ^2.0.0
+  geolocator: ^11.0.0
+  shared_preferences: ^2.2.3
+  flutter_local_notifications: ^17.0.0
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:

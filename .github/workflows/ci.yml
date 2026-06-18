@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: write
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -87,6 +90,23 @@ jobs:
       with:
         name: iqamah-apks
         path: mobile/build/app/outputs/flutter-apk/*.apk
+
+    - name: Create or Update GitHub Release
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: latest
+        name: "Latest Mobile Build"
+        body: |
+          Automatic build of Iqamah Mobile App.
+          
+          This release contains the latest universal and split APKs compiled from the `main` branch.
+        draft: false
+        prerelease: true
+        files: |
+          mobile/build/app/outputs/flutter-apk/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     name: Deploy to Coolify

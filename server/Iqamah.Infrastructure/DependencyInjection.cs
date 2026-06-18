@@ -37,6 +37,9 @@ public static class DependencyInjection
         });
         services.AddScoped<Application.Common.Interfaces.IJwtProvider, Auth.JwtProvider>();
 
+        services.AddMemoryCache();
+        services.AddHttpClient<Application.Common.Interfaces.IPrayerTimeService, Services.PrayerTimeService>();
+
         return services;
     }
 }

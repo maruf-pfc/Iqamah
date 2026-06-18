@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 import DashboardView from '../views/DashboardView.vue'
 import QazaView from '../views/QazaView.vue'
 import AnalyticsView from '../views/AnalyticsView.vue'
+import SalahTimeView from '../views/SalahTimeView.vue'
 import GuideView from '../views/GuideView.vue'
 import LoginView from '../views/LoginView.vue'
 
@@ -25,6 +26,12 @@ const router = createRouter({
       path: '/analytics',
       name: 'analytics',
       component: AnalyticsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/salah-time',
+      name: 'salah-time',
+      component: SalahTimeView,
       meta: { requiresAuth: true },
     },
     {
