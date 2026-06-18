@@ -200,13 +200,13 @@ export const useLocaleStore = defineStore('locale', () => {
       quran_notes: 'কোরআন পাঠের নোট',
       quran_notes_placeholder: 'যেমন, সূরা আল-বাকারাহ ১-১০, পৃষ্ঠা ৫',
       track_tasbih: 'সালাতের পর তাসবীহ',
-      period_hayd: 'ঋতুস্রাব / অপবিত্রতা (হায়েজ)',
+      period_hayd: 'হায়েজ / নিফাস (Hayd / Nifas)',
       save: 'লগ সংরক্ষণ করুন',
       cancel: 'বাতিল',
       no_qaza_required: 'কাজার প্রয়োজন নেই',
       qaza_generated: 'কাজা তৈরি হয়েছে',
-      excused_optgroup: 'ক্ষমাযোগ্য ওজর (গুনাহ নেই)',
-      unexcused_optgroup: 'ক্ষমা অযোগ্য',
+      excused_optgroup: 'ক্ষমাযোগ্য ওজর (Excused)',
+      unexcused_optgroup: 'ক্ষমা অযোগ্য (Unexcused)',
       
       // Qaza Ledger
       qaza_ledger: 'কাজা খতিয়ান (قضاء)',
