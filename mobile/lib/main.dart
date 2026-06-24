@@ -1377,8 +1377,8 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                   ),
                 )
               else if (schedule == null)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40.0),
                   child: Center(
                     child: Text(S.clickDetect, style: const TextStyle(color: Colors.white30)),
                   ),
