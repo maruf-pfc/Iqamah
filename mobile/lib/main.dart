@@ -8,6 +8,7 @@ import 'models/prayer_log.dart';
 import 'models/qaza_log.dart';
 import 'providers/prayer_provider.dart';
 import 'providers/salah_time_provider.dart';
+import 'l10n/strings.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,12 +92,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         unselectedItemColor: const Color(0xFF64748B),
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
         unselectedLabelStyle: const TextStyle(fontSize: 10),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Qaza'),
-          BottomNavigationBarItem(icon: Icon(Icons.access_time_filled_rounded), label: 'Salah Time'),
-          BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: 'Analytics'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Backup'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.dashboard_rounded), label: S.navDashboard),
+          BottomNavigationBarItem(icon: const Icon(Icons.history_rounded), label: S.navQaza),
+          BottomNavigationBarItem(icon: const Icon(Icons.access_time_filled_rounded), label: S.navSalahTime),
+          BottomNavigationBarItem(icon: const Icon(Icons.analytics_rounded), label: S.navAnalytics),
+          BottomNavigationBarItem(icon: const Icon(Icons.settings_rounded), label: S.navBackup),
         ],
       ),
     );
@@ -128,12 +129,12 @@ class _DashboardTabState extends State<DashboardTab> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Establish Salah',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  Text(
+                    S.dashTitle,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   Text(
-                    'إقامة • local dashboard',
+                    S.dashSubtitle,
                     style: TextStyle(fontSize: 12, color: const Color(0xFFC5A059).withOpacity(0.8)),
                   ),
                 ],
@@ -262,7 +263,7 @@ class PrayerLogCard extends StatelessWidget {
         title: Row(
           children: [
             Text(
-              prayerName.name,
+              S.prayerBn(prayerName.name),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(width: 8),
@@ -278,20 +279,20 @@ class PrayerLogCard extends StatelessWidget {
             const SizedBox(height: 6),
             // Status text
             if (!hasLog)
-              const Text('Not Logged', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.white38))
+              Text(S.notLogged, style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.white38))
             else if (isOffered)
               Text(
-                'Offered (${log!.waqtStatus!.name.replaceAll('AlWaqt', '').replaceAll('Wast', 'Wast ').replaceAll('Akhir', 'Akhir ')})',
+                S.offeredStatus(S.waqtLabel(log!.waqtStatus!.name)),
                 style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600),
               )
             else if (isPeriod)
-              const Text(
-                'Period (Excused)',
-                style: TextStyle(fontSize: 12, color: Color(0xFFC5A059), fontWeight: FontWeight.w600),
+              Text(
+                S.periodStatus,
+                style: const TextStyle(fontSize: 12, color: Color(0xFFC5A059), fontWeight: FontWeight.w600),
               )
             else
               Text(
-                'Missed (${log!.missedReason!.name.replaceAll('Excused', '').replaceAll('Unexcused', '')})',
+                S.missedStatus(S.reasonLabel(log!.missedReason!.name)),
                 style: const TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w600),
               ),
 
@@ -319,25 +320,65 @@ class PrayerLogCard extends StatelessWidget {
             ]
           ],
         ),
-        trailing: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF102E29),
-            foregroundColor: const Color(0xFFC5A059),
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          onPressed: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: const Color(0xFF0A1F1B),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (hasLog)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                tooltip: S.deleteBtn,
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xFF0A1F1B),
+                      title: Text(S.deleteConfirmTitle, style: const TextStyle(color: Colors.white)),
+                      content: Text(S.deleteConfirmMsg, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.confirmNo)),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: Text(S.deleteYes),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    try {
+                      await context.read<PrayerProvider>().deletePrayerLog(log!.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(S.deleteSuccess), backgroundColor: Colors.green),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
+                },
               ),
-              builder: (_) => LoggingBottomSheet(prayerName: prayerName, existing: log),
-            );
-          },
-          child: Text(hasLog ? 'Edit' : 'Log'),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF102E29),
+                foregroundColor: const Color(0xFFC5A059),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: const Color(0xFF0A1F1B),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  builder: (_) => LoggingBottomSheet(prayerName: prayerName, existing: log),
+                );
+              },
+              child: Text(hasLog ? S.editBtn : S.logBtn),
+            ),
+          ],
         ),
       ),
     );
@@ -438,20 +479,19 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Log ${widget.prayerName.name}',
+            S.logTitle(S.prayerBn(widget.prayerName.name)),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 16),
           // Tab Switcher
           Row(
             children: [
-              _buildTabButton('Offered', 'offered'),
+              _buildTabButton(S.tabOffered, 'offered'),
               const SizedBox(width: 8),
-              _buildTabButton('Missed', 'missed'),
-              // Hayd / Nifas tab: only for female users
+              _buildTabButton(S.tabMissed, 'missed'),
               if (_isFemale == true) ...[
                 const SizedBox(width: 8),
-                _buildTabButton('Hayd / Nifas', 'period'),
+                _buildTabButton(S.tabHayd, 'period'),
               ],
             ],
           ),
@@ -469,22 +509,22 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Gender Setting', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber)),
+                  Text(S.genderSettingTitle, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber)),
                   const SizedBox(height: 4),
-                  const Text('Hayd / Nifas option is only shown for female users.', style: TextStyle(fontSize: 11, color: Colors.white54)),
+                  Text(S.genderNote, style: const TextStyle(fontSize: 11, color: Colors.white54)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       OutlinedButton(
                         onPressed: () => _saveGender(false),
                         style: OutlinedButton.styleFrom(foregroundColor: Colors.white70, side: const BorderSide(color: Colors.white24), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
-                        child: const Text('Male', style: TextStyle(fontSize: 11)),
+                        child: Text(S.male, style: const TextStyle(fontSize: 11)),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton(
                         onPressed: () => _saveGender(true),
                         style: OutlinedButton.styleFrom(foregroundColor: Color(0xFFC5A059), side: const BorderSide(color: Color(0xFFC5A059)), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
-                        child: const Text('Female', style: TextStyle(fontSize: 11)),
+                        child: Text(S.female, style: const TextStyle(fontSize: 11)),
                       ),
                     ],
                   ),
@@ -495,8 +535,7 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
           const SizedBox(height: 20),
 
           if (_logType == 'offered') ...[
-            // Waqt choice
-            const Text('Waqt Status', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white70)),
+            Text(S.waqtStatus, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white70)),
             const SizedBox(height: 8),
             Row(
               children: WaqtStatus.values.map((status) {
@@ -529,32 +568,32 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
 
             // Modifiers
             SwitchListTile(
-              title: const Text('Congregation (Jamaah)', style: TextStyle(fontSize: 13)),
+              title: Text(S.congregation, style: const TextStyle(fontSize: 13)),
               value: _isJamaah,
               activeColor: const Color(0xFFC5A059),
               onChanged: _isTraveling ? null : (v) => setState(() => _isJamaah = v),
             ),
             SwitchListTile(
-              title: const Text('Prayed at Home', style: TextStyle(fontSize: 13)),
+              title: Text(S.prayedHome, style: const TextStyle(fontSize: 13)),
               value: _isHome,
               activeColor: const Color(0xFFC5A059),
               onChanged: (v) => setState(() => _isHome = v),
             ),
             SwitchListTile(
-              title: const Text('Completed Tasbih', style: TextStyle(fontSize: 13)),
+              title: Text(S.tasbih, style: const TextStyle(fontSize: 13)),
               value: _hasTasbih,
               activeColor: const Color(0xFFC5A059),
               onChanged: (v) => setState(() => _hasTasbih = v),
             ),
             if (widget.prayerName == PrayerName.Dhuhr)
               SwitchListTile(
-                title: const Text('Friday Jummah', style: TextStyle(fontSize: 13)),
+                title: Text(S.jummah, style: const TextStyle(fontSize: 13)),
                 value: _isJummah,
                 activeColor: const Color(0xFFC5A059),
                 onChanged: (v) => setState(() => _isJummah = v),
               ),
             SwitchListTile(
-              title: const Text('Traveling (Musafir)', style: TextStyle(fontSize: 13)),
+              title: Text(S.traveling, style: const TextStyle(fontSize: 13)),
               value: _isTraveling,
               activeColor: const Color(0xFFC5A059),
               onChanged: (v) {
@@ -568,7 +607,7 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
             TextField(
               controller: _quranNotesController,
               decoration: InputDecoration(
-                labelText: 'Quran Reading Notes (Ayat, Surah)',
+                labelText: S.quranNotes,
                 labelStyle: const TextStyle(fontSize: 12, color: Colors.white54),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
@@ -579,7 +618,7 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
               maxLines: 2,
             ),
           ] else if (_logType == 'missed') ...[
-            const Text('Reason Missed', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white70)),
+            Text(S.reasonMissed, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white70)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -598,7 +637,7 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
                   return DropdownMenuItem(
                     value: reason,
                     child: Text(
-                      reason.name.replaceAll('Excused', '[Excused] ').replaceAll('Unexcused', '[Unexcused] '),
+                      S.reasonLabel(reason.name),
                       style: const TextStyle(fontSize: 13, color: Colors.white),
                     ),
                   );
@@ -610,7 +649,7 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
             ),
             const SizedBox(height: 16),
             SwitchListTile(
-              title: const Text('Traveling (Musafir)', style: TextStyle(fontSize: 13)),
+              title: Text(S.traveling, style: const TextStyle(fontSize: 13)),
               value: _isTraveling,
               activeColor: const Color(0xFFC5A059),
               onChanged: (v) => setState(() => _isTraveling = v),
@@ -625,25 +664,14 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
                 border: Border.all(color: const Color(0xFFC5A059).withOpacity(0.1)),
               ),
               child: Column(
-                children: const [
-                  Text('🌸', style: TextStyle(fontSize: 32)),
-                  SizedBox(height: 8),
-                  Text(
-                    'Period / Impurity (Hayd)',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFC5A059)),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'During menstruation (Hayd) or post-natal bleeding (Nifas), prayer obligation is fully lifted. No Qaza required.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    '⚠️ Janabah (requiring Ghusl) does NOT exempt from prayer — prayer remains obligatory.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Colors.amber, height: 1.4),
-                  ),
+                children: [
+                  const Text('🌸', style: TextStyle(fontSize: 32)),
+                  const SizedBox(height: 8),
+                  Text(S.haydTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFC5A059))),
+                  const SizedBox(height: 6),
+                  Text(S.haydDesc, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.white70, height: 1.4)),
+                  const SizedBox(height: 6),
+                  Text(S.janabahWarning, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Colors.amber, height: 1.4)),
                 ],
               ),
             ),
@@ -655,7 +683,7 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                child: Text(S.cancel, style: const TextStyle(color: Colors.white70)),
               ),
               const SizedBox(width: 12),
               ElevatedButton(
@@ -689,7 +717,7 @@ class _LoggingBottomSheetState extends State<LoggingBottomSheet> {
                     );
                   }
                 },
-                child: const Text('Save Log', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(S.saveLog, style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -751,12 +779,12 @@ class _QazaTabState extends State<QazaTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Qaza Obligations',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+          Text(
+            S.qazaTitle,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           Text(
-            'Fulfill your missed prayers debt',
+            S.qazaSubtitle,
             style: TextStyle(fontSize: 12, color: const Color(0xFFC5A059).withOpacity(0.8)),
           ),
           const SizedBox(height: 20),
@@ -771,9 +799,9 @@ class _QazaTabState extends State<QazaTab> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildSummaryStat('Pending', '${provider.pendingQazas.length}', Colors.red),
+                _buildSummaryStat(S.qazaPending, '${provider.pendingQazas.length}', Colors.red),
                 Container(width: 1, height: 40, color: Colors.white12),
-                _buildSummaryStat('Discharged', 'Auto Calc', const Color(0xFFC5A059)),
+                _buildSummaryStat(S.qazaDischarged, 'Auto Calc', const Color(0xFFC5A059)),
               ],
             ),
           ),
@@ -782,10 +810,11 @@ class _QazaTabState extends State<QazaTab> {
             child: provider.loading
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFFC5A059)))
                 : provider.pendingQazas.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
-                          'Alhamdulillah! No pending Qaza logs.',
-                          style: TextStyle(color: Colors.white54, fontStyle: FontStyle.italic),
+                          S.qazaEmpty,
+                          style: const TextStyle(color: Colors.white54, fontStyle: FontStyle.italic),
+                          textAlign: TextAlign.center,
                         ),
                       )
                     : ListView.builder(
@@ -798,11 +827,11 @@ class _QazaTabState extends State<QazaTab> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: ListTile(
                               title: Text(
-                                qaza.prayerName.name,
+                                S.prayerBn(qaza.prayerName.name),
                                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                               subtitle: Text(
-                                'Missed on ${qaza.originalPrayerDate}',
+                                S.missedOn(qaza.originalPrayerDate),
                                 style: const TextStyle(fontSize: 12, color: Colors.white54),
                               ),
                               trailing: ElevatedButton(
@@ -811,8 +840,34 @@ class _QazaTabState extends State<QazaTab> {
                                   foregroundColor: const Color(0xFFC5A059),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 ),
-                                onPressed: () => provider.fulfillQaza(qaza.id),
-                                child: const Text('Fulfill'),
+                                onPressed: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      backgroundColor: const Color(0xFF0A1F1B),
+                                      title: Text(S.fulfillConfirmTitle, style: const TextStyle(color: Colors.white)),
+                                      content: Text(
+                                        S.fulfillConfirmMsg(S.prayerBn(qaza.prayerName.name), qaza.originalPrayerDate),
+                                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                      ),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.confirmNo)),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC5A059), foregroundColor: Colors.black),
+                                          onPressed: () => Navigator.pop(ctx, true),
+                                          child: Text(S.confirmYes),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true) {
+                                    await provider.fulfillQaza(qaza.id);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(S.fulfillSuccess), backgroundColor: Colors.green),
+                                    );
+                                  }
+                                },
+                                child: Text(S.fulfill),
                               ),
                             ),
                           );
@@ -877,12 +932,12 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Analytics',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  Text(
+                    S.analyticsTitle,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   Text(
-                    'Salah performance & habits',
+                    S.analyticsSubtitle,
                     style: TextStyle(fontSize: 12, color: const Color(0xFFC5A059).withOpacity(0.8)),
                   ),
                 ],
@@ -890,9 +945,9 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
               DropdownButton<int>(
                 value: _rangeDays,
                 dropdownColor: const Color(0xFF0A1F1B),
-                items: const [
-                  DropdownMenuItem(value: 7, child: Text('7 Days', style: TextStyle(fontSize: 12))),
-                  DropdownMenuItem(value: 30, child: Text('30 Days', style: TextStyle(fontSize: 12))),
+                items: [
+                  DropdownMenuItem(value: 7, child: Text(S.days7, style: const TextStyle(fontSize: 12))),
+                  DropdownMenuItem(value: 30, child: Text(S.days30, style: const TextStyle(fontSize: 12))),
                 ],
                 onChanged: (val) {
                   if (val != null) {
@@ -921,9 +976,9 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              'Offered Ratio',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
+                            Text(
+                              S.offeredRatio,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -932,7 +987,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Offered ${stats['totalOffered']} out of ${stats['totalObligated']} obligated prayers',
+                              S.offeredSummary(stats['totalOffered'] as int, stats['totalObligated'] as int),
                               style: const TextStyle(fontSize: 12, color: Colors.white54),
                             ),
                           ],
@@ -940,25 +995,25 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
                       ),
                       const SizedBox(height: 16),
                       // Punctuality Card
-                      _buildHeader('Punctuality Split'),
-                      _buildDetailRow('First (Awwal)', '${stats['punctuality']['awwalAlWaqtCount']}', Colors.green),
-                      _buildDetailRow('Middle (Wast)', '${stats['punctuality']['wastAlWaqtCount']}', const Color(0xFFC5A059)),
-                      _buildDetailRow('Late (Akhir)', '${stats['punctuality']['akhirAlWaqtCount']}', Colors.amber),
+                      _buildHeader(S.punctualitySplit),
+                      _buildDetailRow(S.awwal, '${stats['punctuality']['awwalAlWaqtCount']}', Colors.green),
+                      _buildDetailRow(S.wast, '${stats['punctuality']['wastAlWaqtCount']}', const Color(0xFFC5A059)),
+                      _buildDetailRow(S.akhir, '${stats['punctuality']['akhirAlWaqtCount']}', Colors.amber),
                       const SizedBox(height: 20),
                       // Excuses Split
-                      _buildHeader('Missed Reasons'),
-                      _buildDetailRow('Sleep', '${stats['missedReasons']['excusedSleepCount']}', Colors.white70),
-                      _buildDetailRow('Forgetfulness', '${stats['missedReasons']['excusedForgetfulnessCount']}', Colors.white70),
-                      _buildDetailRow('Impurity (Excused)', '${stats['missedReasons']['excusedImpurityCount']}', Colors.pink.shade300),
-                      _buildDetailRow('Laziness', '${stats['missedReasons']['unexcusedLazinessCount']}', Colors.red),
-                      _buildDetailRow('Distraction', '${stats['missedReasons']['unexcusedDistractionCount']}', Colors.red),
-                      _buildDetailRow('Situational', '${stats['missedReasons']['unexcusedSituationalCount']}', Colors.red),
+                      _buildHeader(S.missedReasons),
+                      _buildDetailRow(S.sleepLabel, '${stats['missedReasons']['excusedSleepCount']}', Colors.white70),
+                      _buildDetailRow(S.forgetLabel, '${stats['missedReasons']['excusedForgetfulnessCount']}', Colors.white70),
+                      _buildDetailRow(S.impurityLabel, '${stats['missedReasons']['excusedImpurityCount']}', Colors.pink.shade300),
+                      _buildDetailRow(S.lazinessLabel, '${stats['missedReasons']['unexcusedLazinessCount']}', Colors.red),
+                      _buildDetailRow(S.distractionLabel, '${stats['missedReasons']['unexcusedDistractionCount']}', Colors.red),
+                      _buildDetailRow(S.situationalLabel, '${stats['missedReasons']['unexcusedSituationalCount']}', Colors.red),
                       const SizedBox(height: 20),
                       // Qaza Card
-                      _buildHeader('Qaza summary'),
-                      _buildDetailRow('Pending', '${stats['qazaSummary']['totalPending']}', Colors.red),
-                      _buildDetailRow('Fulfilled', '${stats['qazaSummary']['totalFulfilled']}', Colors.green),
-                      _buildDetailRow('Resolution Time', '${(stats['qazaSummary']['averageResolutionTimeHours'] as double).toStringAsFixed(1)} hours', Colors.white),
+                      _buildHeader(S.qazaSummaryHeader),
+                      _buildDetailRow(S.pendingLabel, '${stats['qazaSummary']['totalPending']}', Colors.red),
+                      _buildDetailRow(S.fulfilledLabel, '${stats['qazaSummary']['totalFulfilled']}', Colors.green),
+                      _buildDetailRow(S.resolutionTime((stats['qazaSummary']['averageResolutionTimeHours'] as double).toStringAsFixed(1)), '', Colors.white),
                     ],
                   ),
           ),
@@ -991,9 +1046,14 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
 }
 
 // ── Backup Settings Tab ──────────────────────────────────────────────────────
-class SettingsTab extends StatelessWidget {
+class SettingsTab extends StatefulWidget {
   const SettingsTab({Key? key}) : super(key: key);
 
+  @override
+  State<SettingsTab> createState() => _SettingsTabState();
+}
+
+class _SettingsTabState extends State<SettingsTab> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<PrayerProvider>();
@@ -1003,15 +1063,34 @@ class SettingsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Backup & Settings',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+          Text(
+            S.settingsTitle,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           Text(
-            'Import, export, and secure your local data',
+            S.settingsSubtitle,
             style: TextStyle(fontSize: 12, color: const Color(0xFFC5A059).withOpacity(0.8)),
           ),
           const SizedBox(height: 24),
+          // Language toggle
+          Card(
+            color: const Color(0xFF0A1F1B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: ListTile(
+              leading: const Icon(Icons.translate_rounded, color: Color(0xFFC5A059)),
+              title: Text(S.languageToggleTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              subtitle: Text(S.languageToggleSubtitle, style: const TextStyle(fontSize: 11, color: Colors.white54)),
+              trailing: Switch(
+                value: S.isBn,
+                activeColor: const Color(0xFFC5A059),
+                onChanged: (val) {
+                  setState(() => S.isBn = val);
+                  context.findAncestorStateOfType<_MainNavigationScreenState>()?.setState(() {});
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Card(
             color: const Color(0xFF0A1F1B),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1019,24 +1098,20 @@ class SettingsTab extends StatelessWidget {
               children: [
                 ListTile(
                   leading: const Icon(Icons.file_upload_outlined, color: Color(0xFFC5A059)),
-                  title: const Text('Export Backup File', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Save your database records to a JSON file that you can share or download.', style: TextStyle(fontSize: 11, color: Colors.white54)),
+                  title: Text(S.exportTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  subtitle: Text(S.exportSubtitle, style: const TextStyle(fontSize: 11, color: Colors.white54)),
                   onTap: () => provider.exportBackup(),
                 ),
                 const Divider(height: 1, color: Colors.white10),
                 ListTile(
                   leading: const Icon(Icons.file_download_outlined, color: Color(0xFFC5A059)),
-                  title: const Text('Import Backup File', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Restore all records from a previously exported Iqamah JSON backup file.', style: TextStyle(fontSize: 11, color: Colors.white54)),
+                  title: Text(S.importTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  subtitle: Text(S.importSubtitle, style: const TextStyle(fontSize: 11, color: Colors.white54)),
                   onTap: () async {
                     final success = await provider.importBackup();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(
-                          success
-                              ? 'Backup restored successfully!'
-                              : 'Failed to restore backup. Please make sure the JSON file is valid.',
-                        ),
+                        content: Text(success ? S.importSuccess : S.importFailed),
                         backgroundColor: success ? Colors.green : Colors.red,
                       ),
                     );
@@ -1058,7 +1133,7 @@ class SettingsTab extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Uninstall Notice: All data is saved strictly on this device. If you uninstall this app, all logged prayers will be permanently deleted. Export backups regularly to preserve your history.',
+                    S.uninstallNotice,
                     style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.6), height: 1.4),
                   ),
                 ),
@@ -1066,10 +1141,10 @@ class SettingsTab extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          const Center(
+          Center(
             child: Text(
-              'Iqamah Mobile v1.0.0',
-              style: TextStyle(fontSize: 12, color: Colors.white24, fontWeight: FontWeight.bold),
+              S.versionLabel,
+              style: const TextStyle(fontSize: 12, color: Colors.white24, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -1169,9 +1244,9 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Salah Schedule',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                      Text(
+                        S.salahTimeTitle,
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                       const SizedBox(height: 2),
                       Row(
@@ -1191,7 +1266,7 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                       provider.detectLocationAndCalculate();
                     },
                     icon: const Icon(Icons.gps_fixed, size: 12, color: Colors.white),
-                    label: const Text('Detect', style: TextStyle(fontSize: 11)),
+                    label: Text(S.detectBtn, style: const TextStyle(fontSize: 11)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0A1F1B),
                       foregroundColor: const Color(0xFFC5A059),
@@ -1222,9 +1297,9 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Forbidden Salah Period Active',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orangeAccent, fontSize: 13),
+                            Text(
+                              S.forbiddenActive,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orangeAccent, fontSize: 13),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -1241,9 +1316,9 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: Colors.orange.shade500, width: 0.5),
                         ),
-                        child: const Text(
-                          'FORBIDDEN',
-                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                        child: Text(
+                          S.forbiddenBadge,
+                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -1265,9 +1340,9 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Current Time',
-                          style: TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        Text(
+                          S.currentTime,
+                          style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 1),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -1305,7 +1380,7 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40.0),
                   child: Center(
-                    child: Text('Click Detect to load Salah times.', style: TextStyle(color: Colors.white30)),
+                    child: Text(S.clickDetect, style: const TextStyle(color: Colors.white30)),
                   ),
                 )
               else ...[
@@ -1334,7 +1409,7 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                prayer.name,
+                                S.salahTimeName(prayer.name),
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
@@ -1360,9 +1435,9 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(color: Colors.red.shade500, width: 0.5),
                             ),
-                            child: const Text(
-                              '⛔ FORBIDDEN',
-                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                            child: Text(
+                              '⛔ ${S.forbiddenBadge}',
+                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                             ),
                           )
                         else if (active)
@@ -1372,9 +1447,9 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                               color: const Color(0xFFC5A059).withOpacity(0.2),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
-                              'ACTIVE',
-                              style: TextStyle(color: Color(0xFFC5A059), fontSize: 9, fontWeight: FontWeight.bold),
+                            child: Text(
+                              S.activeBadge,
+                              style: const TextStyle(color: Color(0xFFC5A059), fontSize: 9, fontWeight: FontWeight.bold),
                             ),
                           ),
                       ],
@@ -1385,9 +1460,9 @@ class _SalahTimeTabState extends State<SalahTimeTab> {
                 const SizedBox(height: 20),
 
                 // Forbidden Times Panel
-                const Text(
-                  'Forbidden (Makruh) Prayer Windows',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
+                Text(
+                  S.forbiddenWindowsTitle,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
                 ),
                 const SizedBox(height: 10),
                 Column(

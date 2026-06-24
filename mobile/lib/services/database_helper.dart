@@ -181,6 +181,26 @@ class DatabaseHelper {
     return existing?.id ?? log.id;
   }
 
+  /// Deletes a prayer log and its associated Qaza (via cascade).
+  /// Throws if the Qaza has already been fulfilled (irreversible).
+  Future<void> deletePrayerLog(String logId) async {
+    final db = await instance.database;
+    // Guard: don't allow delete if Qaza was already fulfilled
+    final qazaResult = await db.query(
+      'qaza_logs',
+      where: 'prayerLogId = ?',
+      whereArgs: [logId],
+    );
+    if (qazaResult.isNotEmpty) {
+      final qaza = QazaLog.fromMap(qazaResult.first);
+      if (qaza.isFulfilled) {
+        throw Exception(
+            'এই সালাতের কাজা ইতোমধ্যে আদায় করা হয়েছে। এটি মুছে ফেলা যাবে না।');
+      }
+    }
+    await db.delete('prayer_logs', where: 'id = ?', whereArgs: [logId]);
+  }
+
   // ── Qaza Operations ────────────────────────────────────────────────────────
 
   Future<List<QazaLog>> getPendingQazas(int userId) async {

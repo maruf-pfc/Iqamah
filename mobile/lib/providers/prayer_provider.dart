@@ -148,6 +148,24 @@ class PrayerProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> deletePrayerLog(String logId) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await DatabaseHelper.instance.deletePrayerLog(logId);
+      await fetchDailyLogs();
+      await fetchPendingQazas();
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> exportBackup() async {
     try {
       await DatabaseHelper.instance.exportBackup();
