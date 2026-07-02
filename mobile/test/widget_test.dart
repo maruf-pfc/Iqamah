@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/main.dart';
 import 'package:mobile/providers/prayer_provider.dart';
 import 'package:mobile/providers/salah_time_provider.dart';
+import 'package:mobile/l10n/strings.dart';
 
 void main() {
   testWidgets('App basic smoke test', (WidgetTester tester) async {
+    S.isBn = false;
     // Build our app with all required providers and trigger a frame.
     await tester.pumpWidget(
       MultiProvider(
@@ -14,7 +15,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => PrayerProvider()),
           ChangeNotifierProvider(create: (_) => SalahTimeProvider()),
         ],
-        child: const IqamahApp(),
+        child: const IqamahApp(hasOnboarded: true),
       ),
     );
 

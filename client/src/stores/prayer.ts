@@ -9,88 +9,29 @@ import type {
   LogMissedPrayerRequest,
 } from '@/types/prayer.types'
 
-const PRAYER_NAME_MAP: Record<string, number> = {
-  Fajr: 0,
-  Dhuhr: 1,
-  Asr: 2,
-  Maghrib: 3,
-  Isha: 4,
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
-const WAQT_STATUS_MAP: Record<string, number> = {
-  AwwalAlWaqt: 0,
-  WastAlWaqt: 1,
-  AkhirAlWaqt: 2,
-}
-
-const MISSED_REASON_MAP: Record<string, number> = {
-  ExcusedImpurity: 0,
-  ExcusedSleep: 1,
-  ExcusedForgetfulness: 2,
-  UnexcusedSituational: 3,
-  UnexcusedLaziness: 4,
-  UnexcusedDistraction: 5,
-}
-
-const QAZA_STATE_MAP: Record<string, number> = {
-  Pending: 0,
-  Offered: 1,
-}
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const normalizeQazaLog = (qaza: any): any => {
-  if (!qaza) return null
-  return {
-    ...qaza,
-    prayerName:
-      typeof qaza.prayerName === 'string' ? PRAYER_NAME_MAP[qaza.prayerName] : qaza.prayerName,
-    state: typeof qaza.state === 'string' ? QAZA_STATE_MAP[qaza.state] : qaza.state,
+const loadLogsFromStorage = (): PrayerLogDto[] => {
+  try {
+    const data = localStorage.getItem('iqamah_prayer_logs')
+    return data ? JSON.parse(data) : []
+  } catch {
+    return []
   }
 }
 
-const normalizePrayerLog = (log: any): any => {
-  if (!log) return null
-  return {
-    ...log,
-    prayerName:
-      typeof log.prayerName === 'string' ? PRAYER_NAME_MAP[log.prayerName] : log.prayerName,
-    waqtStatus:
-      log.waqtStatus !== null && log.waqtStatus !== undefined
-        ? typeof log.waqtStatus === 'string'
-          ? WAQT_STATUS_MAP[log.waqtStatus]
-          : log.waqtStatus
-        : null,
-    missedReason:
-      log.missedReason !== null && log.missedReason !== undefined
-        ? typeof log.missedReason === 'string'
-          ? MISSED_REASON_MAP[log.missedReason]
-          : log.missedReason
-        : null,
-    qazaLog: normalizeQazaLog(log.qazaLog),
-  }
+const saveLogsToStorage = (logs: PrayerLogDto[]) => {
+  localStorage.setItem('iqamah_prayer_logs', JSON.stringify(logs))
 }
-
-const normalizeAnalytics = (data: any): any => {
-  if (!data) return null
-  const normalizedStats: Record<number, any> = {}
-  if (data.prayerStats) {
-    for (const [key, val] of Object.entries(data.prayerStats)) {
-      const numKey = PRAYER_NAME_MAP[key] ?? Number(key)
-      normalizedStats[numKey] = val
-    }
-  }
-  return {
-    ...data,
-    prayerStats: normalizedStats,
-  }
-}
-/* eslint-enable @typescript-eslint/no-explicit-any */
-
-let rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-if (rawApiUrl && !rawApiUrl.endsWith('/api')) {
-  rawApiUrl = `${rawApiUrl}/api`
-}
-const API_BASE_URL = rawApiUrl || '/api'
 
 export const usePrayerStore = defineStore('prayer', () => {
   const authStore = useAuthStore()
@@ -105,32 +46,25 @@ export const usePrayerStore = defineStore('prayer', () => {
     error.value = null
   }
 
-  const getHeaders = (headers: Record<string, string> = {}) => {
-    const baseHeaders: Record<string, string> = { ...headers }
-    if (authStore.token) {
-      baseHeaders['Authorization'] = `Bearer ${authStore.token}`
-    }
-    return baseHeaders
-  }
-
   // ── Actions ──────────────────────────────────────────────────────────────
 
   const fetchPrayerLogs = async (from: string, to: string) => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`${API_BASE_URL}/prayers?from=${from}&to=${to}`, {
-        headers: getHeaders(),
+      const allLogs = loadLogsFromStorage()
+      const filtered = allLogs.filter(
+        (log) => log.prayerDate >= from && log.prayerDate <= to
+      )
+      filtered.sort((a, b) => {
+        if (a.prayerDate !== b.prayerDate) {
+          return a.prayerDate.localeCompare(b.prayerDate)
+        }
+        return a.prayerName - b.prayerName
       })
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.detail || 'Failed to fetch prayer logs.')
-      }
-      const data = await response.json()
-      prayerLogs.value = (data || []).map(normalizePrayerLog)
+      prayerLogs.value = filtered
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : 'An error occurred while fetching prayer logs.'
+      error.value = err instanceof Error ? err.message : 'Failed to fetch prayer logs.'
       throw err
     } finally {
       loading.value = false
@@ -141,21 +75,105 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`${API_BASE_URL}/prayers`, {
-        method: 'POST',
-        headers: getHeaders({
-          'Content-Type': 'application/json',
-        }),
-        body: JSON.stringify(request),
-      })
+      const allLogs = loadLogsFromStorage()
+      const existingIndex = allLogs.findIndex(
+        (log) => log.prayerDate === request.prayerDate && log.prayerName === request.prayerName
+      )
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.detail || 'Failed to log prayer.')
+      let resultId: string
+
+      if (existingIndex > -1) {
+        const oldLog = allLogs[existingIndex]!
+        resultId = oldLog.id
+
+        // Build updated log
+        let updatedQazaLog = oldLog.qazaLog
+        if (request.isOffered) {
+          updatedQazaLog = null
+        } else {
+          const missedReq = request as LogMissedPrayerRequest
+          const requiresQ = missedReq.missedReason !== 0 // MissedReason.ExcusedImpurity is 0
+          if (requiresQ) {
+            if (!updatedQazaLog || updatedQazaLog.state === 1) {
+              updatedQazaLog = {
+                id: generateUUID(),
+                prayerLogId: resultId,
+                userId: 1,
+                prayerName: request.prayerName,
+                originalPrayerDate: request.prayerDate,
+                state: 0, // QazaState.Pending
+                createdAt: new Date().toISOString(),
+                fulfilledAt: null,
+                timeToResolutionSeconds: null,
+              }
+            }
+          } else {
+            updatedQazaLog = null
+          }
+        }
+
+        const updatedLog: PrayerLogDto = {
+          id: resultId,
+          userId: 1,
+          prayerName: request.prayerName,
+          prayerDate: request.prayerDate,
+          isOffered: request.isOffered,
+          waqtStatus: request.isOffered ? (request as LogOfferedPrayerRequest).waqtStatus : null,
+          missedReason: !request.isOffered ? (request as LogMissedPrayerRequest).missedReason : null,
+          isJamaah: request.isOffered ? ((request as LogOfferedPrayerRequest).isJamaah ?? false) : false,
+          isTraveling: request.isTraveling ?? false,
+          isJummah: request.isOffered ? ((request as LogOfferedPrayerRequest).isJummah ?? false) : false,
+          isHome: request.isOffered ? ((request as LogOfferedPrayerRequest).isHome ?? false) : false,
+          quranNotes: request.isOffered ? ((request as LogOfferedPrayerRequest).quranNotes ?? undefined) : undefined,
+          hasTasbih: request.isOffered ? ((request as LogOfferedPrayerRequest).hasTasbih ?? false) : false,
+          loggedAt: oldLog.loggedAt,
+          qazaLog: updatedQazaLog,
+        }
+        allLogs[existingIndex] = updatedLog
+      } else {
+        resultId = generateUUID()
+        let qazaLog: QazaLogDto | null = null
+
+        if (!request.isOffered) {
+          const missedReq = request as LogMissedPrayerRequest
+          const requiresQ = missedReq.missedReason !== 0
+          if (requiresQ) {
+            qazaLog = {
+              id: generateUUID(),
+              prayerLogId: resultId,
+              userId: 1,
+              prayerName: request.prayerName,
+              originalPrayerDate: request.prayerDate,
+              state: 0, // QazaState.Pending
+              createdAt: new Date().toISOString(),
+              fulfilledAt: null,
+              timeToResolutionSeconds: null,
+            }
+          }
+        }
+
+        const newLog: PrayerLogDto = {
+          id: resultId,
+          userId: 1,
+          prayerName: request.prayerName,
+          prayerDate: request.prayerDate,
+          isOffered: request.isOffered,
+          waqtStatus: request.isOffered ? (request as LogOfferedPrayerRequest).waqtStatus : null,
+          missedReason: !request.isOffered ? (request as LogMissedPrayerRequest).missedReason : null,
+          isJamaah: request.isOffered ? ((request as LogOfferedPrayerRequest).isJamaah ?? false) : false,
+          isTraveling: request.isTraveling ?? false,
+          isJummah: request.isOffered ? ((request as LogOfferedPrayerRequest).isJummah ?? false) : false,
+          isHome: request.isOffered ? ((request as LogOfferedPrayerRequest).isHome ?? false) : false,
+          quranNotes: request.isOffered ? ((request as LogOfferedPrayerRequest).quranNotes ?? undefined) : undefined,
+          hasTasbih: request.isOffered ? ((request as LogOfferedPrayerRequest).hasTasbih ?? false) : false,
+          loggedAt: new Date().toISOString(),
+          qazaLog,
+        }
+        allLogs.push(newLog)
       }
 
-      const resultId = await response.json()
-      return resultId as string
+      saveLogsToStorage(allLogs)
+      return resultId
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred while logging prayer.'
       throw err
@@ -168,18 +186,17 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`${API_BASE_URL}/qazas/pending`, {
-        headers: getHeaders(),
-      })
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.detail || 'Failed to fetch pending Qaza logs.')
+      const allLogs = loadLogsFromStorage()
+      const pending: QazaLogDto[] = []
+      for (const log of allLogs) {
+        if (log.qazaLog && log.qazaLog.state === 0) {
+          pending.push(log.qazaLog)
+        }
       }
-      const data = await response.json()
-      pendingQazas.value = (data || []).map(normalizeQazaLog)
+      pending.sort((a, b) => b.originalPrayerDate.localeCompare(a.originalPrayerDate))
+      pendingQazas.value = pending
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : 'An error occurred while fetching Qaza logs.'
+      error.value = err instanceof Error ? err.message : 'An error occurred while fetching Qaza logs.'
       throw err
     } finally {
       loading.value = false
@@ -190,16 +207,47 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`${API_BASE_URL}/qazas/${qazaLogId}/fulfill`, {
-        method: 'POST',
-        headers: getHeaders({
-          'Content-Type': 'application/json',
-        }),
-      })
+      const allLogs = loadLogsFromStorage()
+      const existingIndex = allLogs.findIndex(
+        (log) => log.qazaLog && log.qazaLog.id === qazaLogId
+      )
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.detail || 'Failed to fulfill Qaza obligation.')
+      if (existingIndex > -1) {
+        const log = allLogs[existingIndex]!
+        if (log.qazaLog) {
+          const nowStr = new Date().toISOString()
+          const createdTime = new Date(log.qazaLog.createdAt).getTime()
+          const fulfilledTime = new Date(nowStr).getTime()
+          const timeToResolutionSeconds = Math.max(0, Math.floor((fulfilledTime - createdTime) / 1000))
+
+          const updatedQaza: QazaLogDto = {
+            ...log.qazaLog,
+            state: 1, // QazaState.Offered
+            fulfilledAt: nowStr,
+            timeToResolutionSeconds,
+          }
+
+          const updatedLog: PrayerLogDto = {
+            id: log.id,
+            userId: log.userId,
+            prayerName: log.prayerName,
+            prayerDate: log.prayerDate,
+            isOffered: log.isOffered,
+            waqtStatus: log.waqtStatus,
+            missedReason: log.missedReason,
+            isJamaah: log.isJamaah,
+            isTraveling: log.isTraveling,
+            isJummah: log.isJummah,
+            isHome: log.isHome,
+            quranNotes: log.quranNotes,
+            hasTasbih: log.hasTasbih,
+            loggedAt: log.loggedAt,
+            qazaLog: updatedQaza,
+          }
+
+          allLogs[existingIndex] = updatedLog
+          saveLogsToStorage(allLogs)
+        }
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred while fulfilling Qaza.'
@@ -213,18 +261,136 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await fetch(`${API_BASE_URL}/analytics?from=${from}&to=${to}`, {
-        headers: getHeaders(),
-      })
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
-        throw new Error(errData.detail || 'Failed to fetch analytics.')
+      const allLogs = loadLogsFromStorage()
+      const rangeLogs = allLogs.filter((log) => log.prayerDate >= from && log.prayerDate <= to)
+
+      const totalLogged = rangeLogs.length
+      const obligatedLogs = rangeLogs.filter((log) => log.missedReason !== 0)
+      const totalObligated = obligatedLogs.length
+      const offeredLogs = rangeLogs.filter((log) => log.isOffered)
+      const totalOffered = offeredLogs.length
+      const totalMissed = totalObligated - totalOffered
+      const offeredPercentage = totalObligated > 0 ? Math.round((totalOffered / totalObligated) * 100) : 0
+
+      let awwalAlWaqtCount = 0
+      let wastAlWaqtCount = 0
+      let akhirAlWaqtCount = 0
+      for (const log of offeredLogs) {
+        if (log.waqtStatus === 0) awwalAlWaqtCount++
+        else if (log.waqtStatus === 1) wastAlWaqtCount++
+        else if (log.waqtStatus === 2) akhirAlWaqtCount++
       }
-      const data = await response.json()
-      analytics.value = normalizeAnalytics(data)
+
+      const punctuality = {
+        awwalAlWaqtCount,
+        wastAlWaqtCount,
+        akhirAlWaqtCount,
+        awwalAlWaqtPercentage: totalOffered > 0 ? Math.round((awwalAlWaqtCount / totalOffered) * 100) : 0,
+        wastAlWaqtPercentage: totalOffered > 0 ? Math.round((wastAlWaqtCount / totalOffered) * 100) : 0,
+        akhirAlWaqtPercentage: totalOffered > 0 ? Math.round((akhirAlWaqtCount / totalOffered) * 100) : 0,
+      }
+
+      let excusedImpurityCount = 0
+      let excusedSleepCount = 0
+      let excusedForgetfulnessCount = 0
+      let unexcusedSituationalCount = 0
+      let unexcusedLazinessCount = 0
+      let unexcusedDistractionCount = 0
+
+      for (const log of rangeLogs) {
+        if (!log.isOffered) {
+          if (log.missedReason === 0) excusedImpurityCount++
+          else if (log.missedReason === 1) excusedSleepCount++
+          else if (log.missedReason === 2) excusedForgetfulnessCount++
+          else if (log.missedReason === 3) unexcusedSituationalCount++
+          else if (log.missedReason === 4) unexcusedLazinessCount++
+          else if (log.missedReason === 5) unexcusedDistractionCount++
+        }
+      }
+
+      const totalExcused = excusedImpurityCount + excusedSleepCount + excusedForgetfulnessCount
+      const totalUnexcused = unexcusedSituationalCount + unexcusedLazinessCount + unexcusedDistractionCount
+
+      const missedReasons = {
+        excusedImpurityCount,
+        excusedSleepCount,
+        excusedForgetfulnessCount,
+        unexcusedSituationalCount,
+        unexcusedLazinessCount,
+        unexcusedDistractionCount,
+        totalExcused,
+        totalUnexcused,
+      }
+
+      const prayerNamesList = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      const prayerStats: Record<string, any> = {}
+
+      for (let i = 0; i < 5; i++) {
+        const pNameStr = prayerNamesList[i] || 'fajr'
+        const pLogs = rangeLogs.filter((log) => log.prayerName === i)
+        const pObligated = pLogs.filter((log) => log.missedReason !== 0)
+        const pOffered = pLogs.filter((log) => log.isOffered)
+
+        const totalObligatedCount = pObligated.length
+        const totalOfferedCount = pOffered.length
+
+        const stats = {
+          totalObligated: totalObligatedCount,
+          totalOffered: totalOfferedCount,
+          offeredPercentage: totalObligatedCount > 0 ? Math.round((totalOfferedCount / totalObligatedCount) * 100) : 0,
+          jamaahCount: pOffered.filter((log) => log.isJamaah).length,
+          jamaahPercentage: totalOfferedCount > 0 ? Math.round((pOffered.filter((log) => log.isJamaah).length / totalOfferedCount) * 100) : 0,
+          travelingCount: pLogs.filter((log) => log.isTraveling).length,
+          homeCount: pOffered.filter((log) => log.isHome).length,
+        }
+
+        prayerStats[i] = stats
+        prayerStats[pNameStr] = stats
+        prayerStats[pNameStr.charAt(0).toUpperCase() + pNameStr.slice(1)] = stats
+      }
+
+      const allQazaLogs = allLogs
+        .map((log) => log.qazaLog)
+        .filter((qaza): qaza is QazaLogDto => qaza !== null)
+
+      const totalPending = allQazaLogs.filter((qaza) => qaza.state === 0).length
+      const totalFulfilled = allQazaLogs.filter((qaza) => qaza.state === 1).length
+      const totalIncurred = totalPending + totalFulfilled
+
+      let totalResolutionTimeSeconds = 0
+      let resolvedCount = 0
+      for (const qaza of allQazaLogs) {
+        if (qaza.state === 1 && qaza.timeToResolutionSeconds !== null) {
+          totalResolutionTimeSeconds += qaza.timeToResolutionSeconds
+          resolvedCount++
+        }
+      }
+
+      const averageResolutionTimeHours = resolvedCount > 0
+        ? parseFloat((totalResolutionTimeSeconds / (3600 * resolvedCount)).toFixed(2))
+        : 0
+
+      const qazaSummary = {
+        totalPending,
+        totalFulfilled,
+        totalIncurred,
+        averageResolutionTimeHours,
+      }
+
+      analytics.value = {
+        totalLogged,
+        totalObligated,
+        totalOffered,
+        totalMissed,
+        offeredPercentage,
+        punctuality,
+        missedReasons,
+        prayerStats,
+        qazaSummary,
+      }
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : 'An error occurred while fetching analytics.'
+      error.value = err instanceof Error ? err.message : 'An error occurred while fetching analytics.'
       throw err
     } finally {
       loading.value = false

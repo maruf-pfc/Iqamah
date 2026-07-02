@@ -5,7 +5,7 @@ import QazaView from '../views/QazaView.vue'
 import AnalyticsView from '../views/AnalyticsView.vue'
 import SalahTimeView from '../views/SalahTimeView.vue'
 import GuideView from '../views/GuideView.vue'
-import LoginView from '../views/LoginView.vue'
+import OnboardingView from '../views/OnboardingView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,12 +61,22 @@ const router = createRouter({
       },
     },
     {
-      path: '/login',
-      name: 'login',
-      component: LoginView,
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../views/SettingsView.vue'),
       meta: {
-        title: 'Sign In | Iqamah — Establish Your Salah',
-        description: 'Access your secure personal Salah logging account to monitor prayer metrics and analytics.'
+        requiresAuth: true,
+        title: 'Settings | Iqamah',
+        description: 'Configure your preferences, language, gender settings, and database backup/restore options.'
+      }
+    },
+    {
+      path: '/onboarding',
+      name: 'onboarding',
+      component: OnboardingView,
+      meta: {
+        title: 'Onboarding | Iqamah — Establish Your Salah',
+        description: 'Configure your language and gender settings to begin tracking your Salah habits.'
       }
     },
   ],
@@ -87,8 +97,8 @@ router.beforeEach(async (to) => {
   const isAuth = authStore.isAuthenticated
 
   if (to.meta.requiresAuth && !isAuth) {
-    return '/login'
-  } else if (to.name === 'login' && isAuth) {
+    return '/onboarding'
+  } else if (to.name === 'onboarding' && isAuth) {
     return '/'
   }
 })

@@ -21,6 +21,6 @@ describe('App', () => {
         plugins: [router],
       },
     })
-    expect(wrapper.text()).toContain('Iqamah')
+    expect(wrapper.text()).toContain('আজ')
   })
 })

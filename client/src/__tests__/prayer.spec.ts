@@ -1,20 +1,20 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { usePrayerStore } from '../stores/prayer'
 import { useAuthStore } from '../stores/auth'
-import { PrayerName, WaqtStatus, QazaState } from '../types/prayer.types'
+import { PrayerName, WaqtStatus, QazaState, MissedReason } from '../types/prayer.types'
 
-describe('Prayer Store', () => {
+describe('Prayer Store (Offline-First)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    vi.restoreAllMocks()
+    localStorage.clear()
 
-    // Setup dummy auth credentials for headers in tests
+    // Initialize auth store to completed onboarding
     const authStore = useAuthStore()
-    authStore.token = 'test_token'
+    authStore.completeOnboarding('male', 'bn', 'Test User')
   })
 
-  it('fetchPrayerLogs successfully populates prayerLogs state', async () => {
+  it('fetchPrayerLogs successfully populates prayerLogs state from LocalStorage', async () => {
     const mockLogs = [
       {
         id: '11111111-2222-3333-4444-555555555555',
@@ -27,60 +27,22 @@ describe('Prayer Store', () => {
         isJamaah: true,
         isTraveling: false,
         isJummah: false,
+        isHome: false,
         loggedAt: '2025-05-01T05:00:00Z',
         qazaLog: null,
       },
     ]
-
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockLogs),
-      } as Response),
-    )
+    localStorage.setItem('iqamah_prayer_logs', JSON.stringify(mockLogs))
 
     const store = usePrayerStore()
     await store.fetchPrayerLogs('2025-05-01', '2025-05-02')
 
-    expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/prayers?from=2025-05-01&to=2025-05-02',
-      expect.objectContaining({
-        headers: {
-          Authorization: 'Bearer test_token',
-        },
-      }),
-    )
     expect(store.prayerLogs).toEqual(mockLogs)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
   })
 
-  it('fetchPrayerLogs sets error state on API failure', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-      Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ detail: 'Database connection failed' }),
-      } as Response),
-    )
-
-    const store = usePrayerStore()
-    await expect(store.fetchPrayerLogs('2025-05-01', '2025-05-02')).rejects.toThrow(
-      'Database connection failed',
-    )
-
-    expect(store.prayerLogs).toEqual([])
-    expect(store.error).toBe('Database connection failed')
-    expect(store.loading).toBe(false)
-  })
-
-  it('logPrayer posts log to backend successfully', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve('22222222-3333-4444-5555-666666666666'),
-      } as Response),
-    )
-
+  it('logPrayer saves offered prayer to LocalStorage', async () => {
     const store = usePrayerStore()
     const request = {
       prayerName: PrayerName.Fajr,
@@ -91,30 +53,19 @@ describe('Prayer Store', () => {
     }
 
     const newId = await store.logPrayer(request)
+    expect(newId).toBeDefined()
+    expect(typeof newId).toBe('string')
 
-    expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/prayers',
-      expect.objectContaining({
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer test_token',
-        },
-        body: JSON.stringify(request),
-      }),
-    )
-    expect(newId).toBe('22222222-3333-4444-5555-666666666666')
-    expect(store.error).toBeNull()
+    const stored = JSON.parse(localStorage.getItem('iqamah_prayer_logs') || '[]')
+    expect(stored).toHaveLength(1)
+    expect(stored[0].id).toBe(newId)
+    expect(stored[0].prayerName).toBe(PrayerName.Fajr)
+    expect(stored[0].isOffered).toBe(true)
+    expect(stored[0].waqtStatus).toBe(WaqtStatus.AwwalAlWaqt)
+    expect(stored[0].isJamaah).toBe(true)
   })
 
-  it('logPrayer with Quran notes and Tasbih posts successfully', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve('33333333-4444-5555-6666-777777777777'),
-      } as Response),
-    )
-
+  it('logPrayer with Quran notes and Tasbih saves successfully', async () => {
     const store = usePrayerStore()
     const request = {
       prayerName: PrayerName.Asr,
@@ -125,113 +76,121 @@ describe('Prayer Store', () => {
       hasTasbih: true,
     }
 
-    const newId = await store.logPrayer(request)
-
-    expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/prayers',
-      expect.objectContaining({
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer test_token',
-        },
-        body: JSON.stringify(request),
-      }),
-    )
-    expect(newId).toBe('33333333-4444-5555-6666-777777777777')
-    expect(store.error).toBeNull()
+    await store.logPrayer(request)
+    const stored = JSON.parse(localStorage.getItem('iqamah_prayer_logs') || '[]')
+    expect(stored[0].quranNotes).toBe('Surah Ya-Sin')
+    expect(stored[0].hasTasbih).toBe(true)
   })
 
-  it('fetchPendingQazas populates pendingQazas state', async () => {
-    const mockQazas = [
+  it('logPrayer generates QazaLog for unexcused missed prayers', async () => {
+    const store = usePrayerStore()
+    const request = {
+      prayerName: PrayerName.Dhuhr,
+      prayerDate: '2025-05-01',
+      isOffered: false,
+      missedReason: MissedReason.UnexcusedLaziness,
+    }
+
+    await store.logPrayer(request)
+    const stored = JSON.parse(localStorage.getItem('iqamah_prayer_logs') || '[]')
+    expect(stored[0].isOffered).toBe(false)
+    expect(stored[0].qazaLog).toBeDefined()
+    expect(stored[0].qazaLog.state).toBe(QazaState.Pending)
+    expect(stored[0].qazaLog.prayerName).toBe(PrayerName.Dhuhr)
+  })
+
+  it('fetchPendingQazas populates pendingQazas state from storage', async () => {
+    const mockLogs = [
       {
-        id: '99999999-8888-7777-6666-555555555555',
-        prayerLogId: '11111111-2222-3333-4444-555555555555',
+        id: '11111111-2222-3333-4444-555555555555',
         userId: 1,
         prayerName: PrayerName.Asr,
-        originalPrayerDate: '2025-05-02',
-        state: QazaState.Pending,
-        createdAt: '2025-05-02T16:00:00Z',
-        fulfilledAt: null,
-        timeToResolutionSeconds: null,
+        prayerDate: '2025-05-02',
+        isOffered: false,
+        waqtStatus: null,
+        missedReason: MissedReason.UnexcusedLaziness,
+        isJamaah: false,
+        isTraveling: false,
+        isJummah: false,
+        isHome: false,
+        loggedAt: '2025-05-02T16:00:00Z',
+        qazaLog: {
+          id: '99999999-8888-7777-6666-555555555555',
+          prayerLogId: '11111111-2222-3333-4444-555555555555',
+          userId: 1,
+          prayerName: PrayerName.Asr,
+          originalPrayerDate: '2025-05-02',
+          state: QazaState.Pending,
+          createdAt: '2025-05-02T16:00:00Z',
+          fulfilledAt: null,
+          timeToResolutionSeconds: null,
+        },
       },
     ]
-
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockQazas),
-      } as Response),
-    )
+    localStorage.setItem('iqamah_prayer_logs', JSON.stringify(mockLogs))
 
     const store = usePrayerStore()
     await store.fetchPendingQazas()
 
-    expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/qazas/pending',
-      expect.objectContaining({
-        headers: {
-          Authorization: 'Bearer test_token',
-        },
-      }),
-    )
-    expect(store.pendingQazas).toEqual(mockQazas)
-    expect(store.error).toBeNull()
+    expect(store.pendingQazas).toHaveLength(1)
+    expect(store.pendingQazas[0]!.id).toBe('99999999-8888-7777-6666-555555555555')
+    expect(store.pendingQazas[0]!.state).toBe(QazaState.Pending)
   })
 
-  it('fetchAnalytics successfully populates analytics state', async () => {
-    const mockAnalytics = {
-      totalLogged: 10,
-      totalObligated: 9,
-      totalOffered: 7,
-      totalMissed: 2,
-      offeredPercentage: 77.78,
-      punctuality: {
-        awwalAlWaqtCount: 4,
-        wastAlWaqtCount: 2,
-        akhirAlWaqtCount: 1,
-        awwalAlWaqtPercentage: 57.14,
-        wastAlWaqtPercentage: 28.57,
-        akhirAlWaqtPercentage: 14.29,
+  it('fetchAnalytics successfully calculates analytics from LocalStorage logs', async () => {
+    const mockLogs = [
+      {
+        id: '11111111-1',
+        userId: 1,
+        prayerName: PrayerName.Fajr,
+        prayerDate: '2025-05-01',
+        isOffered: true,
+        waqtStatus: WaqtStatus.AwwalAlWaqt,
+        missedReason: null,
+        isJamaah: true,
+        isTraveling: false,
+        isJummah: false,
+        isHome: false,
+        loggedAt: '2025-05-01T05:00:00Z',
+        qazaLog: null,
       },
-      missedReasons: {
-        excusedImpurityCount: 1,
-        excusedSleepCount: 1,
-        excusedForgetfulnessCount: 0,
-        unexcusedSituationalCount: 0,
-        unexcusedLazinessCount: 1,
-        unexcusedDistractionCount: 0,
-        totalExcused: 1,
-        totalUnexcused: 1,
+      {
+        id: '11111111-2',
+        userId: 1,
+        prayerName: PrayerName.Dhuhr,
+        prayerDate: '2025-05-01',
+        isOffered: false,
+        waqtStatus: null,
+        missedReason: MissedReason.UnexcusedLaziness,
+        isJamaah: false,
+        isTraveling: false,
+        isJummah: false,
+        isHome: false,
+        loggedAt: '2025-05-01T12:00:00Z',
+        qazaLog: {
+          id: '22222222-2',
+          prayerLogId: '11111111-2',
+          userId: 1,
+          prayerName: PrayerName.Dhuhr,
+          originalPrayerDate: '2025-05-01',
+          state: QazaState.Pending,
+          createdAt: '2025-05-01T12:00:00Z',
+          fulfilledAt: null,
+          timeToResolutionSeconds: null,
+        },
       },
-      prayerStats: {},
-      qazaSummary: {
-        totalPending: 2,
-        totalFulfilled: 3,
-        totalIncurred: 5,
-        averageResolutionTimeHours: 12.5,
-      },
-    }
-
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockAnalytics),
-      } as Response),
-    )
+    ]
+    localStorage.setItem('iqamah_prayer_logs', JSON.stringify(mockLogs))
 
     const store = usePrayerStore()
-    await store.fetchAnalytics('2025-05-01', '2025-05-10')
+    await store.fetchAnalytics('2025-05-01', '2025-05-02')
 
-    expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/analytics?from=2025-05-01&to=2025-05-10',
-      expect.objectContaining({
-        headers: {
-          Authorization: 'Bearer test_token',
-        },
-      }),
-    )
-    expect(store.analytics).toEqual(mockAnalytics)
-    expect(store.error).toBeNull()
+    expect(store.analytics).toBeDefined()
+    expect(store.analytics?.totalLogged).toBe(2)
+    expect(store.analytics?.totalObligated).toBe(2)
+    expect(store.analytics?.totalOffered).toBe(1)
+    expect(store.analytics?.offeredPercentage).toBe(50)
+    expect(store.analytics?.missedReasons.unexcusedLazinessCount).toBe(1)
+    expect(store.analytics?.qazaSummary.totalPending).toBe(1)
   })
 })

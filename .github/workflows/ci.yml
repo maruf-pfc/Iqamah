@@ -110,22 +110,47 @@ jobs:
         tag_name: ${{ env.RELEASE_TAG }}
         name: "Iqamah ${{ env.RELEASE_VERSION }}"
         body: |
-          🕌 **Iqamah ${{ env.RELEASE_VERSION }} — Automated Build**
+          🕌 **Iqamah ${{ env.RELEASE_VERSION }}**
 
-          Built from `main` branch commit `${{ github.sha }}`.
+          Built from `main` · commit `${{ github.sha }}`
 
-          ### Downloads
+          ---
+
+          ### 🆕 What's New in v1.1.0
+
+          #### 🌐 Full Bengali Localization (বাংলা)
+          - Entire app UI is now available in Bengali by default
+          - Islamic terms (Fajr, Qaza, Jamaah, Waqt, Hayd, Nifas, Musafir, Tasbih) kept as natural transliterations — not force-translated
+          - Language toggle in Settings: switch between **বাংলা** and **English** at any time
+
+          #### 🗑️ Delete Prayer Log
+          - New trash icon on each logged prayer card
+          - Confirmation dialog before deletion — prevents accidental data loss
+          - Guards against deleting prayers whose Qaza has already been fulfilled
+          - Cascades: deletes linked Qaza record automatically
+
+          #### ✅ Fulfill Qaza — Improved UX
+          - Confirmation dialog before marking Qaza as fulfilled
+          - Success snackbar feedback after fulfillment
+
+          #### 🛠️ Bug Fixes
+          - Fixed Android launcher showing "mobile" instead of "Iqamah"
+          - Fixed `const` widget errors with runtime string getters
+
+          ---
+
+          ### 📦 Downloads
           - **`app-release.apk`** — Universal APK (all devices)
           - **`app-arm64-v8a-release.apk`** — ARM64 (most modern phones)
           - **`app-armeabi-v7a-release.apk`** — ARM32 (older devices)
           - **`app-x86_64-release.apk`** — x86_64 (emulators)
 
-          ### Features
+          ### ✨ Core Features
           - Salah Time with offline Adhan calculations (Karachi method)
           - Location-based prayer times & forbidden zone alerts
           - Hayd / Nifas logging (female users only)
-          - Prayer log, Qaza tracking, Analytics
-          - Bangla & English language support
+          - Prayer log, Qaza tracking, Analytics dashboard
+          - Backup & Restore (JSON export/import)
         draft: false
         prerelease: false
         files: mobile/build/app/outputs/flutter-apk/*.apk

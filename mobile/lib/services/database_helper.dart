@@ -2,11 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/prayer_log.dart';
 import '../models/qaza_log.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
+
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -21,8 +25,15 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+    } else if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+
+    final dbPath = kIsWeb ? '' : await getDatabasesPath();
+    final path = kIsWeb ? filePath : join(dbPath, filePath);
 
     return await openDatabase(
       path,
@@ -146,9 +157,12 @@ class DatabaseHelper {
               "Cannot modify the original prayer to 'On-Time' because the associated Qaza has already been fulfilled.");
         }
 
+        final updateMap = log.toMap();
+        updateMap['id'] = existing.id; // Force using the existing record ID to preserve referential integrity
+
         await txn.update(
           'prayer_logs',
-          log.toMap(),
+          updateMap,
           where: 'id = ?',
           whereArgs: [existing.id],
         );
@@ -236,6 +250,50 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [qazaId],
     );
+  }
+
+  Future<int> getActiveStreak(int userId) async {
+    final db = await instance.database;
+    final toDate = DateTime.now();
+    final fromDate = toDate.subtract(const Duration(days: 30));
+    final formatter = DateFormat('yyyy-MM-dd');
+
+    final result = await db.query(
+      'prayer_logs',
+      where: 'userId = ? AND prayerDate >= ? AND prayerDate <= ? AND isOffered = 1',
+      whereArgs: [userId, formatter.format(fromDate), formatter.format(toDate)],
+    );
+
+    final Set<String> offeredDates = result.map((row) => row['prayerDate'] as String).toSet();
+
+    int streak = 0;
+    DateTime checkDate = DateTime.now();
+    String checkStr = formatter.format(checkDate);
+
+    if (offeredDates.contains(checkStr)) {
+      streak++;
+    } else {
+      checkDate = checkDate.subtract(const Duration(days: 1));
+      final prevStr = formatter.format(checkDate);
+      if (offeredDates.contains(prevStr)) {
+        streak++;
+        checkStr = prevStr;
+      }
+    }
+
+    if (streak > 0) {
+      while (true) {
+        checkDate = checkDate.subtract(const Duration(days: 1));
+        final nextStr = formatter.format(checkDate);
+        if (offeredDates.contains(nextStr)) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    return streak > 0 ? streak : 1; // Default to 1 for motivation if there's any prayer or default placeholder
   }
 
   // ── Analytics Queries ──────────────────────────────────────────────────────
@@ -379,15 +437,18 @@ class DatabaseHelper {
     };
 
     final jsonString = jsonEncode(backupData);
-    final tempDir = await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final backupFile = File(join(tempDir.path, 'iqamah_backup_$timestamp.json'));
+    final bytes = utf8.encode(jsonString);
 
-    await backupFile.writeAsString(jsonString);
+    final xFile = XFile.fromData(
+      bytes,
+      mimeType: 'application/json',
+      name: 'iqamah_backup_$timestamp.json',
+    );
 
     // Share backup file
     await Share.shareXFiles(
-      [XFile(backupFile.path)],
+      [xFile],
       subject: 'Iqamah Backup Export',
       text: 'Here is your Iqamah prayer log backup file.',
     );
@@ -397,14 +458,22 @@ class DatabaseHelper {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
+      withData: true,
     );
 
-    if (result == null || result.files.single.path == null) {
+    if (result == null || result.files.isEmpty) {
       return false;
     }
 
-    final file = File(result.files.single.path!);
-    final jsonString = await file.readAsString();
+    final file = result.files.single;
+    String jsonString;
+    if (kIsWeb) {
+      if (file.bytes == null) return false;
+      jsonString = utf8.decode(file.bytes!);
+    } else {
+      if (file.path == null) return false;
+      jsonString = await File(file.path!).readAsString();
+    }
 
     try {
       final backupData = jsonDecode(jsonString) as Map<String, dynamic>;

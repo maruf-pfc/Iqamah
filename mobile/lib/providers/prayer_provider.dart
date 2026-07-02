@@ -12,6 +12,7 @@ class PrayerProvider extends ChangeNotifier {
   Map<String, dynamic>? _analytics;
   bool _loading = false;
   String? _error;
+  int _streak = 1;
 
   DateTime get selectedDate => _selectedDate;
   Map<PrayerName, PrayerLog?> get dailyLogs => _dailyLogs;
@@ -19,6 +20,7 @@ class PrayerProvider extends ChangeNotifier {
   Map<String, dynamic>? get analytics => _analytics;
   bool get loading => _loading;
   String? get error => _error;
+  int get streak => _streak;
 
   String get formattedSelectedDate => DateFormat('yyyy-MM-dd').format(_selectedDate);
 
@@ -44,6 +46,8 @@ class PrayerProvider extends ChangeNotifier {
       for (final log in logs) {
         _dailyLogs[log.prayerName] = log;
       }
+
+      _streak = await DatabaseHelper.instance.getActiveStreak(currentUserId);
     } catch (e) {
       _error = e.toString();
     } finally {

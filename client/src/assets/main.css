@@ -2,30 +2,45 @@
 
 @theme {
   --font-serif: "Cinzel", "Amiri", Georgia, serif;
-  --font-sans: "Outfit", "Noto Sans Bengali", sans-serif;
+  --font-sans: "Noto Sans Bengali", "Outfit", sans-serif;
   --font-arabic: "Amiri", serif;
   --font-bengali: "Noto Sans Bengali", sans-serif;
   
-  --color-islamic-deep: #030c08;
-  --color-islamic-card: #061710;
-  --color-islamic-hover: #0c261b;
-  --color-islamic-border: rgba(212, 175, 55, 0.15);
+  --color-m3-primary: #0F766E;
+  --color-m3-primary-container: #CCFBF1;
+  --color-m3-on-primary: #FFFFFF;
+  --color-m3-on-primary-container: #042F2E;
   
-  --color-gold-50: #fdfbf7;
-  --color-gold-100: #fbf5e6;
-  --color-gold-200: #f4e6c1;
-  --color-gold-300: #ead296;
-  --color-gold-400: #dcba6b;
-  --color-gold-500: #d4af37; /* Metallic Gold */
-  --color-gold-600: #b8912d;
-  --color-gold-700: #937024;
-  --color-gold-800: #6e501d;
-  --color-gold-900: #4a3416;
+  --color-m3-secondary: #4A6361;
+  --color-m3-secondary-container: #CCE8E6;
+  --color-m3-on-secondary: #FFFFFF;
+  
+  --color-m3-background: #F8FAFC;
+  --color-m3-surface: #FFFFFF;
+  --color-m3-surface-variant: #E2E8F0;
+  --color-m3-outline: #94A3B8;
+  
+  --color-m3-success: #16A34A;
+  --color-m3-success-container: #DCFCE7;
+  --color-m3-warning: #F59E0B;
+  --color-m3-warning-container: #FEF3C7;
+  --color-m3-error: #DC2626;
+  --color-m3-error-container: #FEE2E2;
+  
+  /* Dark Mode Material You overrides */
+  --color-m3-dark-primary: #5EEAD4;
+  --color-m3-dark-primary-container: #115E59;
+  --color-m3-dark-on-primary: #003735;
+  --color-m3-dark-on-primary-container: #99F6E4;
+  --color-m3-dark-background: #0F172A;
+  --color-m3-dark-surface: #1E293B;
+  --color-m3-dark-surface-variant: #334155;
+  --color-m3-dark-outline: #64748B;
 }
 
 /* Base style overrides */
 html, body {
-  background-color: #030c08;
+  background-color: #0B0F19; /* Always dark deep background for the outer desktop wrapper */
   color: #f1f5f9;
   font-family: var(--font-sans);
   scroll-behavior: smooth;

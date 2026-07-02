@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
 import { useLocaleStore } from '@/stores/locale'
 import { PrayerName } from '@/types/prayer.types'
@@ -8,11 +8,11 @@ const store = usePrayerStore()
 const localeStore = useLocaleStore()
 
 const ARABIC_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء']
+const PRAYER_ICONS = ['🌅', '☀️', '⛅', '🌇', '🌃']
 
 const getLocalizedPrayerName = (prayer: number) => {
   const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
   const key = keys[prayer] || 'fajr'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return localeStore.t(key as any)
 }
 
@@ -24,12 +24,13 @@ const loadQazas = async () => {
   }
 }
 
-loadQazas()
+onMounted(() => {
+  loadQazas()
+})
 
 const handleFulfillQaza = async (qazaLogId: string) => {
   try {
     await store.fulfillQaza(qazaLogId)
-    // Reload Qazas
     await loadQazas()
   } catch (err) {
     console.error('Error fulfilling Qaza:', err)
@@ -38,15 +39,16 @@ const handleFulfillQaza = async (qazaLogId: string) => {
 
 const getRelativeTime = (dateStr: string) => {
   const date = new Date(dateStr)
-  // Strip time for clean day diff
   const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const today = new Date()
   const d2 = new Date(today.getFullYear(), today.getMonth(), today.getDate())
   const diffTime = d2.getTime() - d1.getTime()
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-  if (diffDays <= 0) return localeStore.t('today')
-  if (diffDays === 1) return localeStore.t('yesterday')
-  return localeStore.t('days_ago', { count: diffDays })
+  
+  if (diffDays <= 0) return 'আজ'
+  if (diffDays === 1) return 'গতকাল'
+  if (diffDays < 7) return `${diffDays} দিন আগে`
+  return date.toLocaleDateString('bn-BD', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 // Group pending Qaza logs by prayer name for summary
@@ -65,150 +67,144 @@ const qazaSummary = computed<Record<number, number>>(() => {
   })
   return counts
 })
+
+// Timeline grouping
+const groupedQazas = computed(() => {
+  const groups: Record<string, typeof store.pendingQazas> = {
+    'আজ': [],
+    'গতকাল': [],
+    'এই সপ্তাহে': [],
+    'পূর্বে': []
+  }
+
+  store.pendingQazas.forEach(q => {
+    const date = new Date(q.originalPrayerDate)
+    const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const today = new Date()
+    const d2 = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    const diffTime = d2.getTime() - d1.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays <= 0) {
+      groups['আজ']!.push(q)
+    } else if (diffDays === 1) {
+      groups['গতকাল']!.push(q)
+    } else if (diffDays < 7) {
+      groups['এই সপ্তাহে']!.push(q)
+    } else {
+      groups['পূর্বে']!.push(q)
+    }
+  })
+
+  // Filter out empty groups
+  return Object.entries(groups).filter(([_, list]) => list.length > 0)
+})
 </script>
 
 <template>
-  <div class="space-y-8 max-w-4xl mx-auto px-4 py-6">
+  <div class="px-6 space-y-6">
+    
     <!-- Header -->
-    <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 islamic-card p-6 rounded-2xl shadow-xl islamic-border-top"
-    >
-      <div>
-        <h1
-          class="text-3xl font-serif font-bold bg-gradient-to-r from-gold-100 via-gold-300 to-gold-500 bg-clip-text text-transparent tracking-wide"
-        >
-          {{ localeStore.t('qaza_ledger') }}
-        </h1>
-        <p class="text-gold-200/60 text-sm mt-1">
-          {{ localeStore.t('qaza_tagline') }}
-        </p>
-      </div>
+    <div class="pt-4">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+        কাজা খতিয়ান (قضاء)
+      </h1>
+      <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
+        ছুটে যাওয়া সালাতের দায় হিসাব করুন এবং অপেক্ষমান কাজা আদায় করুন।
+      </p>
     </div>
 
-    <!-- Summary Statistics -->
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-      <div
-        v-for="pName in [
-          PrayerName.Fajr,
-          PrayerName.Dhuhr,
-          PrayerName.Asr,
-          PrayerName.Maghrib,
-          PrayerName.Isha,
-        ]"
+    <!-- Summary Statistics Grid -->
+    <div class="grid grid-cols-5 gap-2">
+      <div 
+        v-for="pName in [PrayerName.Fajr, PrayerName.Dhuhr, PrayerName.Asr, PrayerName.Maghrib, PrayerName.Isha]"
         :key="pName"
-        class="islamic-card islamic-card-hover rounded-2xl p-4 text-center"
+        class="bg-m3-surface dark:bg-m3-dark-surface p-3 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 text-center shadow-sm"
       >
-        <span class="text-xs text-gold-200/70 block font-bold font-serif">{{
-          getLocalizedPrayerName(pName)
-        }}</span>
-        <span
-          class="text-3xl font-serif font-bold block mt-2 text-glow-gold"
-          :class="[(qazaSummary[pName] ?? 0) > 0 ? 'text-gold-400' : 'text-slate-600']"
+        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">
+          {{ getLocalizedPrayerName(pName) }}
+        </span>
+        <span 
+          :class="[(qazaSummary[pName] ?? 0) > 0 ? 'text-m3-primary dark:text-m3-dark-primary font-black text-2xl' : 'text-slate-300 dark:text-slate-700 font-bold text-xl']"
+          class="block transition-all duration-300"
         >
           {{ qazaSummary[pName] ?? 0 }}
         </span>
-        <span class="text-[10px] text-gold-500/50 mt-1 uppercase tracking-wider block font-black"
-          >{{ localeStore.t('pending') }}</span
-        >
       </div>
     </div>
 
-    <!-- Error indicator -->
-    <div
-      v-if="store.error"
-      class="bg-rose-950/20 border border-rose-500/20 p-4 rounded-xl flex items-center justify-between"
-    >
-      <p class="text-rose-300 text-sm font-medium">{{ store.error }}</p>
-      <button
-        @click="store.clearError()"
-        class="text-rose-400 hover:text-rose-200 text-xs font-semibold cursor-pointer"
-      >
-        Dismiss
-      </button>
-    </div>
-
-    <!-- Pending Qazas List -->
-    <div class="islamic-card rounded-2xl p-6 shadow-lg border-t border-gold-500/10">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-serif font-bold text-slate-100">{{ localeStore.t('outstanding_debt') }}</h2>
-        <span
-          class="text-xs font-bold bg-gold-500/10 text-gold-300 border border-gold-500/20 px-3 py-1 rounded-full"
-        >
-          {{ localeStore.t('prayers_due', { count: store.pendingQazas.length }) }}
+    <!-- Pending Qazas Ledger List -->
+    <div class="bg-m3-surface dark:bg-m3-dark-surface rounded-[32px] p-6 border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-6">
+      
+      <!-- List Title -->
+      <div class="flex items-center justify-between">
+        <h2 class="font-bold text-base text-slate-800 dark:text-slate-200">বকেয়া কাজা সালাতসমূহ</h2>
+        <span class="text-xs font-bold bg-m3-primary-container dark:bg-m3-dark-primary-container text-m3-primary dark:text-m3-dark-primary px-3 py-1 rounded-full border border-m3-primary/10">
+          {{ store.pendingQazas.length }}টি সালাত বাকি
         </span>
       </div>
 
-      <div
-        v-if="store.loading && store.pendingQazas.length === 0"
-        class="flex flex-col items-center py-12"
-      >
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500 mb-2"></div>
-        <p class="text-gold-200/50 text-sm">Loading Qaza obligations...</p>
+      <!-- Loading State -->
+      <div v-if="store.loading && store.pendingQazas.length === 0" class="flex flex-col items-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-m3-primary mb-2"></div>
+        <p class="text-slate-400 text-xs font-semibold">কাজা তথ্য লোড করা হচ্ছে...</p>
       </div>
 
-      <div v-else-if="store.pendingQazas.length === 0" class="text-center py-16 space-y-4">
-        <div
-          class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gold-500/10 text-gold-400 border border-gold-500/20 shadow-[0_0_15px_rgba(212,175,55,0.05)] animate-pulse"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
+      <!-- Empty State -->
+      <div v-else-if="store.pendingQazas.length === 0" class="text-center py-12 space-y-4">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 text-m3-success border border-emerald-500/20 shadow-sm animate-pulse">
+          <span class="material-symbols-rounded text-3xl font-bold">done_all</span>
         </div>
         <div>
-          <h3 class="text-gold-300 font-serif font-bold text-lg">{{ localeStore.t('no_pending') }}</h3>
-          <p class="text-gold-200/50 text-sm mt-1">
-            {{ localeStore.t('no_pending_desc') }}
+          <h3 class="font-bold text-slate-800 dark:text-slate-200 text-base">কোনো কাজা বাকি নেই!</h3>
+          <p class="text-slate-400 dark:text-slate-500 text-xs mt-1 leading-relaxed max-w-xs mx-auto">
+            আলহামদুলিল্লাহ, আপনার সব কাজা সালাত সফলভাবে আদায় করা হয়েছে। আপনার ধারাবাহিকতা বজায় রাখুন!
           </p>
         </div>
       </div>
 
-      <div v-else class="divide-y divide-gold-500/10 max-h-[500px] overflow-y-auto pr-2">
-        <div
-          v-for="qaza in store.pendingQazas"
-          :key="qaza.id"
-          class="flex items-center justify-between py-4 first:pt-0 last:pb-0 group transition-all duration-300"
-        >
-          <div>
-            <span class="font-serif font-bold text-slate-200 flex items-center gap-2">
-              {{ getLocalizedPrayerName(qaza.prayerName) }}
-              <span class="text-sm font-normal text-gold-400 font-arabic">{{
-                ARABIC_NAMES[qaza.prayerName]
-              }}</span>
-            </span>
-            <div class="flex items-center gap-2 mt-1">
-              <span class="text-xs text-slate-400">{{ qaza.originalPrayerDate }}</span>
-              <span class="text-[10px] text-slate-500">•</span>
-              <span class="text-xs text-gold-400 font-semibold">{{
-                getRelativeTime(qaza.originalPrayerDate)
-              }}</span>
+      <!-- Timeline List -->
+      <div v-else class="space-y-6">
+        <div v-for="[groupName, qazas] in groupedQazas" :key="groupName" class="space-y-3">
+          <!-- Timeline Header -->
+          <h3 class="text-xs font-black uppercase tracking-wider text-teal-600 dark:text-teal-400 bg-teal-500/5 px-3 py-1 rounded-md inline-block">
+            {{ groupName }}
+          </h3>
+
+          <!-- Group List -->
+          <div class="divide-y divide-slate-100 dark:divide-slate-800/80">
+            <div 
+              v-for="qaza in qazas" 
+              :key="qaza.id" 
+              class="flex items-center justify-between py-4.5 first:pt-2 last:pb-2 group transition-all duration-300"
+            >
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg shadow-sm">
+                  {{ PRAYER_ICONS[qaza.prayerName] }}
+                </div>
+                <div>
+                  <span class="font-bold text-slate-850 dark:text-slate-200 block">
+                    {{ getLocalizedPrayerName(qaza.prayerName) }} সালাত
+                  </span>
+                  <div class="flex items-center gap-1.5 mt-1 text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
+                    <span>{{ qaza.originalPrayerDate }}</span>
+                    <span>•</span>
+                    <span class="text-teal-600 dark:text-teal-400">{{ getRelativeTime(qaza.originalPrayerDate) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                @click="handleFulfillQaza(qaza.id)"
+                class="bg-m3-primary dark:bg-m3-dark-primary text-white font-bold text-xs px-4 py-2.5 rounded-2xl shadow hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                আদায় করুন
+              </button>
             </div>
           </div>
-
-          <button
-            @click="handleFulfillQaza(qaza.id)"
-            class="bg-islamic-hover hover:bg-gold-500 border border-gold-500/20 hover:border-gold-400 text-gold-300 hover:text-islamic-deep font-bold text-xs px-4 py-2.5 rounded-xl transition-all duration-300 shadow-md cursor-pointer"
-          >
-            {{ localeStore.t('fulfill') }}
-          </button>
         </div>
       </div>
+
     </div>
   </div>
 </template>
-
-<style scoped>
-.font-arabic {
-  font-family: 'Amiri', 'Traditional Arabic', serif;
-}
-</style>
