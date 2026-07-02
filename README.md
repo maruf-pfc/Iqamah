@@ -1,14 +1,14 @@
 # إقامة | Iqamah — Salah Habit Establishment Platform
 
-[![.NET 10](https://img.shields.io/badge/.NET-10.0-blueviolet.svg)](https://dotnet.microsoft.com/)
+[![Version](https://img.shields.io/badge/version-1.1.1-teal.svg)](CHANGELOG.md)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-emerald.svg)](https://vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.x-yellow.svg)](https://vite.dev/)
+[![Flutter](https://img.shields.io/badge/Flutter-Stable-blue.svg)](https://flutter.dev/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.x-336791.svg)](https://www.postgresql.org/)
+[![Offline-First](https://img.shields.io/badge/mode-offline--first-green.svg)](#)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-**Iqamah (إقامة)** is a highly specialized, data-driven web application designed to help Muslims build, establish, and analyze their daily prayer (Salah/Namaz) habits. The system provides granular tracking for prayer punctuality, situational missed reasons, state machines for make-up (Qaza) tracking, and multi-year analytics.
+**Iqamah (إقامة)** is a premium, offline-first Salah (Namaz) habit establishment platform for Muslims. It helps you build and maintain consistent prayer habits with granular punctuality tracking, make-up (Qaza) debt management, and motivational analytics — entirely on your own device, with no account or internet required.
 
 ![Iqamah Platform Preview](assets/cover.png)
 
@@ -16,180 +16,175 @@
 
 ## 🏗️ Architecture Overview
 
-The project is structured as a hybrid platform featuring web services and a standalone mobile companion:
+As of **v1.1.0**, the platform operates in **fully offline mode**. All data is stored locally on the user's device with no server dependency for core features.
 
 ```mermaid
 graph TD
-    Client[Vue 3 SPA Client] <-->|JSON + JWT Authorization| API[ASP.NET Core 10 Web API]
-    API <-->|EF Core| DB[(Postgres / NeonDB)]
-    Mobile[Flutter Mobile App] <-->|Data Sandbox| LocalDB[(Local SQLite DB)]
-    Mobile <-->|JSON File Migration| Client
+    Client[Vue 3 SPA — Offline-First]
+    Client -->|localStorage + Pinia| LocalState[(Local Browser Storage)]
+    Client -->|adhan library| SalahEngine[Prayer Time Engine]
+
+    Mobile[Flutter Mobile App]
+    Mobile -->|SQLite FFI| LocalDB[(Local SQLite DB)]
+    Mobile -->|adhan-dart| SalahEngine2[Prayer Time Engine]
+    Mobile -->|SharedPreferences| Prefs[(Local Preferences)]
+
+    Client <-->|JSON Export / Import| Mobile
 ```
 
-### 1. Server-Side (.NET 10)
-Built following **Clean Architecture** patterns:
-*   **Iqamah.Domain:** Contains core entities (`PrayerLog`, `QazaLog`, `User`), value objects, domain exceptions, and repository contracts.
-*   **Iqamah.Application:** Implements the CQRS pattern using **MediatR** and contains handlers, commands, queries, and **FluentValidation** rules.
-*   **Iqamah.Infrastructure:** Implements repository interfaces (`UserRepository`), database contexts using **EF Core**, and infrastructure services such as the `JwtProvider` (stateless JWT claims emission).
-*   **Iqamah.API:** The entry point containing REST controllers, authentication middleware configurations, and a global problem-details exception handler.
+### 1. Web Client (Vue 3 + Vite)
+A local-first Single Page Application:
+- **Tailwind CSS v4:** Material Design 3-inspired color system with full light/dark mode.
+- **Pinia Store (`usePrayerStore`):** All prayer logs, Qaza records, streaks, and analytics computed and persisted in `localStorage`. No HTTP calls.
+- **adhan (JS):** Offline prayer time calculation based on the user's GPS coordinates.
+- **OnboardingView:** Replaces the login screen. Captures name, language, and gender — stored locally.
 
-### 2. Client-Side (Vue 3 + Vite)
-Built as a highly reactive Single Page Application (SPA):
-*   **Tailwind CSS v4:** Styling engine leveraging CSS variables and fluid, modern glassmorphic designs.
-*   **Pinia Store:** Manages auth status (`stores/auth.ts`) and tracks prayer logs, pending debts, and charts data (`stores/prayer.ts`).
-*   **Vue Router:** Controls page paths and enforces route guards to redirect unauthenticated requests.
+### 2. Mobile Client (Flutter)
+A premium, native mobile companion:
+- **SQLite (`sqflite_common_ffi` + `sqflite_common_ffi_web`):** Cross-platform local database for prayer and Qaza logs.
+- **SharedPreferences:** Language, gender, and onboarding state.
+- **adhan (Dart):** High-precision offline Salah times and Makruh window detection.
+- **Material Design 3:** Premium dark theme with prayer emoji icons, status strip cards, circular checkmarks, and a bilingual (Bengali/English) interface.
 
-### 3. Standalone Mobile Client (Flutter)
-Built as a local-first offline companion app:
-*   **Local Persistence:** Uses SQLite (`sqflite`) inside the app sandbox (data is safely wiped upon uninstallation).
-*   **Data Portability:** Implements standardized JSON export/import to migrate logs across devices or backup data.
-*   **Domain Parity:** Replicates C# state machine logic and excuse validations for accurate Qaza calculations.
+### 3. Server (ASP.NET Core 10) — Optional / Legacy
+The original server implementation remains in `server/` for reference or self-hosted use. It is no longer required by the web or mobile clients in their default configuration.
 
 ---
 
-## 💻 Frontend Client Implementation
+## ✨ Features
 
-### 📁 Codebase Structure
-```
-client/
-├── src/
-│   ├── __tests__/         # Unit tests (Vitest)
-│   ├── assets/            # CSS styles and fonts
-│   ├── components/        # Reusable UI component modules
-│   ├── router/            # Route guards and URL definitions (vue-router)
-│   ├── stores/            # State stores (Pinia)
-│   │   ├── auth.ts        # Session persistence, login, registration, logout
-│   │   └── prayer.ts      # Prayer logging, Qaza debt tracking, analytics, and normalizations
-│   ├── types/             # TypeScript type definitions mirroring backend DTOs
-│   ├── views/             # Major layout views (Dashboard, Qaza, Analytics, Login)
-│   ├── App.vue            # Layout shell
-│   └── main.ts            # Bootstrapper
-```
-
-### 🛠️ State Management & JSON Normalization
-1. **The Enum Deserialization Challenge:** The backend `.NET 10` server is configured to serialize C# enums as string values in JSON payloads for API readability. For example, `PrayerName.Fajr` (value `0`) is serialized as `"Fajr"`. However, the client-side lookup arrays (`PRAYER_LABELS`, `WAQT_LABELS`, and `MISSED_REASON_LABELS`) are keyed using numeric values (`0`, `1`, etc.) to maintain type-safe enum patterns. Looking up properties using a string value (e.g., `PRAYER_LABELS["Fajr"]`) causes `TypeError: Cannot read properties of undefined` in JavaScript.
-2. **The Solution (Store Normalization Layer):** To decouple the view templates from deserialization types, `stores/prayer.ts` implements a mapping/normalization layer. Every response fetched from backend endpoints is automatically passed through normalizers:
-   * `normalizePrayerLog()`: Normalizes enums `prayerName`, `waqtStatus`, and `missedReason` into integers.
-   * `normalizeQazaLog()`: Maps pending make-up logs.
-   * `normalizeAnalytics()`: Normalizes the keys of `prayerStats` from strings to integers, enabling clean numeric lookups in charts and tables.
+| Feature | Web | Mobile |
+|---------|-----|--------|
+| 5-prayer daily tracker with quick log (tap) | ✅ | ✅ |
+| Detailed log sheet (Waqt, Jamaah, Tasbih, Quran notes) | ✅ | ✅ |
+| Swipe gestures (delete / mark missed) | — | ✅ |
+| Qaza ledger with fulfill action | ✅ | ✅ |
+| Streak counter | ✅ | ✅ |
+| Analytics (punctuality split, missed reasons) | ✅ | ✅ |
+| Salah time schedule + Makruh windows | ✅ | ✅ |
+| Hijri date display | ✅ | — |
+| JSON backup export / import | ✅ | ✅ |
+| Reset Application (wipe all data) | ✅ | ✅ |
+| Bilingual (Bengali / English) | ✅ | ✅ |
+| Gender-aware Hayd/Nifas logging | ✅ | ✅ |
+| Offline — no internet required | ✅ | ✅ |
+| Light + Dark mode | ✅ | ✅ (Dark) |
 
 ---
 
-## 🔒 Security & Identity System
-
-The application implements a stateless **JWT Bearer Authentication** model:
-1.  **Registration / Login:** Hashes user passwords using **BCrypt.Net** and issues a token signed with an HMAC-SHA256 signature containing claims (`sub`, `name`, `email`).
-2.  **Explicit Claims Resolution:** The API controllers are secured with `[Authorize]` attributes. User identities are resolved implicitly via claims parameters (`HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)`), eliminating insecure client-provided parameter spoofing.
-3.  **Client Persistence:** The JWT is safely stored in `localStorage` and attached to outgoing requests via interceptors.
-4.  **Client-Side Route Protection:** Protected routes (Dashboard, Qaza, Analytics) are guarded by checking token expiration and authentication state, redirecting unauthorized traffic to the `/login` route.
-
----
-
-## 🚀 Getting Started
+## 💻 Web Client — Quick Start
 
 ### Prerequisites
-*   [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
-*   [Node.js (v20+ or v22+)](https://nodejs.org/)
+- [Node.js v20+ or v22+](https://nodejs.org/)
+- [Bun](https://bun.sh/) (recommended) or npm
 
-### Backend Setup (.NET)
-1. Navigate to the server folder:
-   ```bash
-   cd server
-   ```
-2. Restore dependencies:
-   ```bash
-   dotnet restore
-   ```
-3. Update connection string in `Iqamah.API/appsettings.Development.json` pointing to your PostgreSQL instance.
-4. Run migrations:
-   ```bash
-   dotnet ef database update --project Iqamah.Infrastructure/Iqamah.Infrastructure.csproj --startup-project Iqamah.API/Iqamah.API.csproj
-   ```
-5. Launch the Web API:
-   ```bash
-   dotnet run --project Iqamah.API/Iqamah.API.csproj --launch-profile http
-   ```
-   *The server will start listening at `http://localhost:5229`.*
-
-### Frontend Setup (Vue)
-1. Navigate to the client folder:
-   ```bash
-   cd client
-   ```
-2. Install bun dependencies:
-   ```bash
-   bun install
-   ```
-3. Launch development server:
-   ```bash
-   bun run dev
-   ```
-   *The client will start listening at `http://localhost:5173`.*
-
----
-
-## 🧪 Verification & Testing
-
-### Running Server Tests
-Run backend C# unit tests using:
-```bash
-cd server
-dotnet test
-```
-
-### Running Client Tests & Linters
-Run Vite verification commands using:
+### Setup
 ```bash
 cd client
-bun run test:unit -- --run  # Run Vitest test suite
-bun run lint                # Run ESLint & Oxlint code style checks
-bun run format              # Run Prettier code formatting
+bun install
+bun run dev
+```
+The app opens at `http://localhost:5173`. No backend needed.
+
+### Production Build
+```bash
+bun run build      # TypeScript check + Vite build
+bun run test:unit -- --run   # Run Vitest suite (7 tests)
+bun run lint       # ESLint + Oxlint
 ```
 
 ---
 
-## 🐳 Container Deployment (Coolify)
+## 📱 Mobile Client — Quick Start
 
-Iqamah is configured to compile and run as a single unified container (serving both the Vue 3 SPA frontend and ASP.NET Core 10 Web API backend from the same port). This design simplifies routing, eliminates CORS configuration issues, and minimizes deployment footprints.
+### Prerequisites
+- [Flutter SDK (stable)](https://docs.flutter.dev/get-started/install)
+- Android SDK / Xcode (for device targets)
 
-### 1. Build and Run Locally with Docker
-You can build and test the production Docker container locally:
+### Setup
+```bash
+cd mobile
+flutter pub get
+flutter run          # Connect an Android/iOS device or emulator
+```
+
+### Supported Platforms
+| Platform | Status |
+|----------|--------|
+| Android | ✅ Primary target |
+| iOS | ✅ Supported |
+| Web (WASM SQLite) | ✅ `flutter run -d chrome` |
+| Linux Desktop | ✅ `flutter run -d linux` |
+
+---
+
+## 📁 Project Structure
+
+```
+Iqamah/
+├── client/                    # Vue 3 offline SPA
+│   └── src/
+│       ├── assets/            # Tailwind CSS + fonts
+│       ├── stores/            # Pinia (auth.ts, prayer.ts)
+│       ├── views/             # Dashboard, Qaza, Analytics, SalahTime, Settings, Guide, Onboarding
+│       └── router/            # Route guards
+├── mobile/                    # Flutter offline companion
+│   └── lib/
+│       ├── main.dart          # All widgets, screens, navigation
+│       ├── providers/         # PrayerProvider, SalahTimeProvider
+│       ├── services/          # DatabaseHelper (SQLite)
+│       └── l10n/              # strings.dart (Bengali + English)
+├── server/                    # ASP.NET Core 10 API (optional/legacy)
+├── docs/                      # Domain model documentation
+├── CHANGELOG.md               # Version history
+└── README.md
+```
+
+---
+
+## 🧪 Testing
+
+### Web Client (Vitest)
+```bash
+cd client
+bun run test:unit -- --run
+```
+
+### Mobile (Flutter)
+```bash
+cd mobile
+flutter test
+flutter analyze
+```
+
+---
+
+## 🐳 Self-Hosted Server (Optional)
+
+The original full-stack mode (Vue → ASP.NET Core → PostgreSQL) is still supported for users who want server-side multi-device sync.
+
 ```bash
 # Build the Docker image
 docker build -t iqamah-app .
 
-# Run the container (injecting DB and JWT variables)
+# Run with PostgreSQL credentials
 docker run -p 8080:8080 \
-  -e ConnectionStrings__DefaultConnection="Host=your_host;Database=your_db;Username=your_user;Password=your_password;SSL Mode=Require;" \
+  -e ConnectionStrings__DefaultConnection="Host=your_host;Database=your_db;Username=user;Password=pass;SSL Mode=Require;" \
   -e Jwt__Issuer="IqamahServer" \
   -e Jwt__Audience="IqamahClient" \
-  -e Jwt__SecretKey="your_production_secure_jwt_secret_key_at_least_32_characters" \
+  -e Jwt__SecretKey="your_secure_secret_at_least_32_chars" \
   iqamah-app
 ```
-*The application will be accessible at `http://localhost:8080`.*
 
-### 2. Deploying to Coolify
-To deploy the application to Coolify:
-1. In the Coolify Dashboard, click **New Resource** and select **Git Repository**.
-2. Select your repository and target the `main` branch.
-3. Under **Build Pack**, select **Dockerfile**. Coolify will automatically locate the `Dockerfile` at the root of the project.
-4. Set up the following environment variables in the Coolify resource configuration panel:
-   * `ConnectionStrings__DefaultConnection` (with your PostgreSQL connection details)
-   * `Jwt__Issuer` (e.g., `IqamahServer`)
-   * `Jwt__Audience` (e.g., `IqamahClient`)
-   * `Jwt__SecretKey` (a secure random string at least 32 characters long)
-5. Set the public domain/port mapping (the container exposes port `8080`).
-6. Save and click **Deploy**.
+See [docs/domain-model.md](docs/domain-model.md) for the full server-side domain model.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming conventions, coding standards, and how to submit a pull request.
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on setting up local environments, branch naming conventions, coding standards, and how to submit a pull request.
-
-Please review our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) to understand the guidelines for interacting within our community.
+Please review [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before participating.
 
 ## 📄 License
 

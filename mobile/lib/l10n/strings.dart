@@ -213,7 +213,7 @@ class S {
   static String get languageToggleTitle => isBn ? 'ভাষা: বাংলা' : 'Language: English';
   static String get languageToggleSubtitle =>
       isBn ? 'ইংরেজিতে স্যুইচ করতে ট্যাপ করুন' : 'Tap to switch to Bengali';
-  static String get versionLabel => 'Iqamah Mobile v1.1.0';
+  static String get versionLabel => 'Iqamah Mobile v1.1.1';
 
   // ── Salah Time Tab ─────────────────────────────────────────────────────────
   static String get salahTimeTitle => isBn ? 'সালাতের সময়সূচি' : 'Salah Schedule';

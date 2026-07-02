@@ -1,8 +1,8 @@
 # Iqamah — Domain Model Documentation
 
 > **Audience:** New engineers onboarding to the project.  
-> **Last Updated:** 2026-06-11  
-> **Layer:** `Iqamah.Domain`
+> **Last Updated:** 2026-07-03 · **v1.1.1**  
+> **Layer:** `Iqamah.Domain` (server) · `mobile/lib/` (Flutter) · `client/src/stores/` (Vue)
 
 ---
 
@@ -184,37 +184,35 @@ Tracks one outstanding Qaza (make-up prayer) debt linked to its parent `PrayerLo
 
 ---
 
-## 6. TypeScript Equivalent
+## 6. Client-Side Equivalents
 
+### Web (TypeScript)
 Client-side types are located in `client/src/types/prayer.types.ts`.  
-All integer values **must** stay in sync with the C# enum definitions above.
+As of **v1.1.0**, the web client runs fully offline — all domain logic (Qaza creation, streak calculation, analytics) is re-implemented in `client/src/stores/prayer.ts` using `localStorage`.
 
-Key helpers exported:
+Key helpers:
 - `PRAYER_LABELS` — display strings
 - `WAQT_LABELS` — display strings
 - `MISSED_REASON_LABELS` — display strings
 - `isExcusedMissedReason(reason)` — type guard
 - `requiresQaza(reason)` — state machine rule mirrored on client
 
+### Mobile (Dart / Flutter)
+Domain enumerations are mirrored in `mobile/lib/main.dart`:
+- `PrayerName` — Fajr, Dhuhr, Asr, Maghrib, Isha
+- `WaqtStatus` — AwwalAlWaqt, WastAlWaqt, AkhirAlWaqt
+- `MissedReason` — ExcusedImpurity, ExcusedSleep, ExcusedForgetfulness, UnexcusedSituational, UnexcusedLaziness, UnexcusedDistraction
+
+All integer values **must** stay in sync across C#, TypeScript, and Dart definitions.
+
 ---
 
-## 7. Git Workflow
+## 7. Version History
 
-```
-main
- └── develop
-      └── feature/domain-model   ← current branch
-```
+| Version | Date | Key Domain Change |
+|---------|------|-------------------|
+| v1.0.0 | 2026-06-11 | Initial domain model — server-side EF Core + PostgreSQL |
+| v1.1.0 | 2026-07-02 | Offline-first migration — domain logic ported to localStorage (web) and SQLite FFI (mobile) |
+| v1.1.1 | 2026-07-03 | Mobile UI parity — card redesign, calendar grid, reset flow |
 
-Conventional commit for this milestone:
-```
-feat(domain): add core domain entities, enums, and Qaza state machine
-
-- Define PrayerName, WaqtStatus, MissedReason, QazaState enums
-- Implement PrayerLog aggregate root with DDD invariant enforcement
-- Implement QazaLog entity with Pending→Offered state transition
-- Add PrayerMissedDomainEvent and QazaFulfilledDomainEvent
-- Add IPrayerLogRepository and IQazaLogRepository interfaces
-- Add TypeScript type mirrors in client/src/types/prayer.types.ts
-- Add 34 xUnit unit tests covering all state machine paths
-```
+See [CHANGELOG.md](../CHANGELOG.md) for full release notes.
