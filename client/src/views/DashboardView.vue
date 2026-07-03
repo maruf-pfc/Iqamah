@@ -2,33 +2,31 @@
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
 import { useLocaleStore } from '@/stores/locale'
-import { useAuthStore } from '@/stores/auth'
 import { PrayerName, WaqtStatus, MissedReason } from '@/types/prayer.types'
 import type { LogOfferedPrayerRequest, LogMissedPrayerRequest, PrayerLogDto } from '@/types/prayer.types'
 
 const store = usePrayerStore()
 const localeStore = useLocaleStore()
-const authStore = useAuthStore()
 
 const ARABIC_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء']
 const PRAYER_ICONS = ['🌅', '☀️', '⛅', '🌇', '🌃']
 
 const getLocalizedPrayerName = (prayer: number) => {
-  const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+  const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const
   const key = keys[prayer] || 'fajr'
-  return localeStore.t(key as any)
+  return localeStore.t(key)
 }
 
 const getLocalizedWaqt = (status: number) => {
-  const keys = ['awwal', 'wast', 'akhir']
+  const keys = ['awwal', 'wast', 'akhir'] as const
   const key = keys[status] || 'awwal'
-  return localeStore.t(key as any)
+  return localeStore.t(key)
 }
 
 const getLocalizedMissedReason = (reason: number) => {
-  const keys = ['impurity', 'sleep', 'forgetfulness', 'situational', 'laziness', 'distraction']
+  const keys = ['impurity', 'sleep', 'forgetfulness', 'situational', 'laziness', 'distraction'] as const
   const key = keys[reason] || 'laziness'
-  return localeStore.t(key as any)
+  return localeStore.t(key)
 }
 
 // Date selection: Default to today
@@ -59,11 +57,6 @@ const isFemale = ref<boolean | null>(
       : null
 )
 
-const setGender = (female: boolean) => {
-  isFemale.value = female
-  localStorage.setItem('iqamah_gender', female ? 'female' : 'male')
-}
-
 // Generate calendar bar
 const getPastDays = () => {
   const days = []
@@ -83,8 +76,8 @@ const calendarDays = getPastDays()
 // Hijri Date display (locally calculated roughly for context)
 const getHijriDateStr = () => {
   // Rough Hijri calculation for decoration, SalahTimeView will pull real Hijri date if backend has it.
-  const options = { calendar: 'islamic-umalqura', day: 'numeric', month: 'long', year: 'numeric' }
-  return new Intl.DateTimeFormat('bn-BD-u-ca-islamic-umalqura', options as any).format(new Date())
+  const options: Intl.DateTimeFormatOptions = { calendar: 'islamic-umalqura', day: 'numeric', month: 'long', year: 'numeric' }
+  return new Intl.DateTimeFormat('bn-BD-u-ca-islamic-umalqura', options).format(new Date())
 }
 const hijriDate = ref(getHijriDateStr())
 
@@ -111,64 +104,56 @@ const completionPercentage = computed(() => {
 })
 
 // Local streak calculator
-const streakDays = ref(12) // Default placeholder for motivation
-const loadStreak = async () => {
+const streakDays = ref(0)
+const loadStreak = () => {
   try {
-    const today = new Date()
-    const start = new Date()
-    start.setDate(today.getDate() - 30)
-    const startStr = start.toISOString().split('T')[0]
-    const todayStr = today.toISOString().split('T')[0]
+    const logsData = localStorage.getItem('iqamah_prayer_logs')
+    const logs: PrayerLogDto[] = logsData ? JSON.parse(logsData) : []
     
-    // Fetch logs for past 30 days
-    const response = await fetch(`${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '') || '/api'}/prayers?from=${startStr}&to=${todayStr}`, {
-      headers: authStore.token ? { Authorization: `Bearer ${authStore.token}` } : {}
+    // Group by date to count how many prayers were offered per day
+    const daysWithPrayers: Record<string, number> = {}
+    logs.forEach(l => {
+      if (l.isOffered) {
+        const dateStr = l.prayerDate.split('T')[0]
+        if (dateStr) {
+          daysWithPrayers[dateStr] = (daysWithPrayers[dateStr] || 0) + 1
+        }
+      }
     })
-    if (response.ok) {
-      const logs: PrayerLogDto[] = await response.json()
-      // Group by date
-      const daysWithPrayers: Record<string, number> = {}
-      logs.forEach(l => {
-        if (l.isOffered) {
-          const dateStr = l.prayerDate.split('T')[0]
-          if (dateStr) {
-            daysWithPrayers[dateStr] = (daysWithPrayers[dateStr] || 0) + 1
-          }
-        }
-      })
-      
-      // Compute streak backwards
-      let currentStreak = 0
-      let d = new Date()
-      // Check today
-      let checkStr = d.toISOString().split('T')[0]
-      if (checkStr && daysWithPrayers[checkStr]) {
+    
+    // Compute streak backwards
+    let currentStreak = 0
+    const d = new Date()
+    // Check today
+    let checkStr = d.toISOString().split('T')[0]
+    
+    if (checkStr && daysWithPrayers[checkStr]) {
+      currentStreak++
+    } else {
+      // If not today, check yesterday to see if streak is still alive
+      d.setDate(d.getDate() - 1)
+      const prevStr = d.toISOString().split('T')[0]
+      if (prevStr && daysWithPrayers[prevStr]) {
         currentStreak++
-      } else {
-        // If not today, check yesterday to see if streak is still alive
-        d.setDate(d.getDate() - 1)
-        const prevStr = d.toISOString().split('T')[0]
-        if (prevStr && daysWithPrayers[prevStr]) {
-          currentStreak++
-          checkStr = prevStr
-        }
+        checkStr = prevStr
       }
-      
-      if (currentStreak > 0 && checkStr) {
-        while (true) {
-          d.setDate(d.getDate() - 1)
-          const nextStr = d.toISOString().split('T')[0]
-          if (nextStr && daysWithPrayers[nextStr]) {
-            currentStreak++
-          } else {
-            break
-          }
-        }
-      }
-      streakDays.value = currentStreak || 1
     }
+    
+    if (currentStreak > 0 && checkStr) {
+      while (true) {
+        d.setDate(d.getDate() - 1)
+        const nextStr = d.toISOString().split('T')[0]
+        if (nextStr && daysWithPrayers[nextStr]) {
+          currentStreak++
+        } else {
+          break
+        }
+      }
+    }
+    streakDays.value = currentStreak
   } catch (err) {
     console.error('Failed to calculate streak', err)
+    streakDays.value = 0
   }
 }
 
@@ -303,11 +288,6 @@ const handleSaveLog = async () => {
     console.error('Error logging prayer:', err)
   }
 }
-
-const isFutureDate = () => {
-  const todayStr = new Date().toISOString().split('T')[0] ?? ''
-  return selectedDate.value > todayStr
-}
 </script>
 
 <template>
@@ -376,7 +356,7 @@ const isFutureDate = () => {
           :key="day.dateStr"
           @click="selectedDate = day.dateStr"
           class="flex flex-col items-center py-2.5 rounded-2xl border transition-all duration-200 cursor-pointer"
-          :class="[selectedDate === day.dateStr ? 'bg-m3-primary-container dark:bg-m3-dark-primary-container text-m3-primary dark:text-m3-dark-primary border-m3-primary dark:border-m3-dark-primary font-bold shadow-sm' : 'border-slate-100 dark:border-slate-800/30 bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500']"
+          :class="[selectedDate === day.dateStr ? 'bg-m3-primary-container dark:bg-m3-dark-primary-container text-m3-primary dark:text-m3-dark-primary border-m3-primary dark:border-m3-dark-primary font-bold shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300']"
         >
           <span class="text-[9px] uppercase font-bold tracking-wider mb-1">{{ day.dayName }}</span>
           <span class="text-base font-semibold">{{ day.dayNum }}</span>
@@ -475,7 +455,7 @@ const isFutureDate = () => {
     >
       <div class="bg-m3-surface dark:bg-m3-dark-surface rounded-[32px] w-full max-w-lg overflow-hidden shadow-2xl animate-slide-up border border-slate-200/50 dark:border-slate-800">
         <!-- Title -->
-        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-850 border-b border-slate-200/30 dark:border-slate-850 flex items-center justify-between">
+        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <h3 class="font-bold text-lg text-slate-800 dark:text-slate-200">
             {{ getLocalizedPrayerName(editingPrayerName!) }} সালাত
           </h3>
@@ -485,17 +465,17 @@ const isFutureDate = () => {
         <!-- Body -->
         <div class="p-6 space-y-5 max-h-[400px] overflow-y-auto">
           <!-- Log Offered / Missed Switcher -->
-          <div class="flex bg-slate-100 dark:bg-slate-850 p-1 rounded-2xl border border-slate-200/20">
+          <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
             <button 
               @click="logType = 'offered'"
-              :class="[logType === 'offered' ? 'bg-m3-primary dark:bg-m3-dark-primary text-white shadow' : 'text-slate-600 dark:text-slate-400']"
+              :class="[logType === 'offered' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
               class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
               আদায় করেছি
             </button>
             <button 
               @click="logType = 'missed'"
-              :class="[logType === 'missed' ? 'bg-m3-primary dark:bg-m3-dark-primary text-white shadow' : 'text-slate-600 dark:text-slate-400']"
+              :class="[logType === 'missed' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
               class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
               ছুটে গেছে
@@ -503,7 +483,7 @@ const isFutureDate = () => {
             <button 
               v-if="isFemale"
               @click="logType = 'period'"
-              :class="[logType === 'period' ? 'bg-m3-primary dark:bg-m3-dark-primary text-white shadow' : 'text-slate-600 dark:text-slate-400']"
+              :class="[logType === 'period' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
               class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
               হায়েজ / নিফাস
@@ -514,7 +494,7 @@ const isFutureDate = () => {
           <div v-if="logType === 'offered'" class="space-y-4">
             <div>
               <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ওয়াক্তের সময়ানুবর্তিতা</label>
-              <select v-model="formWaqtStatus" class="w-full bg-slate-100 dark:bg-slate-850 border border-slate-200/20 text-slate-800 dark:text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
+              <select v-model="formWaqtStatus" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
                 <option :value="WaqtStatus.AwwalAlWaqt">আউয়াল ওয়াক্ত (শুরুতে)</option>
                 <option :value="WaqtStatus.WastAlWaqt">ওয়াসাত ওয়াক্ত (মাঝামাঝি)</option>
                 <option :value="WaqtStatus.AkhirAlWaqt">আখির ওয়াক্ত (শেষের দিকে)</option>
@@ -522,31 +502,31 @@ const isFutureDate = () => {
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-              <label class="flex items-center gap-3 bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl cursor-pointer hover:border-teal-500/30 transition-all select-none">
+              <label class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
                 <input type="checkbox" v-model="formIsJamaah" class="rounded text-teal-600 focus:ring-teal-500" />
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">জামায়াত</span>
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">জামায়াত</span>
               </label>
 
-              <label class="flex items-center gap-3 bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl cursor-pointer hover:border-teal-500/30 transition-all select-none">
+              <label class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
                 <input type="checkbox" v-model="formIsTraveling" class="rounded text-teal-600 focus:ring-teal-500" />
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">মুসাফির</span>
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">মুসাফির</span>
               </label>
 
-              <label class="col-span-2 flex items-center gap-3 bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl cursor-pointer hover:border-teal-500/30 transition-all select-none">
+              <label class="col-span-2 flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
                 <input type="checkbox" v-model="formIsHome" class="rounded text-teal-600 focus:ring-teal-500" />
                 <span class="text-xs font-bold text-slate-700 dark:text-slate-300">বাসায় আদায় করেছি</span>
               </label>
             </div>
 
             <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-4">
-              <label class="flex items-center gap-3 bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl cursor-pointer hover:border-teal-500/30 transition-all select-none">
+              <label class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
                 <input type="checkbox" v-model="formHasTasbih" class="rounded text-teal-600 focus:ring-teal-500" />
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">সালাতের পর তাসবীহ</span>
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">সালাতের পর তাসবীহ</span>
               </label>
 
               <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">কোরআন পাঠের নোট</label>
-                <input type="text" v-model="formQuranNotes" placeholder="যেমন, সূরা আল-বাকারাহ ১-১০, পৃষ্ঠা ৫" class="w-full bg-slate-100 dark:bg-slate-850 border border-slate-200/20 text-slate-800 dark:text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500" />
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">কোরআন পাঠের নোট</label>
+                <input type="text" v-model="formQuranNotes" placeholder="যেমন, সূরা আল-বাকারাহ ১-১০, পৃষ্ঠা ৫" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500" />
               </div>
             </div>
           </div>
@@ -554,8 +534,8 @@ const isFutureDate = () => {
           <!-- Missed form fields -->
           <div v-else-if="logType === 'missed'" class="space-y-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ছুটে যাওয়ার কারণ</label>
-              <select v-model="formMissedReason" class="w-full bg-slate-100 dark:bg-slate-850 border border-slate-200/20 text-slate-800 dark:text-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
+              <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">ছুটে যাওয়ার কারণ</label>
+              <select v-model="formMissedReason" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
                 <optgroup label="ক্ষমাযোগ্য ওজর (Excused)">
                   <option :value="MissedReason.ExcusedSleep">ঘুম (নওম)</option>
                   <option :value="MissedReason.ExcusedForgetfulness">ভুলে যাওয়া (নিসইয়ান)</option>
@@ -568,9 +548,9 @@ const isFutureDate = () => {
               </select>
             </div>
 
-            <label class="flex items-center gap-3 bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl cursor-pointer hover:border-teal-500/30 transition-all select-none">
+            <label class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
               <input type="checkbox" v-model="formIsTraveling" class="rounded text-teal-600 focus:ring-teal-500" />
-              <span class="text-xs font-bold text-slate-700 dark:text-slate-300">সফররত (মুসাফির) ছিলাম</span>
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-100">সফররত (মুসাফির) ছিলাম</span>
             </label>
           </div>
 
@@ -585,9 +565,9 @@ const isFutureDate = () => {
         </div>
 
         <!-- Actions -->
-        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-850 border-t border-slate-200/30 dark:border-slate-850 flex items-center justify-end gap-3">
+        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
           <button @click="isModalOpen = false" class="text-xs font-bold text-slate-600 dark:text-slate-400 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">বাতিল</button>
-          <button @click="handleSaveLog" class="bg-m3-primary dark:bg-m3-dark-primary text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow cursor-pointer">সংরক্ষণ করুন</button>
+          <button @click="handleSaveLog" class="bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 font-bold text-xs px-5 py-2.5 rounded-xl shadow cursor-pointer">সংরক্ষণ করুন</button>
         </div>
       </div>
     </div>

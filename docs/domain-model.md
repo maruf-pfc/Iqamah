@@ -212,7 +212,6 @@ All integer values **must** stay in sync across C#, TypeScript, and Dart definit
 | Version | Date | Key Domain Change |
 |---------|------|-------------------|
 | v1.0.0 | 2026-06-11 | Initial domain model — server-side EF Core + PostgreSQL |
-| v1.1.0 | 2026-07-02 | Offline-first migration — domain logic ported to localStorage (web) and SQLite FFI (mobile) |
-| v1.1.1 | 2026-07-03 | Mobile UI parity — card redesign, calendar grid, reset flow |
+| v1.1.1 | 2026-07-03 | WebView container parity migration, hash routing configuration, offline streak fixes |
 
 See [CHANGELOG.md](../CHANGELOG.md) for full release notes.

@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useLocaleStore } from '@/stores/locale'
 
 const router = useRouter()
-const localeStore = useLocaleStore()
 const activeTab = ref('qaza-rules')
 </script>
 
@@ -30,21 +28,21 @@ const activeTab = ref('qaza-rules')
     <div class="bg-m3-surface dark:bg-m3-dark-surface p-1 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex">
       <button 
         @click="activeTab = 'qaza-rules'"
-        :class="[activeTab === 'qaza-rules' ? 'bg-m3-primary dark:bg-m3-dark-primary text-white shadow' : 'text-slate-650 dark:text-slate-400']"
+        :class="[activeTab === 'qaza-rules' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
         class="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
       >
         কাজা নীতিমালা
       </button>
       <button 
         @click="activeTab = 'punctuality'"
-        :class="[activeTab === 'punctuality' ? 'bg-m3-primary dark:bg-m3-dark-primary text-white shadow' : 'text-slate-650 dark:text-slate-400']"
+        :class="[activeTab === 'punctuality' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
         class="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
       >
         সময়ানুবর্তিতা
       </button>
       <button 
         @click="activeTab = 'app-usage'"
-        :class="[activeTab === 'app-usage' ? 'bg-m3-primary dark:bg-m3-dark-primary text-white shadow' : 'text-slate-650 dark:text-slate-400']"
+        :class="[activeTab === 'app-usage' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
         class="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
       >
         অ্যাপ ব্যবহার

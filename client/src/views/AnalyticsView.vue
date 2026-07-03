@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
-import { useLocaleStore } from '@/stores/locale'
 
 const store = usePrayerStore()
-const localeStore = useLocaleStore()
 
 const getLocalizedPrayerNameStr = (pName: string) => {
   const keys: Record<string, string> = {
@@ -81,19 +79,19 @@ watch(
 
     <!-- Range Selector Toolbar (Material 3 Segmented Control) -->
     <div class="flex flex-wrap items-center justify-between gap-3 bg-m3-surface dark:bg-m3-dark-surface p-2 rounded-3xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm">
-      <div class="flex bg-slate-100 dark:bg-slate-850 p-1 rounded-2xl w-full">
+      <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl w-full">
         <button 
           v-for="r in ['7d', '30d', '365d'] as const"
           :key="r"
           @click="setRange(r)"
-          :class="[activeRange === r ? 'bg-m3-primary dark:bg-m3-dark-primary text-white shadow' : 'text-slate-650 dark:text-slate-400']"
+          :class="[activeRange === r ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
           class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer"
         >
           {{ r === '7d' ? '৭ দিন' : r === '30d' ? '৩০ দিন' : '১ বছর' }}
         </button>
         <button 
           @click="activeRange = 'custom'"
-          :class="[activeRange === 'custom' ? 'bg-m3-primary dark:bg-m3-dark-primary text-white shadow' : 'text-slate-650 dark:text-slate-400']"
+          :class="[activeRange === 'custom' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
           class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer"
         >
           কাস্টম
@@ -168,7 +166,7 @@ watch(
           <!-- Total Missed -->
           <div class="bg-m3-surface dark:bg-m3-dark-surface p-4.5 rounded-[24px] border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
             <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">ছুটে গেছে</span>
-            <span class="text-2xl font-black text-rose-500 dark:text-rose-450 mt-2">{{ store.analytics.totalMissed }}</span>
+            <span class="text-2xl font-black text-rose-500 dark:text-rose-300 mt-2">{{ store.analytics.totalMissed }}</span>
             <span class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">কাজা তৈরি হয়েছে</span>
           </div>
 
@@ -189,7 +187,7 @@ watch(
         <div class="space-y-4">
           <!-- Awwal Al Waqt -->
           <div>
-            <div class="flex justify-between text-xs font-bold text-slate-650 dark:text-slate-350 mb-1.5">
+            <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
               <span>আউয়াল ওয়াক্ত (শুরুতে)</span>
               <span>{{ store.analytics.punctuality.awwalAlWaqtCount }}টি ({{ store.analytics.punctuality.awwalAlWaqtPercentage }}%)</span>
             </div>
@@ -203,7 +201,7 @@ watch(
 
           <!-- Wast Al Waqt -->
           <div>
-            <div class="flex justify-between text-xs font-bold text-slate-650 dark:text-slate-350 mb-1.5">
+            <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
               <span>ওয়াসাত ওয়াক্ত (মাঝামাঝি)</span>
               <span>{{ store.analytics.punctuality.wastAlWaqtCount }}টি ({{ store.analytics.punctuality.wastAlWaqtPercentage }}%)</span>
             </div>
@@ -217,7 +215,7 @@ watch(
 
           <!-- Akhir Al Waqt -->
           <div>
-            <div class="flex justify-between text-xs font-bold text-slate-650 dark:text-slate-350 mb-1.5">
+            <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
               <span>আখির ওয়াক্ত (শেষের দিকে)</span>
               <span>{{ store.analytics.punctuality.akhirAlWaqtCount }}টি ({{ store.analytics.punctuality.akhirAlWaqtPercentage }}%)</span>
             </div>
@@ -242,22 +240,22 @@ watch(
 
         <div class="grid grid-cols-2 gap-4">
           <!-- Sleep -->
-          <div class="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+          <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
             <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">ঘুমের কারণে</span>
-            <span class="text-lg font-bold text-slate-800 dark:text-slate-250 mt-1 block">{{ store.analytics.missedReasons.excusedSleepCount }} বার</span>
+            <span class="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1 block">{{ store.analytics.missedReasons.excusedSleepCount }} বার</span>
           </div>
           <!-- Forget -->
-          <div class="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+          <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
             <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">ভুলে যাওয়ার কারণে</span>
-            <span class="text-lg font-bold text-slate-800 dark:text-slate-250 mt-1 block">{{ store.analytics.missedReasons.excusedForgetfulnessCount }} বার</span>
+            <span class="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1 block">{{ store.analytics.missedReasons.excusedForgetfulnessCount }} বার</span>
           </div>
           <!-- Laziness -->
-          <div class="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+          <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
             <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">অলসতায়</span>
             <span class="text-lg font-bold text-rose-500 dark:text-rose-400 mt-1 block">{{ store.analytics.missedReasons.unexcusedLazinessCount }} বার</span>
           </div>
           <!-- Distraction -->
-          <div class="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/50">
+          <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
             <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">উদাসীনতায়</span>
             <span class="text-lg font-bold text-rose-500 dark:text-rose-400 mt-1 block">{{ store.analytics.missedReasons.unexcusedDistractionCount }} বার</span>
           </div>
@@ -279,7 +277,7 @@ watch(
                 {{ PRAYER_ICONS[pName] }}
               </div>
               <div>
-                <span class="font-bold text-slate-850 dark:text-slate-200 block">
+                <span class="font-bold text-slate-900 dark:text-slate-100 block">
                   {{ getLocalizedPrayerNameStr(pName) }} সালাত
                 </span>
                 <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
@@ -299,7 +297,7 @@ watch(
                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                   : (store.analytics.prayerStats[pName]?.offeredPercentage ?? 0) >= 70
                     ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                    : 'bg-rose-500/10 text-rose-500 dark:text-rose-450 border border-rose-500/20'
+                    : 'bg-rose-500/10 text-rose-500 dark:text-rose-300 border border-rose-500/20'
               ]"
               class="px-3 py-1.5 rounded-full font-bold text-xs"
             >
@@ -314,21 +312,21 @@ watch(
         <h3 class="font-bold text-base text-slate-800 dark:text-slate-200">কাজা সমাধানের লাইফসাইকেল</h3>
         
         <div class="grid grid-cols-3 gap-3">
-          <div class="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl text-center border border-slate-100 dark:border-slate-800/50">
+          <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl text-center border border-slate-200 dark:border-slate-700">
             <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">সমাধানের গড় সময়</span>
             <span class="text-base font-black text-teal-600 dark:text-teal-400 block mt-2">
               {{ store.analytics.qazaSummary.averageResolutionTimeHours }} ঘণ্টা
             </span>
           </div>
 
-          <div class="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl text-center border border-slate-100 dark:border-slate-800/50">
+          <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl text-center border border-slate-200 dark:border-slate-700">
             <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">মোট কাজা সালাত</span>
             <span class="text-base font-black text-slate-800 dark:text-slate-200 block mt-2">
               {{ store.analytics.qazaSummary.totalIncurred }} বার
             </span>
           </div>
 
-          <div class="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl text-center border border-slate-100 dark:border-slate-800/50">
+          <div class="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl text-center border border-slate-200 dark:border-slate-700">
             <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block">অপেক্ষমান কাজা</span>
             <span class="text-base font-black text-rose-500 dark:text-rose-400 block mt-2">
               {{ store.analytics.qazaSummary.totalPending }} বার

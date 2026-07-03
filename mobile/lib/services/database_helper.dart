@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_import, deprecated_member_use
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';

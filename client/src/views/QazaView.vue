@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
 import { useLocaleStore } from '@/stores/locale'
-import { PrayerName } from '@/types/prayer.types'
 
 const store = usePrayerStore()
 const localeStore = useLocaleStore()
 
-const ARABIC_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء']
 const PRAYER_ICONS = ['🌅', '☀️', '⛅', '🌇', '🌃']
 
 const getLocalizedPrayerName = (prayer: number) => {
-  const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+  const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const
   const key = keys[prayer] || 'fajr'
-  return localeStore.t(key as any)
+  return localeStore.t(key)
 }
 
 const loadQazas = async () => {
@@ -54,11 +52,11 @@ const getRelativeTime = (dateStr: string) => {
 // Group pending Qaza logs by prayer name for summary
 const qazaSummary = computed<Record<number, number>>(() => {
   const counts: Record<number, number> = {
-    [PrayerName.Fajr]: 0,
-    [PrayerName.Dhuhr]: 0,
-    [PrayerName.Asr]: 0,
-    [PrayerName.Maghrib]: 0,
-    [PrayerName.Isha]: 0,
+    0: 0,
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
   }
   store.pendingQazas.forEach((q) => {
     const key = q.prayerName
@@ -97,7 +95,7 @@ const groupedQazas = computed(() => {
   })
 
   // Filter out empty groups
-  return Object.entries(groups).filter(([_, list]) => list.length > 0)
+  return Object.entries(groups).filter((item) => item[1].length > 0)
 })
 </script>
 
@@ -109,7 +107,7 @@ const groupedQazas = computed(() => {
       <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
         কাজা খতিয়ান (قضاء)
       </h1>
-      <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
+      <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mt-1">
         ছুটে যাওয়া সালাতের দায় হিসাব করুন এবং অপেক্ষমান কাজা আদায় করুন।
       </p>
     </div>
@@ -117,11 +115,11 @@ const groupedQazas = computed(() => {
     <!-- Summary Statistics Grid -->
     <div class="grid grid-cols-5 gap-2">
       <div 
-        v-for="pName in [PrayerName.Fajr, PrayerName.Dhuhr, PrayerName.Asr, PrayerName.Maghrib, PrayerName.Isha]"
+        v-for="pName in [0, 1, 2, 3, 4]"
         :key="pName"
         class="bg-m3-surface dark:bg-m3-dark-surface p-3 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 text-center shadow-sm"
       >
-        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-1">
+        <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300 block mb-1">
           {{ getLocalizedPrayerName(pName) }}
         </span>
         <span 
@@ -183,7 +181,7 @@ const groupedQazas = computed(() => {
                   {{ PRAYER_ICONS[qaza.prayerName] }}
                 </div>
                 <div>
-                  <span class="font-bold text-slate-850 dark:text-slate-200 block">
+                  <span class="font-bold text-slate-900 dark:text-slate-100 block">
                     {{ getLocalizedPrayerName(qaza.prayerName) }} সালাত
                   </span>
                   <div class="flex items-center gap-1.5 mt-1 text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
@@ -196,7 +194,7 @@ const groupedQazas = computed(() => {
 
               <button 
                 @click="handleFulfillQaza(qaza.id)"
-                class="bg-m3-primary dark:bg-m3-dark-primary text-white font-bold text-xs px-4 py-2.5 rounded-2xl shadow hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                class="bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 font-bold text-xs px-4 py-2.5 rounded-2xl shadow hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
                 আদায় করুন
               </button>

@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { usePrayerStore } from '@/stores/prayer'
 
-const props = defineProps<{
+defineProps<{
   isDark: boolean
 }>()
 
@@ -69,7 +69,7 @@ const triggerExport = async () => {
 
     statusMessage.value = localeStore.currentLocale === 'bn' ? 'ব্যাকআপ ফাইল সফলভাবে ডাউনলোড হয়েছে।' : 'Backup file downloaded successfully.'
     isSuccessStatus.value = true
-  } catch (err) {
+  } catch {
     statusMessage.value = localeStore.currentLocale === 'bn' ? 'ব্যাকআপ তৈরি ব্যর্থ হয়েছে।' : 'Export failed.'
     isSuccessStatus.value = false
   } finally {
@@ -140,7 +140,7 @@ const handleImportFile = async (event: Event) => {
         ? `সফলভাবে ${importTotal.value}টি রেকর্ড রিস্টোর করা হয়েছে!` 
         : `Successfully restored ${importTotal.value} records!`
       isSuccessStatus.value = true
-    } catch (err) {
+    } catch {
       statusMessage.value = localeStore.currentLocale === 'bn' ? 'ফাইল ইম্পোর্ট ব্যর্থ হয়েছে। অনুগ্রহ করে সঠিক ফাইল নির্বাচন করুন।' : 'Import failed. Invalid file format.'
       isSuccessStatus.value = false
     } finally {
@@ -203,7 +203,7 @@ const handleReset = () => {
 
     <!-- Preferences Group -->
     <div class="space-y-3">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-1">
         {{ localeStore.currentLocale === 'bn' ? 'ব্যবহারকারী সেটিংস' : 'User Preferences' }}
       </h2>
 
@@ -212,12 +212,12 @@ const handleReset = () => {
         <!-- Dark Mode Switch -->
         <div class="p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-500 dark:text-slate-400 text-2xl">dark_mode</span>
+            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">dark_mode</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
                 {{ localeStore.currentLocale === 'bn' ? 'ডার্ক মোড' : 'Dark Mode' }}
               </span>
-              <span class="text-xs text-slate-400 dark:text-slate-500 block">
+              <span class="text-xs text-slate-500 dark:text-slate-300 block">
                 {{ localeStore.currentLocale === 'bn' ? 'চোখের সুরক্ষা এবং চার্জ সাশ্রয়' : 'Save battery & protect your eyes' }}
               </span>
             </div>
@@ -237,12 +237,12 @@ const handleReset = () => {
         <!-- Language Toggle -->
         <div class="p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-500 dark:text-slate-400 text-2xl">translate</span>
+            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">translate</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
                 {{ localeStore.currentLocale === 'bn' ? 'ভাষা / Language' : 'Language' }}
               </span>
-              <span class="text-xs text-slate-400 dark:text-slate-500 block">
+              <span class="text-xs text-slate-500 dark:text-slate-300 block">
                 {{ localeStore.currentLocale === 'bn' ? 'অ্যাপ্লিকেশন ভাষা পরিবর্তন করুন' : 'Change app interface language' }}
               </span>
             </div>
@@ -258,12 +258,12 @@ const handleReset = () => {
         <!-- Gender Settings -->
         <div class="p-4 space-y-3">
           <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-500 dark:text-slate-400 text-2xl">wc</span>
+            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">wc</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
                 {{ localeStore.currentLocale === 'bn' ? 'লিঙ্গ নির্ধারণ' : 'Gender Settings' }}
               </span>
-              <span class="text-xs text-slate-400 dark:text-slate-500 block">
+              <span class="text-xs text-slate-500 dark:text-slate-300 block">
                 {{ localeStore.currentLocale === 'bn' ? 'হায়েজ / নিফাস অপশনের জন্য প্রয়োজন' : 'Required for showing menstruation options' }}
               </span>
             </div>
@@ -271,14 +271,14 @@ const handleReset = () => {
           <div class="flex gap-2">
             <button 
               @click="setGender(false)" 
-              :class="[isFemale === false ? 'bg-m3-primary dark:bg-m3-dark-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300']"
+              :class="[isFemale === false ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300']"
               class="flex-1 py-2 text-xs font-bold rounded-xl border border-slate-200/20 text-center cursor-pointer transition-colors"
             >
               {{ localeStore.currentLocale === 'bn' ? 'পুরুষ (মুজাক্কার)' : 'Male (Mudhakkar)' }}
             </button>
             <button 
               @click="setGender(true)" 
-              :class="[isFemale === true ? 'bg-m3-primary dark:bg-m3-dark-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300']"
+              :class="[isFemale === true ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300']"
               class="flex-1 py-2 text-xs font-bold rounded-xl border border-slate-200/20 text-center cursor-pointer transition-colors"
             >
               {{ localeStore.currentLocale === 'bn' ? 'নারী (মুআন্নাস)' : 'Female (Mu\'annath)' }}
@@ -291,7 +291,7 @@ const handleReset = () => {
 
     <!-- Data Management Group -->
     <div class="space-y-3">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-1">
         {{ localeStore.currentLocale === 'bn' ? 'উপাত্ত ব্যবস্থাপনা' : 'Data Management' }}
       </h2>
 
@@ -301,39 +301,39 @@ const handleReset = () => {
         <button 
           @click="triggerExport"
           :disabled="isExporting"
-          class="w-full text-left p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-850 cursor-pointer disabled:opacity-50"
+          class="w-full text-left p-4 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 cursor-pointer disabled:opacity-50 transition-colors duration-150"
         >
           <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-500 dark:text-slate-400 text-2xl">download_for_offline</span>
+            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">download_for_offline</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
                 {{ localeStore.currentLocale === 'bn' ? 'ব্যাকআপ ডাউনলোড (JSON)' : 'Export Backup (JSON)' }}
               </span>
-              <span class="text-xs text-slate-400 dark:text-slate-500 block">
+              <span class="text-xs text-slate-500 dark:text-slate-300 block">
                 {{ localeStore.currentLocale === 'bn' ? 'আপনার নামাজের সকল রেকর্ড ফাইল হিসেবে সংরক্ষণ করুন' : 'Export your prayer records to local storage' }}
               </span>
             </div>
           </div>
-          <span class="material-symbols-rounded text-slate-400">chevron_right</span>
+          <span class="material-symbols-rounded text-slate-500 dark:text-slate-300">chevron_right</span>
         </button>
 
         <!-- Import Backup -->
         <button 
           @click="triggerImportClick"
-          class="w-full text-left p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-850 cursor-pointer"
+          class="w-full text-left p-4 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 cursor-pointer transition-colors duration-150"
         >
           <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-500 dark:text-slate-400 text-2xl">upload_file</span>
+            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">upload_file</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
                 {{ localeStore.currentLocale === 'bn' ? 'ব্যাকআপ রিস্টোর করুন' : 'Restore Backup' }}
               </span>
-              <span class="text-xs text-slate-400 dark:text-slate-500 block">
+              <span class="text-xs text-slate-500 dark:text-slate-300 block">
                 {{ localeStore.currentLocale === 'bn' ? 'সংরক্ষিত ব্যাকআপ ফাইল থেকে ডাটা ইম্পোর্ট করুন' : 'Restore your prayer logs from a backup file' }}
               </span>
             </div>
           </div>
-          <span class="material-symbols-rounded text-slate-400">chevron_right</span>
+          <span class="material-symbols-rounded text-slate-500 dark:text-slate-300">chevron_right</span>
         </button>
 
         <!-- Hidden input -->
@@ -350,7 +350,7 @@ const handleReset = () => {
 
     <!-- Information & Guide Group -->
     <div class="space-y-3">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-1">
         {{ localeStore.currentLocale === 'bn' ? 'তথ্য ও নির্দেশিকা' : 'Guides & Timings' }}
       </h2>
 
@@ -359,39 +359,39 @@ const handleReset = () => {
         <!-- Salah Times -->
         <RouterLink 
           to="/salah-time"
-          class="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-850"
+          class="p-4 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors duration-150"
         >
           <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-500 dark:text-slate-400 text-2xl">schedule</span>
+            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">schedule</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
                 {{ localeStore.currentLocale === 'bn' ? 'সালাতের সময়সূচী' : 'Salah Timings' }}
               </span>
-              <span class="text-xs text-slate-400 dark:text-slate-500 block">
+              <span class="text-xs text-slate-500 dark:text-slate-300 block">
                 {{ localeStore.currentLocale === 'bn' ? 'ওয়াক্ত ও হারাম সময়সমূহের লাইভ হিসাব' : 'Live prayer timings & forbidden zones lookup' }}
               </span>
             </div>
           </div>
-          <span class="material-symbols-rounded text-slate-400">chevron_right</span>
+          <span class="material-symbols-rounded text-slate-500 dark:text-slate-300">chevron_right</span>
         </RouterLink>
 
         <!-- Islamic Guide -->
         <RouterLink 
           to="/guide"
-          class="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-850"
+          class="p-4 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors duration-150"
         >
           <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-500 dark:text-slate-400 text-2xl">import_contacts</span>
+            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">import_contacts</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
                 {{ localeStore.currentLocale === 'bn' ? 'সালাত ও কাজার নিয়মাবলী' : 'Salah & Qaza Rules' }}
               </span>
-              <span class="text-xs text-slate-400 dark:text-slate-500 block">
+              <span class="text-xs text-slate-500 dark:text-slate-300 block">
                 {{ localeStore.currentLocale === 'bn' ? 'ইকামা ট্র্যাকিংয়ের পেছনের ফিকহী নীতিমালা' : 'Islamic jurisprudence regarding missed prayers' }}
               </span>
             </div>
           </div>
-          <span class="material-symbols-rounded text-slate-400">chevron_right</span>
+          <span class="material-symbols-rounded text-slate-500 dark:text-slate-300">chevron_right</span>
         </RouterLink>
 
       </div>

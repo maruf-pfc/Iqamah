@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import DashboardView from '../views/DashboardView.vue'
 import QazaView from '../views/QazaView.vue'
@@ -8,7 +8,7 @@ import GuideView from '../views/GuideView.vue'
 import OnboardingView from '../views/OnboardingView.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',

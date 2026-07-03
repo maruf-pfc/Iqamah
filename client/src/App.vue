@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
-import { onMounted, onUnmounted, ref, watch, computed } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { usePrayerStore } from '@/stores/prayer'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { PrayerName } from '@/types/prayer.types'
 
-const router = useRouter()
 const route = useRoute()
 const store = usePrayerStore()
 const authStore = useAuthStore()
@@ -78,9 +77,9 @@ onUnmounted(() => {
 })
 
 const getLocalizedPrayerName = (prayer: number) => {
-  const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+  const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const
   const key = keys[prayer] || 'fajr'
-  return localeStore.t(key as any)
+  return localeStore.t(key)
 }
 
 const handleQuickLog = async (isOffered: boolean, missedReason?: number) => {

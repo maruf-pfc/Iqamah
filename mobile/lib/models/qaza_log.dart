@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'prayer_log.dart';
 
 enum QazaState { Pending, Offered }

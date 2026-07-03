@@ -51,7 +51,7 @@ const handleStart = () => {
           <span class="font-arabic text-teal-650 dark:text-teal-400 text-5xl">إقامة</span>
           <span>ইকামা</span>
         </h1>
-        <p class="text-xs text-slate-500 dark:text-slate-450 font-bold max-w-[290px] mx-auto leading-relaxed">
+        <p class="text-xs text-slate-600 dark:text-slate-300 font-bold max-w-[290px] mx-auto leading-relaxed">
           {{ selectedLanguage === 'bn' 
             ? 'আপনার নামাজ ও কাজা সালাত ট্র্যাকিংয়ের মাধ্যমে অভ্যাস গড়ে তোলার ইসলামিক ডায়েরি।' 
             : 'Your personal Islamic diary to build consistent Salah habits and track make-up prayers.' }}
@@ -60,22 +60,24 @@ const handleStart = () => {
     </div>
 
     <!-- Onboarding Selection Card -->
-    <div class="bg-slate-100/40 dark:bg-slate-900/30 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800/80 shadow-md space-y-6 mt-6">
+    <div class="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-700 shadow-lg space-y-6 mt-6">
       <!-- Title -->
-      <h2 class="text-xl font-extrabold text-slate-850 dark:text-slate-100 text-center">
+      <h2 class="text-xl font-extrabold text-slate-900 dark:text-slate-100 text-center">
         {{ selectedLanguage === 'bn' ? 'আসুন শুরু করা যাক!' : 'Let\'s Get Started!' }}
       </h2>
 
       <!-- Language Selector -->
       <div class="space-y-2">
-        <label class="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block">
+        <label class="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-widest block">
           {{ selectedLanguage === 'bn' ? 'ভাষা নির্বাচন করুন' : 'Select Language' }}
         </label>
-        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-200/50 dark:bg-slate-950 rounded-2xl">
+        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-200 dark:bg-slate-950 rounded-2xl">
           <button 
             type="button"
             @click="selectLanguage('bn')"
-            :class="[selectedLanguage === 'bn' ? 'bg-teal-650 dark:bg-teal-500 text-white dark:text-slate-950 shadow-md font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-semibold']"
+            :class="[selectedLanguage === 'bn' 
+              ? 'bg-teal-600 text-white dark:bg-teal-500 dark:text-slate-950 shadow-md font-bold' 
+              : 'bg-transparent text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-semibold']"
             class="py-2.5 text-xs rounded-xl transition-all duration-200 cursor-pointer"
           >
             বাংলা
@@ -83,7 +85,9 @@ const handleStart = () => {
           <button 
             type="button"
             @click="selectLanguage('en')"
-            :class="[selectedLanguage === 'en' ? 'bg-teal-650 dark:bg-teal-500 text-white dark:text-slate-950 shadow-md font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-semibold']"
+            :class="[selectedLanguage === 'en' 
+              ? 'bg-teal-600 text-white dark:bg-teal-500 dark:text-slate-950 shadow-md font-bold' 
+              : 'bg-transparent text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-semibold']"
             class="py-2.5 text-xs rounded-xl transition-all duration-200 cursor-pointer"
           >
             English
@@ -93,14 +97,16 @@ const handleStart = () => {
 
       <!-- Gender Selector -->
       <div class="space-y-2">
-        <label class="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block">
+        <label class="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-widest block">
           {{ selectedLanguage === 'bn' ? 'লিঙ্গ নির্বাচন করুন' : 'Select Gender' }}
         </label>
         <div class="grid grid-cols-2 gap-2">
           <button 
             type="button"
             @click="selectGender('male')"
-            :class="[selectedGender === 'male' ? 'bg-teal-650 dark:bg-teal-500 text-white dark:text-slate-950 font-bold shadow-md' : 'bg-slate-200/70 dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300/40 dark:border-slate-800/80 font-semibold']"
+            :class="[selectedGender === 'male' 
+              ? 'bg-teal-600 text-white dark:bg-teal-500 dark:text-slate-950 font-bold shadow-md border border-teal-600 dark:border-teal-500' 
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 font-semibold']"
             class="py-3 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer text-xs"
           >
             <span class="material-symbols-rounded text-lg">man</span>
@@ -109,14 +115,16 @@ const handleStart = () => {
           <button 
             type="button"
             @click="selectGender('female')"
-            :class="[selectedGender === 'female' ? 'bg-teal-650 dark:bg-teal-500 text-white dark:text-slate-950 font-bold shadow-md' : 'bg-slate-200/70 dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300/40 dark:border-slate-800/80 font-semibold']"
+            :class="[selectedGender === 'female' 
+              ? 'bg-teal-600 text-white dark:bg-teal-500 dark:text-slate-950 font-bold shadow-md border border-teal-600 dark:border-teal-500' 
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 font-semibold']"
             class="py-3 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer text-xs"
           >
             <span class="material-symbols-rounded text-lg">woman</span>
             <span>{{ selectedLanguage === 'bn' ? 'নারী (মুআন্নাস)' : 'Female (Mu\'annath)' }}</span>
           </button>
         </div>
-        <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-normal italic px-1">
+        <p class="text-[10px] text-slate-600 dark:text-slate-300 leading-normal italic px-1">
           * {{ selectedLanguage === 'bn' 
             ? 'মেয়েদের পিরিয়ড বা ওজরের দিনগুলোতে নামাজ ও কাজা হিসাব থেকে অব্যাহতি দেওয়ার জন্য এটি ব্যবহৃত হয়।' 
             : 'Menstruation exemption settings are tailored specifically based on this selection.' }}
@@ -125,17 +133,17 @@ const handleStart = () => {
 
       <!-- Optional Name Field -->
       <div class="space-y-2">
-        <label for="username" class="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block">
+        <label for="username" class="text-[10px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-widest block">
           {{ selectedLanguage === 'bn' ? 'আপনার নাম (ঐচ্ছিক)' : 'Your Name (Optional)' }}
         </label>
         <div class="relative flex items-center">
-          <span class="material-symbols-rounded absolute left-4 text-slate-400 dark:text-slate-500 text-xl">person</span>
+          <span class="material-symbols-rounded absolute left-4 text-slate-500 dark:text-slate-300 text-xl">person</span>
           <input 
             id="username"
             v-model="username"
             type="text"
             :placeholder="selectedLanguage === 'bn' ? 'যেমন: আব্দুল্লাহ বা আয়েশা' : 'e.g., Abdullah or Ayesha'"
-            class="w-full bg-slate-200/50 dark:bg-slate-850 border border-slate-300/40 dark:border-slate-800/80 text-slate-800 dark:text-slate-200 text-xs pl-11 pr-4 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
+            class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs pl-11 pr-4 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
           />
         </div>
       </div>

@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 enum PrayerName { Fajr, Dhuhr, Asr, Maghrib, Isha }
 
 enum WaqtStatus { AwwalAlWaqt, WastAlWaqt, AkhirAlWaqt }

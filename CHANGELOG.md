@@ -10,17 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.1] — 2026-07-03
 
 ### Added
-- **Mobile — Prayer card emoji icons:** Each prayer row (Fajr 🌙, Dhuhr ☀️, Asr 🌤️, Maghrib 🌅, Isha 🌃) now displays an emoji badge in a rounded container, matching the web client icon design.
-- **Mobile — Left status indicator strip:** Each prayer card now has a coloured left-edge strip (green = offered, red = missed, teal = excused/period, grey = unlogged) identical to the web client's vertical accent bar.
-- **Mobile — Circular checkbox trailing indicator:** The trailing area of each card shows a filled circular checkmark (✓), error mark (✕), or empty ring that animates on state change, replacing the plain `more_vert` icon.
-- **Mobile — Visible edit button:** An `edit_outlined` icon button is always visible in the card trailing area, replacing the hidden long-press-only gesture for opening the logging bottom sheet.
-- **Mobile — Responsive 6-column calendar grid:** The horizontal calendar date strip now renders as a full-width `Row` of 6 `Expanded` cells (today + 5 past days), matching the web client's `grid-cols-6` layout.
-- **Mobile — Reset Application in Settings:** A new destructive action card in the Settings tab wipes all `prayer_logs` and `qaza_logs` from the SQLite database, clears `SharedPreferences`, and navigates back to the Onboarding screen — identical to the web client's "Reset Application" feature.
-- **Web + Mobile — Wave emoji in dashboard greeting:** Dashboard title now reads "আসসালামু আলাইকুম 👋 / Assalamu Alaikum 👋" on both platforms.
+- **Mobile — Hybrid WebView Architecture:** Replaced the mobile UI screens with a high-performance `webview_flutter` container that loads compiled `client/dist` assets directly from the local asset bundle. This guarantees 100% UI/UX parity with the web client.
+- **Mobile — Platform-Safe Conditional WebViews:** Implemented a stub-based platform-conditional registration structure (`webview_stub.dart`, `webview_mobile.dart`, `webview_web.dart`) preventing crashes when launching on unsupported platforms (like web/desktop).
+- **Web + Mobile — Offline Streak Calculation:** Refactored the Dashboard streak counter (`loadStreak` in `DashboardView.vue`) to calculate streaks locally from browser/WebView `localStorage` data, resolving the static `12 দিন` default placeholder.
 
 ### Fixed
-- **Mobile — Bengali navigation label:** `navAnalytics` was incorrectly set to the English word `'progress'`; corrected to `'অগ্রগতি'`.
-- **Mobile — Calendar future-date bug:** The date strip previously generated days from 3 days in the past to 3 days in the *future*; corrected to always show only the 5 most recent past days plus today.
+- **Web — Router Local Resolution:** Switched Vue Router to `createWebHashHistory` to resolve routing paths correctly within isolated, non-server environments (e.g. mobile assets served under the `file:///` protocol).
+- **Web — Asset Paths:** Updated Vite build configuration to use relative paths (`base: './'`), allowing resources to load correctly without absolute server domains.
+- **Web — Code Quality & Lint Cleanups:** Resolved all ESLint and TypeScript compilation issues (unused imports, any types, unused destructured parameters) across the Vue codebase to guarantee production build stability.
+- **Mobile — Modern Key Parameters:** Refactored all constructor keys in Flutter widgets to use modern Dart `super.key` parameters.
 
 ### Changed
 - **Mobile — `pubspec.yaml`:** version bumped `1.1.0+2 → 1.1.1+3`.

@@ -145,10 +145,6 @@ const requestLocation = () => {
   }
 }
 
-const formattedGregorianDate = computed(() => {
-  return currentTime.value.toLocaleDateString('bn-BD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-})
-
 const formattedTime = computed(() => {
   return currentTime.value.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 })
@@ -171,7 +167,7 @@ const countdownText = computed(() => {
     { name: 'ইশা', start: new Date(schedule.value.isha.start).getTime() },
   ]
 
-  let next = prayers.find((p) => p.start > now)
+  const next = prayers.find((p) => p.start > now)
   let prefix = ''
   let diff = 0
 

@@ -16,7 +16,7 @@
 
 ## 🏗️ Architecture Overview
 
-As of **v1.1.0**, the platform operates in **fully offline mode**. All data is stored locally on the user's device with no server dependency for core features.
+As of **v1.1.1**, the platform operates in a **fully offline, hybrid model**. The mobile client wraps the compiled offline-first Vue client inside a native WebView container, achieving 100% feature and design parity.
 
 ```mermaid
 graph TD
@@ -24,12 +24,8 @@ graph TD
     Client -->|localStorage + Pinia| LocalState[(Local Browser Storage)]
     Client -->|adhan library| SalahEngine[Prayer Time Engine]
 
-    Mobile[Flutter Mobile App]
-    Mobile -->|SQLite FFI| LocalDB[(Local SQLite DB)]
-    Mobile -->|adhan-dart| SalahEngine2[Prayer Time Engine]
-    Mobile -->|SharedPreferences| Prefs[(Local Preferences)]
-
-    Client <-->|JSON Export / Import| Mobile
+    Mobile[Flutter Mobile Shell]
+    Mobile -->|webview_flutter| Client
 ```
 
 ### 1. Web Client (Vue 3 + Vite)
@@ -40,11 +36,10 @@ A local-first Single Page Application:
 - **OnboardingView:** Replaces the login screen. Captures name, language, and gender — stored locally.
 
 ### 2. Mobile Client (Flutter)
-A premium, native mobile companion:
-- **SQLite (`sqflite_common_ffi` + `sqflite_common_ffi_web`):** Cross-platform local database for prayer and Qaza logs.
-- **SharedPreferences:** Language, gender, and onboarding state.
-- **adhan (Dart):** High-precision offline Salah times and Makruh window detection.
-- **Material Design 3:** Premium dark theme with prayer emoji icons, status strip cards, circular checkmarks, and a bilingual (Bengali/English) interface.
+A lightweight Flutter WebView shell:
+- **webview_flutter:** Serves the compiled Vue 3 Single Page Application locally via asset bundler, ensuring 100% UI/UX parity.
+- **Platform-Safe Wrapper:** Uses Dart conditional imports (`webview_stub.dart`, `webview_mobile.dart`, `webview_web.dart`) to safely load platform-specific WebViews across Android, iOS, Web (Chrome), and Desktop.
+- **System Theme Integration:** Sets native status bar and system navigation bar coloring (`#030A09`) to blend seamlessly with the app's dark visual design.
 
 ### 3. Server (ASP.NET Core 10) — Optional / Legacy
 The original server implementation remains in `server/` for reference or self-hosted use. It is no longer required by the web or mobile clients in their default configuration.
