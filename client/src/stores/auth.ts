@@ -26,13 +26,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, _password: string) => {
     // No-op local fallback
     token.value = 'local_offline_token'
     user.value = { id: 1, username: 'Brother Ahmed', email }
   }
 
-  const register = async (username: string, email: string, password: string) => {
+  const register = async (username: string, email: string, _password: string) => {
     // No-op local fallback
     token.value = 'local_offline_token'
     user.value = { id: 1, username, email }

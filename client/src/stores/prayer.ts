@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useAuthStore } from '@/stores/auth'
 import type {
   PrayerLogDto,
   QazaLogDto,
@@ -34,7 +33,6 @@ const saveLogsToStorage = (logs: PrayerLogDto[]) => {
 }
 
 export const usePrayerStore = defineStore('prayer', () => {
-  const authStore = useAuthStore()
   const prayerLogs = ref<PrayerLogDto[]>([])
   const pendingQazas = ref<QazaLogDto[]>([])
   const analytics = ref<AnalyticsResponseDto | null>(null)

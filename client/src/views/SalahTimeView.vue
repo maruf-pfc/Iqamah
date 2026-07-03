@@ -2,7 +2,6 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocaleStore } from '@/stores/locale'
-import { useAuthStore } from '@/stores/auth'
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from 'adhan'
 
 interface PrayerEntry {
@@ -33,7 +32,6 @@ interface PrayerSchedule {
 
 const router = useRouter()
 const localeStore = useLocaleStore()
-const authStore = useAuthStore()
 
 const latitude = ref<number>(23.7639)
 const longitude = ref<number>(90.3889)

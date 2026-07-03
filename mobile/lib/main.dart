@@ -14,6 +14,7 @@ import 'models/qaza_log.dart';
 import 'providers/prayer_provider.dart';
 import 'providers/salah_time_provider.dart';
 import 'l10n/strings.dart';
+import 'services/database_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
