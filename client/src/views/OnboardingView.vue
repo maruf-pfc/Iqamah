@@ -51,7 +51,7 @@ const handleStart = () => {
           <span class="font-arabic text-teal-650 dark:text-teal-400 text-5xl">إقامة</span>
           <span>ইকামা</span>
         </h1>
-        <p class="text-xs text-slate-450 dark:text-slate-500 font-bold max-w-[290px] mx-auto leading-relaxed">
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold max-w-[290px] mx-auto leading-relaxed">
           {{ selectedLanguage === 'bn' 
             ? 'আপনার নামাজ ও কাজা সালাত ট্র্যাকিংয়ের মাধ্যমে অভ্যাস গড়ে তোলার ইসলামিক ডায়েরি।' 
             : 'Your personal Islamic diary to build consistent Salah habits and track make-up prayers.' }}
@@ -60,7 +60,7 @@ const handleStart = () => {
     </div>
 
     <!-- Onboarding Selection Card -->
-    <div class="bg-m3-surface dark:bg-m3-dark-surface p-6 rounded-[32px] border border-slate-200/50 dark:border-slate-800/80 shadow-md space-y-6 mt-6">
+    <div class="bg-m3-surface dark:bg-m3-dark-surface p-6 rounded-[32px] border border-slate-200 dark:border-slate-800/80 shadow-md space-y-6 mt-6">
       <!-- Title -->
       <h2 class="text-xl font-extrabold text-slate-800 dark:text-slate-100 text-center">
         {{ selectedLanguage === 'bn' ? 'আসুন শুরু করা যাক!' : 'Let\'s Get Started!' }}
@@ -68,14 +68,14 @@ const handleStart = () => {
 
       <!-- Language Selector -->
       <div class="space-y-2">
-        <label class="text-[10px] font-extrabold text-slate-450 dark:text-slate-500 uppercase tracking-widest block">
+        <label class="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block">
           {{ selectedLanguage === 'bn' ? 'ভাষা নির্বাচন করুন' : 'Select Language' }}
         </label>
         <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl">
           <button 
             type="button"
             @click="selectLanguage('bn')"
-            :class="[selectedLanguage === 'bn' ? 'bg-white dark:bg-slate-800 text-teal-650 dark:text-teal-400 shadow-sm font-bold' : 'text-slate-500 dark:text-slate-450 hover:text-slate-700 font-semibold']"
+            :class="[selectedLanguage === 'bn' ? 'bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white font-semibold']"
             class="py-2.5 text-xs rounded-xl transition-all duration-200 cursor-pointer"
           >
             বাংলা
@@ -83,7 +83,7 @@ const handleStart = () => {
           <button 
             type="button"
             @click="selectLanguage('en')"
-            :class="[selectedLanguage === 'en' ? 'bg-white dark:bg-slate-800 text-teal-650 dark:text-teal-400 shadow-sm font-bold' : 'text-slate-500 dark:text-slate-450 hover:text-slate-700 font-semibold']"
+            :class="[selectedLanguage === 'en' ? 'bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-sm font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white font-semibold']"
             class="py-2.5 text-xs rounded-xl transition-all duration-200 cursor-pointer"
           >
             English
@@ -93,14 +93,14 @@ const handleStart = () => {
 
       <!-- Gender Selector -->
       <div class="space-y-2">
-        <label class="text-[10px] font-extrabold text-slate-450 dark:text-slate-500 uppercase tracking-widest block">
+        <label class="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block">
           {{ selectedLanguage === 'bn' ? 'লিঙ্গ নির্বাচন করুন' : 'Select Gender' }}
         </label>
         <div class="grid grid-cols-2 gap-2">
           <button 
             type="button"
             @click="selectGender('male')"
-            :class="[selectedGender === 'male' ? 'bg-teal-600 text-white font-bold shadow-md' : 'bg-slate-50 dark:bg-slate-850 text-slate-650 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/20 font-semibold']"
+            :class="[selectedGender === 'male' ? 'bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-950 font-bold shadow-md' : 'bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800/80 font-semibold']"
             class="py-3 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer text-xs"
           >
             <span class="material-symbols-rounded text-lg">man</span>
@@ -109,14 +109,14 @@ const handleStart = () => {
           <button 
             type="button"
             @click="selectGender('female')"
-            :class="[selectedGender === 'female' ? 'bg-teal-600 text-white font-bold shadow-md' : 'bg-slate-50 dark:bg-slate-850 text-slate-650 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/20 font-semibold']"
+            :class="[selectedGender === 'female' ? 'bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-950 font-bold shadow-md' : 'bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800/80 font-semibold']"
             class="py-3 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer text-xs"
           >
             <span class="material-symbols-rounded text-lg">woman</span>
             <span>{{ selectedLanguage === 'bn' ? 'নারী (মুআন্নাস)' : 'Female (Mu\'annath)' }}</span>
           </button>
         </div>
-        <p class="text-[10px] text-slate-400 dark:text-slate-500 leading-normal italic px-1">
+        <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-normal italic px-1">
           * {{ selectedLanguage === 'bn' 
             ? 'মেয়েদের পিরিয়ড বা ওজরের দিনগুলোতে নামাজ ও কাজা হিসাব থেকে অব্যাহতি দেওয়ার জন্য এটি ব্যবহৃত হয়।' 
             : 'Menstruation exemption settings are tailored specifically based on this selection.' }}
@@ -125,7 +125,7 @@ const handleStart = () => {
 
       <!-- Optional Name Field -->
       <div class="space-y-2">
-        <label for="username" class="text-[10px] font-extrabold text-slate-450 dark:text-slate-500 uppercase tracking-widest block">
+        <label for="username" class="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block">
           {{ selectedLanguage === 'bn' ? 'আপনার নাম (ঐচ্ছিক)' : 'Your Name (Optional)' }}
         </label>
         <div class="relative flex items-center">
@@ -135,7 +135,7 @@ const handleStart = () => {
             v-model="username"
             type="text"
             :placeholder="selectedLanguage === 'bn' ? 'যেমন: আব্দুল্লাহ বা আয়েশা' : 'e.g., Abdullah or Ayesha'"
-            class="w-full bg-slate-100 dark:bg-slate-850 border border-slate-200/20 text-slate-800 dark:text-slate-200 text-xs pl-11 pr-4 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 transition-all duration-200"
+            class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800/80 text-slate-800 dark:text-slate-200 text-xs pl-11 pr-4 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
           />
         </div>
       </div>
@@ -144,7 +144,7 @@ const handleStart = () => {
       <button 
         type="button"
         @click="handleStart"
-        class="w-full bg-m3-primary dark:bg-m3-dark-primary hover:bg-teal-700 text-white font-extrabold py-4 rounded-2xl shadow hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer text-sm flex items-center justify-center gap-2"
+        class="w-full bg-teal-600 dark:bg-teal-500 hover:bg-teal-700 dark:hover:bg-teal-400 text-white dark:text-slate-950 font-extrabold py-4 rounded-2xl shadow hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer text-sm flex items-center justify-center gap-2"
       >
         <span>{{ selectedLanguage === 'bn' ? 'যাত্রা শুরু করুন' : 'Start Journey' }}</span>
         <span class="material-symbols-rounded text-lg">arrow_forward</span>
@@ -153,7 +153,7 @@ const handleStart = () => {
 
     <!-- Footer Note -->
     <div class="text-center mt-6">
-      <p class="text-[10px] text-slate-450 dark:text-slate-500 font-semibold tracking-wide">
+      <p class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold tracking-wide">
         {{ selectedLanguage === 'bn' 
           ? '১০০% অফলাইন এবং নিরাপদ। আপনার সকল তথ্য ব্রাউজারে সংরক্ষিত থাকবে।' 
           : '100% Offline & Private. All your logs remain on this browser.' }}
