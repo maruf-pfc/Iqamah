@@ -6,6 +6,7 @@ import AnalyticsView from '../views/AnalyticsView.vue'
 import SalahTimeView from '../views/SalahTimeView.vue'
 import GuideView from '../views/GuideView.vue'
 import OnboardingView from '../views/OnboardingView.vue'
+import SettingsView from '../views/SettingsView.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -63,7 +64,7 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('../views/SettingsView.vue'),
+      component: SettingsView,
       meta: {
         requiresAuth: true,
         title: 'Settings | Iqamah',
