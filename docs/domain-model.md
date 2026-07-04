@@ -1,7 +1,7 @@
 # Iqamah — Domain Model Documentation
 
 > **Audience:** New engineers onboarding to the project.  
-> **Last Updated:** 2026-07-03 · **v1.1.1**  
+> **Last Updated:** 2026-07-04 · **v1.1.2**  
 > **Layer:** `Iqamah.Domain` (server) · `mobile/lib/` (Flutter) · `client/src/stores/` (Vue)
 
 ---
@@ -213,5 +213,6 @@ All integer values **must** stay in sync across C#, TypeScript, and Dart definit
 |---------|------|-------------------|
 | v1.0.0 | 2026-06-11 | Initial domain model — server-side EF Core + PostgreSQL |
 | v1.1.1 | 2026-07-03 | WebView container parity migration, hash routing configuration, offline streak fixes |
+| v1.1.2 | 2026-07-04 | Single-file bundle integration, local offline Material font embedding |
 
 See [CHANGELOG.md](../CHANGELOG.md) for full release notes.

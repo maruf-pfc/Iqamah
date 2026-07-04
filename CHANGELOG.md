@@ -5,6 +5,15 @@ All notable changes to **Iqamah (إقامة)** are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] — 2026-07-04
+
+### Added
+- **Web + Mobile — Offline Material Symbols:** Bundled the Material Symbols Rounded font directly in the client repository as an offline asset. The font is fully base64-encoded and inlined into the single HTML build, enabling icons to render perfectly and instantly offline without fetching external stylesheets.
+
+### Fixed
+- **Mobile — Black Screen Resolved:** Reconfigured Vite and Vue Router build targets using `vite-plugin-singlefile` to bundle the entire web app into a single self-contained `index.html`. This eliminates external resource fetches and CORS blocks when loading the app under the local `file://` protocol.
+- **Mobile — Assets Clean Up:** Removed obsolete `assets/web/assets` directory configuration from `pubspec.yaml` to ensure clean Flutter compilations.
+
 ---
 
 ## [1.1.1] — 2026-07-03
