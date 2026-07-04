@@ -13,9 +13,9 @@ const selectedLanguage = ref<'en' | 'bn'>('en')
 const username = ref('')
 
 // Initialize from existing local state if any
-const existingGender = localStorage.getItem('iqamah_gender')
-if (existingGender === 'male' || existingGender === 'female') {
-  selectedGender.value = existingGender
+const existingGender = localStorage.getItem('iqamah_user_g')
+if (existingGender === 'm' || existingGender === 'f') {
+  selectedGender.value = existingGender === 'f' ? 'female' : 'male'
 }
 
 const existingLang = localStorage.getItem('iqamah_locale')

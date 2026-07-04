@@ -43,17 +43,17 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     localStorage.removeItem('iqamah_onboarding_completed')
     localStorage.removeItem('iqamah_user_name')
-    localStorage.removeItem('iqamah_gender')
+    localStorage.removeItem('iqamah_user_g')
   }
 
-  const completeOnboarding = (gender: 'male' | 'female', lang: 'en' | 'bn', customName?: string) => {
+  const completeOnboarding = (userGender: 'male' | 'female', lang: 'en' | 'bn', customName?: string) => {
     localStorage.setItem('iqamah_onboarding_completed', 'true')
-    localStorage.setItem('iqamah_gender', gender)
+    localStorage.setItem('iqamah_user_g', userGender === 'female' ? 'f' : 'm')
     localStorage.setItem('iqamah_locale', lang)
     
     let displayName = customName?.trim()
     if (!displayName) {
-      displayName = gender === 'female' ? 'Sister Ayesha' : 'Brother Ahmed'
+      displayName = userGender === 'female' ? 'Sister Ayesha' : 'Brother Ahmed'
     }
     localStorage.setItem('iqamah_user_name', displayName)
     

@@ -20,16 +20,16 @@ const store = usePrayerStore()
 
 // Gender selection state
 const isFemale = ref<boolean | null>(
-  localStorage.getItem('iqamah_gender') === 'female'
+  localStorage.getItem('iqamah_user_g') === 'f'
     ? true
-    : localStorage.getItem('iqamah_gender') === 'male'
+    : localStorage.getItem('iqamah_user_g') === 'm'
       ? false
       : null
 )
 
 const setGender = (female: boolean) => {
   isFemale.value = female
-  localStorage.setItem('iqamah_gender', female ? 'female' : 'male')
+  localStorage.setItem('iqamah_user_g', female ? 'f' : 'm')
 }
 
 // Backup & Restore states

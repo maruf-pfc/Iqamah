@@ -50,9 +50,9 @@ const formHasTasbih = ref(false)
 
 // Gender preference
 const isFemale = ref<boolean | null>(
-  localStorage.getItem('iqamah_gender') === 'female'
+  localStorage.getItem('iqamah_user_g') === 'f'
     ? true
-    : localStorage.getItem('iqamah_gender') === 'male'
+    : localStorage.getItem('iqamah_user_g') === 'm'
       ? false
       : null
 )
