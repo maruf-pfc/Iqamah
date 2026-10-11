@@ -1,6 +1,6 @@
 # إقامة | Iqamah — Salah Habit Establishment Platform
 
-[![Version](https://img.shields.io/badge/version-1.1.3-teal.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.4--beta.1-teal.svg)](CHANGELOG.md)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-emerald.svg)](https://vuejs.org/)
 [![Flutter](https://img.shields.io/badge/Flutter-Stable-blue.svg)](https://flutter.dev/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
@@ -10,7 +10,7 @@
 
 **Iqamah (إقامة)** is a local-first Salah habit companion for users in Bangladesh. It tracks prayer punctuality, missed prayers, Qaza obligations and analytics without an account or a mandatory server. Select one of Bangladesh's 64 districts during onboarding or in Settings to calculate district-center prayer estimates offline.
 
-**Current implementation work is unreleased, not an unconditional release-readiness certification.** See [release verification and blockers](docs/release-readiness.md) and [design system](docs/design-system.md).
+**Current implementation is v1.1.4-beta.1.** See [release verification and blockers](docs/release-readiness.md) and [design system](docs/design-system.md).
 
 ![Iqamah Platform Preview](assets/cover.png)
 
@@ -18,7 +18,7 @@
 
 ## 🏗️ Architecture Overview
 
-As of **v1.1.3**, the platform operates in a **fully offline, hybrid model**. The mobile client wraps the compiled offline-first Vue client inside a native WebView container, achieving 100% feature and design parity.
+As of **v1.1.4-beta.1**, the platform operates in a **fully offline, hybrid model**. The mobile client wraps the compiled offline-first Vue client inside a native WebView container, achieving 100% feature and design parity.
 
 ```mermaid
 graph TD

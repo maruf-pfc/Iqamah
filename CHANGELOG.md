@@ -5,6 +5,21 @@ All notable changes to **Iqamah (إقامة)** are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4-beta.1] — 2026-10-11
+
+### Added
+- **Native Backup & Share Bridge:** Integrated `IqamahNative` JavaScript channel in Flutter WebView using `share_plus` to allow mobile users to save and share JSON backup files directly to system file managers, Google Drive, and apps.
+- **Backward-Compatible Migration Pipeline:** Added migration logic in `backup.ts` supporting mobile SQLite v1 exports, web v1.1.0/v1.0.0 backups, and v2.0.0 schema with non-destructive validation and checksum verification.
+- **Bilingual In-App Guidance:** Rewrote `GuideView.vue` with complete English and Bengali localization covering Qaza Fiqh rules, prayer calculation accuracy, punctuality stages, daily app usage, zero-telemetry privacy, and scholarly consultation disclaimers.
+- **Bangladesh Reference Validation Tests:** Added automated prayer timetable tests across solstices, equinoxes, and longitudinal spreads verifying strict prayer ordering, Hanafi Asr, and Islamic Foundation Bangladesh 18° solar conventions.
+- **Migration & Integrity Test Suites:** Added test coverage in `migration.spec.ts` proving cross-version backup compatibility, error boundaries on corrupt inputs, and preservation of user data.
+
+### Fixed
+- **Android Package Identity Continuity:** Maintained `applicationId = "com.example.mobile"` and incremented `versionCode: 6` / `versionName: 1.1.4-beta.1` to ensure upgrades install over existing v1.1.3 installations without data loss or package mismatch errors.
+- **Settings Backup Handling:** Restored theme and calculation preference extraction upon backup import with atomic commits and clean validation.
+
+---
+
 ## [1.1.3] — 2026-10-11
 
 ### Added

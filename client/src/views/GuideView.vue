@@ -1,51 +1,70 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useLocaleStore } from '@/stores/locale'
 
 const router = useRouter()
-const activeTab = ref('qaza-rules')
+const locale = useLocaleStore()
+const activeTab = ref<'qaza-rules' | 'timing-accuracy' | 'punctuality' | 'app-usage' | 'data-privacy'>('qaza-rules')
 </script>
 
 <template>
-  <div class="px-6 space-y-6">
+  <div class="px-6 space-y-6 pb-12">
     <!-- Header with Back Button -->
     <div class="flex items-center gap-3 pt-4">
       <button 
         @click="router.push('/settings')"
         class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 cursor-pointer"
+        :aria-label="locale.currentLocale === 'bn' ? 'ফিরে যান' : 'Go back'"
       >
         <span class="material-symbols-rounded">arrow_back</span>
       </button>
       <div>
-        <h1 class="text-xl font-bold text-slate-900 dark:text-white">সালাত ও কাজার নিয়মাবলী</h1>
+        <h1 class="text-xl font-bold text-slate-900 dark:text-white">
+          {{ locale.currentLocale === 'bn' ? 'সালাত ও কাজার পূর্ণাঙ্গ নির্দেশিকা' : 'Salah & Qaza Complete Guide' }}
+        </h1>
         <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
-          ইসলামী ফিকহ ও অ্যাপ ব্যবহার নির্দেশিকা
+          {{ locale.currentLocale === 'bn' ? 'ইসলামী ফিকহ, নামাজের সময় ও তথ্য সুরক্ষা' : 'Islamic Fiqh, Prayer Timings & Data Privacy' }}
         </p>
       </div>
     </div>
 
     <!-- Segmented Tab Controls -->
-    <div class="bg-m3-surface dark:bg-m3-dark-surface p-1 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex">
+    <div class="bg-m3-surface dark:bg-m3-dark-surface p-1 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex flex-wrap gap-1">
       <button 
         @click="activeTab = 'qaza-rules'"
         :class="[activeTab === 'qaza-rules' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
-        class="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
+        class="flex-1 min-w-[100px] text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
       >
-        কাজা নীতিমালা
+        {{ locale.currentLocale === 'bn' ? 'কাজা নীতিমালা' : 'Qaza Rules' }}
+      </button>
+      <button 
+        @click="activeTab = 'timing-accuracy'"
+        :class="[activeTab === 'timing-accuracy' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
+        class="flex-1 min-w-[100px] text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
+      >
+        {{ locale.currentLocale === 'bn' ? 'সময় ও নির্ভুলতা' : 'Timings & Accuracy' }}
       </button>
       <button 
         @click="activeTab = 'punctuality'"
         :class="[activeTab === 'punctuality' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
-        class="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
+        class="flex-1 min-w-[100px] text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
       >
-        সময়ানুবর্তিতা
+        {{ locale.currentLocale === 'bn' ? 'ওয়াক্তের স্তর' : 'Waqt Stages' }}
       </button>
       <button 
         @click="activeTab = 'app-usage'"
         :class="[activeTab === 'app-usage' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
-        class="flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
+        class="flex-1 min-w-[100px] text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
       >
-        অ্যাপ ব্যবহার
+        {{ locale.currentLocale === 'bn' ? 'ব্যবহারবিধি' : 'How to Use' }}
+      </button>
+      <button 
+        @click="activeTab = 'data-privacy'"
+        :class="[activeTab === 'data-privacy' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
+        class="flex-1 min-w-[100px] text-center py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer"
+      >
+        {{ locale.currentLocale === 'bn' ? 'ব্যাকআপ ও নিরাপত্তা' : 'Data & Backups' }}
       </button>
     </div>
 
@@ -57,141 +76,284 @@ const activeTab = ref('qaza-rules')
         <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
           <span class="text-2xl">⚖️</span>
           <div>
-            <h2 class="font-bold text-slate-900 dark:text-white text-base">সালাত কাজা হওয়ার শরয়ী হুকুম</h2>
-            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">কখন এবং কিভাবে কাজা সালাত আদায় করবেন</p>
+            <h2 class="font-bold text-slate-900 dark:text-white text-base">
+              {{ locale.currentLocale === 'bn' ? 'সালাত কাজা হওয়ার শরয়ী হুকুম' : 'Islamic Rulings on Missed Prayers (Qaza)' }}
+            </h2>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
+              {{ locale.currentLocale === 'bn' ? 'কখন এবং কিভাবে কাজা সালাত আদায় করবেন' : 'When and how to fulfill missed obligations' }}
+            </p>
           </div>
         </div>
 
         <p class="text-slate-600 dark:text-slate-350 text-xs leading-relaxed">
-          ইসলামী বিধান অনুযায়ী সাময়িকভাবে ওজর বা অবহেলার কারণে ফরজ সালাত ছুটে গেলে তা পরবর্তীতে আদায় করাকে 'কাজা' বলা হয়। সালাত কাজা হওয়ার কারণসমূহ ফিকহী দৃষ্টিতে ৩টি শ্রেণীতে বিভক্ত:
+          {{ locale.currentLocale === 'bn' 
+            ? 'ইসলামী ফিকহ অনুযায়ী ওজর বা অনবধানতার কারণে ফরজ সালাতের ওয়াক্ত পার হয়ে গেলে তা পরবর্তীতে আদায় করাকে \'কাজা\' বলা হয়। ক্ষমাযোগ্য ওজরের ক্ষেত্রে গুনাহ না হলেও সালাত আদায় করার আবশ্যকতা রহিত হয় না।' 
+            : 'According to Islamic jurisprudence, performing an obligatory prayer after its designated time has expired is known as Qaza. An unintentional excuse removes sin but does not remove the obligation to perform the prayer.' }}
         </p>
 
         <div class="space-y-3">
-          <!-- Sleep -->
+          <!-- Sleep & Forgetfulness -->
           <div class="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
             <span class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-              <span>💤</span> ঘুম ও অসচেতনতা
+              <span>💤</span> {{ locale.currentLocale === 'bn' ? 'ঘুম ও অনিচ্ছাকৃত ভুল' : 'Sleep & Unintentional Forgetfulness' }}
             </span>
-            <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1.5 leading-relaxed">
-              যদি কেউ ঘুম বা অনিচ্ছাকৃত ভুলে যাওয়ার কারণে ওয়াক্ত পার করে ফেলে, তবে মনে পড়ার সাথে সাথেই সালাত আদায় করা ফরজ। এটি ক্ষমাযোগ্য ওজর হিসেবে গণ্য হলেও কাজা আদায় করা বাধ্যতামূলক।
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1.5 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'রাসূলুল্লাহ ﷺ বলেছেন: "যে ব্যক্তি নামাজের কথা ভুলে যায় বা ঘুমিয়ে থাকে, তার কাফফারা হলো স্মরণ হওয়ামাত্রই তা আদায় করা" (সহীহ বুখারী ৫৯৭)। এটি ক্ষমাযোগ্য ওজর হলেও সালাতের কাজা আদায় করা ফরজ।'
+                : 'The Prophet ﷺ said: "Whoever forgets a prayer or sleeps through it, its expiation is that he prays it when he remembers it" (Sahih al-Bukhari 597). While blameless, Qaza remains strictly obligatory.' }}
             </p>
           </div>
 
-          <!-- Laziness -->
+          <!-- Laziness & Situational -->
           <div class="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10">
             <span class="text-xs font-bold text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
-              <span>⚠️</span> অলসতা বা অবহেলা
+              <span>⚠️</span> {{ locale.currentLocale === 'bn' ? 'অলসতা বা জাগতিক ব্যস্ততা' : 'Laziness & Situational Delays' }}
             </span>
-            <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1.5 leading-relaxed">
-              ইচ্ছাকৃতভাবে বা অবহেলা করে সালাত পরিত্যাগ করা একটি কবিরা গুনাহ। এর জন্য তাওবা ও ইস্তিগফার করার পাশাপাশি বকেয়া কাজা সালাত অতি দ্রুত আদায় করা ফরজ।
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1.5 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'ইচ্ছাকৃতভাবে সালাত বিলম্বিত করা গুরুতর অন্যায়। এর জন্য খাঁটি মনে তাওবা ও ক্ষমা প্রার্থনার পাশাপাশি দ্রুততম সময়ে বকেয়া কাজা সালাত আদায় করা চার মাজহাবের সর্বসম্মত ফতোয়া।'
+                : 'Intentionally delaying prayer without an excuse is a serious sin. Sincere repentance is required alongside immediate make-up (Qaza) according to the consensus of Sunni jurisprudence.' }}
             </p>
           </div>
 
-          <!-- Menstruation -->
+          <!-- Hayd & Nifas -->
           <div class="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
             <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-              <span>🌸</span> হায়েজ ও নিফাস (নারীদের জন্য)
+              <span>🌸</span> {{ locale.currentLocale === 'bn' ? 'হায়েজ ও নিফাস (মহিলাদের জন্য)' : 'Hayd & Nifas (For Women)' }}
             </span>
-            <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1.5 leading-relaxed">
-              ঋতুস্রাব (হায়েজ) অথবা সন্তান প্রসব পরবর্তী অপবিত্রতার (নিফাস) দিনগুলোতে নারীদের জন্য নামাজ আদায় করা সম্পূর্ণ নিষেধ এবং এই সালাতসমূহের কোনো কাজা আদায় করতে হয় না।
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1.5 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'ঋতুস্রাব (হায়েজ) বা প্রসবোত্তর অপবিত্রতার (নিফাস) দিনগুলোতে নামাজ আদায় সম্পূর্ণ নিষেধ এবং এই সময়ের সালাতসমূহের কোনো কাজা আদায় করতে হয় না।'
+                : 'During menstruation (Hayd) and postnatal bleeding (Nifas), prayers are exempted entirely and no Qaza is required (Sahih Muslim 335).' }}
             </p>
           </div>
         </div>
       </div>
 
-      <!-- TAB 2: PUNCTUALITY -->
+      <!-- TAB 2: TIMINGS & ACCURACY -->
+      <div v-if="activeTab === 'timing-accuracy'" class="space-y-5 animate-fade-in">
+        <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <span class="text-2xl">🧭</span>
+          <div>
+            <h2 class="font-bold text-slate-900 dark:text-white text-base">
+              {{ locale.currentLocale === 'bn' ? 'নামাজের সময় ও হিসাবের ভিত্তি' : 'Prayer Times & Calculation Methodology' }}
+            </h2>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
+              {{ locale.currentLocale === 'bn' ? 'ইসলামিক ফাউন্ডেশন বাংলাদেশ ও জ্যোতির্বৈজ্ঞানিক হিসাব' : 'Islamic Foundation Bangladesh & Solar Mathematics' }}
+            </p>
+          </div>
+        </div>
+
+        <p class="text-slate-600 dark:text-slate-350 text-xs leading-relaxed">
+          {{ locale.currentLocale === 'bn'
+            ? 'ইকামা অ্যাপে বাংলাদেশের সকল ৬৪টি জেলার জেলা সদরের সঠিক অক্ষাংশ ও দ্রাঘিমাংশ ব্যবহার করে সম্পূর্ণ অফলাইনে প্রতিটি ওয়াক্ত নির্ধারণ করা হয়।'
+            : 'Iqamah calculates prayer timetables 100% offline using validated district-center coordinates for all 64 administrative districts of Bangladesh.' }}
+        </p>
+
+        <div class="space-y-3">
+          <div class="p-4 rounded-2xl bg-teal-500/5 border border-teal-500/15">
+            <span class="text-xs font-bold text-teal-700 dark:text-teal-400">
+              {{ locale.currentLocale === 'bn' ? '১. হিসাব পদ্ধতি (Calculation Method)' : '1. Calculation Conventions' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'ফজর ও ইশার জন্য ইসলামিক ফাউন্ডেশন বাংলাদেশ (IFB) স্বীকৃত ১৮° সৌর কোণ ব্যবহৃত হয় (করাচি মেথড কনভেনশন)। আসরের ওয়াক্তের জন্য বাংলাদেশে প্রচলিত হানাফী মাজহাবের দ্বিগুণ ছায়া (Shadow factor 2) মান্য করা হয়।'
+                : 'Fajr and Isha use an 18° solar angle conforming with Islamic Foundation Bangladesh standards (Karachi method). Asr is calculated using the Hanafi shadow multiplier (factor 2).' }}
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15">
+            <span class="text-xs font-bold text-amber-700 dark:text-amber-400">
+              {{ locale.currentLocale === 'bn' ? '২. নিষিদ্ধ ও সতর্কতামূলক সময় (Caution Windows)' : '2. Caution Windows (Forbidden Zones)' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'সূর্যোদয়ের পর ১৫ মিনিট, দ্বিপ্রহরে সূর্য মধ্যাকাশে থাকার সময় (জাওয়াল এর ১০ মিনিট পূর্বে) এবং সূর্যাস্তের পূর্বের ২০ মিনিট—এই সময়গুলোতে যেকোনো নফল ও সাধারণ সালাত আদায় থেকে বিরত থাকার সতর্কতামূলক ব্যবধান দেখানো হয়।'
+                : 'Caution intervals highlight periods where voluntary prayers are discouraged: 15 mins after sunrise, 10 mins before Dhuhr (solar noon), and 20 mins before sunset.' }}
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-500/5 border border-slate-500/15">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">
+              {{ locale.currentLocale === 'bn' ? '৩. স্থানীয় মসজিদের সাথে ব্যবধান' : '3. Variance with Local Mosques' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'যেহেতু হিসাবটি জেলা সদরের ভৌগোলিক কেন্দ্রবিন্দুর ওপর ভিত্তি করে করা হয়, তাই আপনার নির্দিষ্ট উপজেলা বা মহল্লার মসজিদের ওয়াক্তের সাথে ১-২ মিনিটের সামান্য পার্থক্য দেখা যেতে পারে।'
+                : 'Because calculations rely on district-headquarters coordinates, local sub-district mosques may vary by 1–2 minutes depending on municipal boundaries and rounding.' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: WAQT STAGES -->
       <div v-if="activeTab === 'punctuality'" class="space-y-5 animate-fade-in">
         <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
           <span class="text-2xl">⏳</span>
           <div>
-            <h2 class="font-bold text-slate-900 dark:text-white text-base">ওয়াক্তের সময়ানুবর্তিতা</h2>
-            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">ওয়াক্তের মধ্যে নামাজ আদায়ে সময়ের গুরুত্ব</p>
+            <h2 class="font-bold text-slate-900 dark:text-white text-base">
+              {{ locale.currentLocale === 'bn' ? 'ওয়াক্তের সময়ানুবর্তিতা ও স্তর' : 'Punctuality & Waqt Stages' }}
+            </h2>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
+              {{ locale.currentLocale === 'bn' ? 'ওয়াক্তের মধ্যে নামাজ আদায়ে সময়ের গুরুত্ব' : 'The merit of offering prayer in its early interval' }}
+            </p>
           </div>
         </div>
 
-        <p class="text-slate-600 dark:text-slate-350 text-xs leading-relaxed">
-          ফরজ নামাজসমূহ নির্দিষ্ট সময়ে আদায় করা মুমিনদের জন্য অত্যন্ত গুরুত্বপূর্ণ। সালাত আদায়ে সময়ের অগ্রাধিকারে ৩টি স্তর রয়েছে:
-        </p>
-
         <div class="relative border-l-2 border-slate-200 dark:border-slate-800 pl-6 ml-3 space-y-5 py-1">
-          <!-- Awwal -->
-          <div class="relative">
-            <span class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-teal-600 ring-4 ring-teal-500/10"></span>
-            <span class="font-bold text-slate-850 dark:text-slate-200 text-sm block">আউয়াল ওয়াক্ত (প্রথম অংশ)</span>
-            <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1 leading-relaxed">
-              ওয়াক্ত শুরু হওয়ার প্রথম এক-তৃতীয়াংশের মধ্যে নামাজ আদায় করাকে আউয়াল ওয়াক্ত বলা হয়। এটি সর্বোত্তম সময় এবং সর্বাধিক সাওয়াব অর্জনের অন্যতম উপায়।
+          <div>
+            <span class="font-bold text-slate-800 dark:text-slate-200 text-sm block">
+              {{ locale.currentLocale === 'bn' ? 'আউয়াল ওয়াক্ত (প্রথম অংশ)' : 'Awwal al-Waqt (Early Interval)' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'ওয়াক্ত শুরু হওয়ার সাথে সাথে প্রথম অংশে নামাজ আদায় করা সর্বোত্তম আমল ও সর্বোচ্চ সাওয়াব অর্জনের মাধ্যম।'
+                : 'Offering prayer near the start of its prescribed window carries the greatest merit and reward.' }}
             </p>
           </div>
 
-          <!-- Wast -->
-          <div class="relative">
-            <span class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-amber-500 ring-4 ring-amber-500/10"></span>
-            <span class="font-bold text-slate-850 dark:text-slate-200 text-sm block">ওয়াসাত ওয়াক্ত (মধ্যবর্তী অংশ)</span>
-            <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1 leading-relaxed">
-              ওয়াক্তের মধ্যবর্তী অংশে নামাজ আদায় করা। প্রথম অংশে আদায়ে ব্যর্থ হলে এই সময়ে আদায় করা উত্তম।
+          <div>
+            <span class="font-bold text-slate-800 dark:text-slate-200 text-sm block">
+              {{ locale.currentLocale === 'bn' ? 'ওয়াসাত ওয়াক্ত (মধ্যবর্তী অংশ)' : 'Wast al-Waqt (Middle Interval)' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'ওয়াক্তের মধ্যবর্তী সময়ে আদায়। কোনো বিশেষ প্রয়োজনে প্রথম অংশে সম্ভব না হলে এ সময়ে আদায় করা যায়।'
+                : 'Offering prayer in the middle of the window when delayed by legitimate daily responsibilities.' }}
             </p>
           </div>
 
-          <!-- Akhir -->
-          <div class="relative">
-            <span class="absolute -left-[31px] top-1.5 flex h-4 w-4 rounded-full bg-rose-500 ring-4 ring-rose-500/10"></span>
-            <span class="font-bold text-slate-850 dark:text-slate-200 text-sm block">আখির ওয়াক্ত (শেষ অংশ)</span>
-            <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1 leading-relaxed">
-              ওয়াক্ত শেষ হওয়ার ঠিক পূর্ববর্তী সময়। মাকরূহ বা নিষিদ্ধ সময়ে নামাজ ঝুলিয়ে রাখা অনুচিত, তবে ওয়াক্ত শেষ হওয়ার পূর্বে আদায় করলে নামাজ আদায় হয়ে যাবে।
+          <div>
+            <span class="font-bold text-slate-800 dark:text-slate-200 text-sm block">
+              {{ locale.currentLocale === 'bn' ? 'আখির ওয়াক্ত (শেষ অংশ)' : 'Akhir al-Waqt (Final Interval)' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'ওয়াক্ত শেষ হওয়ার পূর্ববর্তী সময়। অকারণে শেষ সময় পর্যন্ত নামাজ ঝুলিয়ে রাখা উচিত নয়, তবে ওয়াক্ত থাকাকালীন আদায় করলে তা আদায় হিসেবেই গণ্য হবে।'
+                : 'The period nearing the end of the Waqt. While valid as an in-time prayer, unexcused delay is strongly discouraged.' }}
             </p>
           </div>
         </div>
       </div>
 
-      <!-- TAB 3: APP USAGE -->
+      <!-- TAB 4: APP USAGE -->
       <div v-if="activeTab === 'app-usage'" class="space-y-5 animate-fade-in">
         <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
           <span class="text-2xl">📱</span>
           <div>
-            <h2 class="font-bold text-slate-900 dark:text-white text-base">ইকামা প্ল্যাটফর্ম ব্যবহার নির্দেশিকা</h2>
-            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">কিভাবে অ্যাপ ব্যবহার করে সালাত অভ্যাস গড়বেন</p>
+            <h2 class="font-bold text-slate-900 dark:text-white text-base">
+              {{ locale.currentLocale === 'bn' ? 'ইকামা ব্যবহারের নিয়মাবলী' : 'How to Use Iqamah Daily' }}
+            </h2>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
+              {{ locale.currentLocale === 'bn' ? 'সালাত ট্র্যাকিং, জামা\'আত, তাসবীহ ও কুরআন নোট' : 'Logging prayers, Jama\'ah, Tasbih & Quran reflections' }}
+            </p>
           </div>
         </div>
 
-        <div class="space-y-4">
-          <!-- Step 1 -->
-          <div class="flex gap-3 items-start">
-            <div class="h-6 w-6 rounded-lg bg-teal-500/10 border border-teal-500/25 text-teal-650 dark:text-teal-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
-              ১
-            </div>
+        <div class="space-y-4 text-xs">
+          <div class="flex gap-3">
+            <div class="w-6 h-6 rounded-full bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">1</div>
             <div>
-              <h4 class="text-slate-800 dark:text-slate-200 font-bold text-xs">আজকের ড্যাশবোর্ডে নামাজ ট্র্যাকিং</h4>
-              <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1 leading-relaxed">
-                প্রতিটি সালাত আদায়ের পর ড্যাশবোর্ডের কার্ডে একটি আলতো টোকা (Single Tap) দিয়ে দ্রুত তা আদায় হিসেবে চিহ্নিত করতে পারেন। আর বিস্তারিত এন্ট্রির জন্য ডানপাশে থাকা এডিট বাটনে ক্লিক করুন।
+              <h4 class="font-bold text-slate-800 dark:text-slate-200">
+                {{ locale.currentLocale === 'bn' ? 'হোম ড্যাশবোর্ডে সালাত ট্র্যাকিং' : 'Daily Dashboard Logging' }}
+              </h4>
+              <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+                {{ locale.currentLocale === 'bn'
+                  ? 'নামাজ আদায়ের পর ড্যাশবোর্ডের কার্ডে এক ট্যাপে আদায় চিহ্নিত করুন অথবা এডিট বাটনে চেপে জামা\'আত, মুসাফির অবস্থা ও কুরআন পড়ার নোট সংরক্ষণ করুন।'
+                  : 'Tap any prayer card to log completion, or click Edit to record congregation (Jama\'ah), travel status, Tasbih, and Quran reading notes.' }}
               </p>
             </div>
           </div>
 
-          <!-- Step 2 -->
-          <div class="flex gap-3 items-start">
-            <div class="h-6 w-6 rounded-lg bg-teal-500/10 border border-teal-500/25 text-teal-650 dark:text-teal-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
-              ২
-            </div>
+          <div class="flex gap-3">
+            <div class="w-6 h-6 rounded-full bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">2</div>
             <div>
-              <h4 class="text-slate-800 dark:text-slate-200 font-bold text-xs">কাজা নামাজ সমাধান করা</h4>
-              <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1 leading-relaxed">
-                ছুটে যাওয়া সালাতগুলো স্বয়ংক্রিয়ভাবে কাজা খতিয়ানে জমা হয়। কাজা আদায়ের পর খতিয়ান বা 'রেকর্ড' ট্যাবে এসে 'আদায় করুন' বাটনে চাপ দিলে তা বকেয়া হিসাব থেকে বাদ যাবে।
+              <h4 class="font-bold text-slate-800 dark:text-slate-200">
+                {{ locale.currentLocale === 'bn' ? 'কাজা সালাত পরিশোধ' : 'Resolving Qaza Debts' }}
+              </h4>
+              <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+                {{ locale.currentLocale === 'bn'
+                  ? 'ছুটে যাওয়া সালাতগুলো স্বয়ংক্রিয়ভাবে কাজা খতিয়ানে জমা হয়। কাজা আদায়ের পর \'আদায় করুন\' বোতামে চাপ দিলে তা বকেয়া তালিকা থেকে নিষ্পত্তি হবে।'
+                  : 'Missed prayers requiring compensation automatically generate entries in the Qaza ledger. Fulfill them with a single tap as you make them up.' }}
               </p>
             </div>
           </div>
 
-          <!-- Step 3 -->
-          <div class="flex gap-3 items-start">
-            <div class="h-6 w-6 rounded-lg bg-teal-500/10 border border-teal-500/25 text-teal-650 dark:text-teal-400 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
-              ৩
-            </div>
+          <div class="flex gap-3">
+            <div class="w-6 h-6 rounded-full bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">3</div>
             <div>
-              <h4 class="text-slate-800 dark:text-slate-200 font-bold text-xs">অগ্রগতি পর্যবেক্ষণ করা</h4>
-              <p class="text-slate-500 dark:text-slate-455 text-[11px] mt-1 leading-relaxed">
-                'অগ্রগতি' বা অ্যানালিটিক্স ট্যাব ব্যবহার করে আপনার বিগত ১ সপ্তাহ বা ১ মাসের নামাজের অনুপাত ও সময়ানুবর্তিতা গ্রাফে দেখে অভ্যাস উন্নত করতে পারেন।
+              <h4 class="font-bold text-slate-800 dark:text-slate-200">
+                {{ locale.currentLocale === 'bn' ? 'সকল ৬৪ জেলার লাইভ ট্র্যাকার' : 'All-64 Districts Live Tracker' }}
+              </h4>
+              <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+                {{ locale.currentLocale === 'bn'
+                  ? 'সালাত টাইম পেজ থেকে বাংলাদেশের যেকোনো জেলার বর্তমান ওয়াক্ত ও অবশিষ্ট সময় এক পলকে পর্যবেক্ষণ করতে পারবেন।'
+                  : 'Inspect real-time active Waqts and remaining time across all 64 districts with division filters and dual search.' }}
               </p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: DATA & PRIVACY -->
+      <div v-if="activeTab === 'data-privacy'" class="space-y-5 animate-fade-in">
+        <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <span class="text-2xl">🔒</span>
+          <div>
+            <h2 class="font-bold text-slate-900 dark:text-white text-base">
+              {{ locale.currentLocale === 'bn' ? 'তথ্য সুরক্ষা, ব্যাকআপ ও অ্যাপ আপডেট' : 'Data Privacy, Backups & App Updates' }}
+            </h2>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
+              {{ locale.currentLocale === 'bn' ? 'আপনার ব্যক্তিগত তথ্যের নিরাপত্তা শতভাগ আপনার ডিভাইসে' : 'Your spiritual records remain 100% on your device' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-4 rounded-2xl bg-teal-500/5 border border-teal-500/15">
+            <span class="text-xs font-bold text-teal-700 dark:text-teal-400">
+              {{ locale.currentLocale === 'bn' ? '১. শূন্য ট্র্যাকিং ও অফলাইন নিশ্চয়তা' : '1. Zero Tracking & Offline Guarantee' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'ইকামা কোনো ক্লাউড সার্ভারে আপনার তথ্য পাঠায় না। কোনো ট্র্যাকিং SDK, বিজ্ঞাপন বা অ্যানালিটিক্স নেই।'
+                : 'Iqamah collects zero telemetry, shows zero ads, and never transmits your prayer history or personal notes to any remote server.' }}
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15">
+            <span class="text-xs font-bold text-amber-700 dark:text-amber-400">
+              {{ locale.currentLocale === 'bn' ? '২. নিয়মিত ব্যাকআপ নেওয়া আবশ্যক' : '2. Creating & Storing Backups' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'সেটিংস পেজে গিয়ে যেকোনা সময় \'ব্যাকআপ ফাইল ডাউনলোড\' বোতামে চাপ দিয়ে আপনার সকল রেকর্ড একটি ফাইলে সংরক্ষণ করুন এবং ফাইলটি গুগল ড্রাইভ বা অন্য নিরাপদ স্থানে রেখে দিন।'
+                : 'In Settings, tap "Export Backup" anytime to download a verified JSON snapshot. Save this file to Google Drive or safe storage in case your device is lost or reset.' }}
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-sky-500/5 border border-sky-500/15">
+            <span class="text-xs font-bold text-sky-700 dark:text-sky-400">
+              {{ locale.currentLocale === 'bn' ? '৩. আনইনস্টল ছাড়া সাধারণ আপডেট' : '3. Upgrading Without Uninstalling' }}
+            </span>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
+              {{ locale.currentLocale === 'bn'
+                ? 'নতুন সংস্করণ ইনস্টল করার সময় পূর্বের অ্যাপ আনইনস্টল করবেন না। সরাসরি আপডেট দিলে আপনার সংরক্ষিত সকল নামাজ ও কাজার রেকর্ড স্বয়ংক্রিয়ভাবে বজায় থাকবে।'
+                : 'Install app updates directly over existing installations without uninstalling first to preserve your local records.' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Scholarly Disclaimer -->
+        <div class="p-4 rounded-2xl bg-slate-500/10 border border-slate-500/20 mt-4">
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>📖</span> {{ locale.currentLocale === 'bn' ? 'শরয়ী ও আইনি সতর্কতা' : 'Scholarly & Religious Disclaimer' }}
+          </span>
+          <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1.5 leading-relaxed">
+            {{ locale.currentLocale === 'bn'
+              ? 'ইকামা একটি সহায়ক অভ্যাস ট্র্যাকিং ও হিসাব টুল। এটি কোনো ফতোয়া বা বিজ্ঞ আলেমের বিকল্প নয়। আপনার বিশেষ কোনো দ্বীনি মাসআলা বা জটিল কাজা হিসাবের ক্ষেত্রে আপনার স্থানীয় বিশ্বস্ত উলামায়ে কেরামের সাথে পরামর্শ করুন।'
+              : 'Iqamah is a calculation and personal accountability aid, not a religious authority or substitute for scholarly fatwas. Consult local scholars for complex religious queries.' }}
+          </p>
         </div>
       </div>
 
@@ -201,7 +363,7 @@ const activeTab = ref('qaza-rules')
 
 <style scoped>
 .animate-fade-in {
-  animation: fadeIn 0.25s ease-out forwards;
+  animation: fadeIn 0.2s ease-out forwards;
 }
 @keyframes fadeIn {
   from {

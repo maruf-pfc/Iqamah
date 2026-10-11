@@ -5,13 +5,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { usePrayerStore } from '@/stores/prayer'
 import PrayerCalculationSettings from '@/components/PrayerCalculationSettings.vue'
-import { readLogs, mergeBackup } from '@/services/backup'
+import { readLogs, mergeBackup, extractPreferences, backupChecksum, CURRENT_BACKUP_VERSION, APP_VERSION } from '@/services/backup'
 import { bangladeshDate } from '@/services/calendar'
 import { readPreference } from '@/services/preferences'
 import { useTimingStore } from '@/stores/timing'
 import notices from '@/data/notices'
 
-defineProps<{
+const props = defineProps<{
   isDark: boolean
 }>()
 
@@ -23,6 +23,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
 const store = usePrayerStore()
+const timing = useTimingStore()
 
 // Gender selection state
 const isFemale = ref<boolean | null>(
@@ -55,22 +56,41 @@ const triggerExport = async () => {
     const logs = readLogs().sort((a, b) => a.prayerDate.localeCompare(b.prayerDate) || a.prayerName - b.prayerName)
 
     const backupData = {
-      version: '1.1.0',
+      version: CURRENT_BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
+      appVersion: APP_VERSION,
+      checksum: '',
       username: authStore.user?.username || 'user',
       prayerLogs: logs,
       pendingQazas: logs.flatMap(log => log.qazaLog?.state === 0 ? [log.qazaLog] : []),
-      gender: isFemale.value ? 'female' : 'male'
+      preferences: {
+        language: localeStore.currentLocale,
+        theme: props.isDark ? 'dark' : 'light',
+        gender: isFemale.value ? 'female' : 'male',
+        districtId: timing.districtId,
+        method: timing.config?.method ?? 'Karachi',
+        madhab: timing.config?.madhab ?? 'Hanafi',
+      },
+    }
+    backupData.checksum = backupChecksum(backupData)
+
+    const backupJson = JSON.stringify(backupData, null, 2)
+    const fileName = `iqamah_backup_${todayStr}.json`
+
+    const nativeChannel = (window as unknown as { IqamahNative?: { postMessage: (msg: string) => void } }).IqamahNative
+    if (nativeChannel && typeof nativeChannel.postMessage === 'function') {
+      nativeChannel.postMessage(JSON.stringify({ action: 'shareBackup', content: backupJson, filename: fileName }))
+    } else {
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(backupJson)
+      const downloadAnchor = document.createElement('a')
+      downloadAnchor.setAttribute('href', dataStr)
+      downloadAnchor.setAttribute('download', fileName)
+      document.body.appendChild(downloadAnchor)
+      downloadAnchor.click()
+      downloadAnchor.remove()
     }
 
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2))
-    const downloadAnchor = document.createElement('a')
-    downloadAnchor.setAttribute('href', dataStr)
-    downloadAnchor.setAttribute('download', `iqamah_backup_${todayStr}.json`)
-    document.body.appendChild(downloadAnchor)
-    downloadAnchor.click()
-    downloadAnchor.remove()
-
+    localStorage.setItem('iqamah_last_backup', new Date().toISOString())
     statusMessage.value = localeStore.currentLocale === 'bn' ? 'ব্যাকআপ ফাইল সফলভাবে ডাউনলোড হয়েছে।' : 'Backup file downloaded successfully.'
     isSuccessStatus.value = true
   } catch {
@@ -99,6 +119,23 @@ const handleImportFile = async (event: Event) => {
       const data: unknown = JSON.parse(await file.text())
       const merged = mergeBackup(readLogs(), data)
       localStorage.setItem('iqamah_prayer_logs', JSON.stringify(merged))
+      const prefs = extractPreferences(data)
+      if (prefs) {
+        if (prefs.language === 'bn' || prefs.language === 'en') localeStore.setLocale(prefs.language)
+        if (prefs.theme === 'light' || prefs.theme === 'dark') {
+          localStorage.setItem('iqamah_theme', prefs.theme)
+        }
+        if (prefs.gender === 'female' || prefs.gender === 'male') {
+          localStorage.setItem('iqamah_user_g', prefs.gender === 'female' ? 'f' : 'm')
+        }
+        if (typeof prefs.districtId === 'string' && prefs.districtId) {
+          const { methods } = await import('@/services/prayerTimes')
+          const method = typeof prefs.method === 'string' && (methods as readonly string[]).includes(prefs.method)
+            ? (prefs.method as typeof methods[number])
+            : 'Karachi'
+          timing.selectDistrict(prefs.districtId, method, prefs.madhab === 'Shafi' ? 'Shafi' : 'Hanafi')
+        }
+      }
       importTotal.value = merged.length
       importProgress.value = merged.length
       await store.fetchPendingQazas()
@@ -125,6 +162,12 @@ const handleReset = () => {
   if (confirmed) {
     authStore.logout()
     localStorage.removeItem('iqamah_prayer_logs')
+    localStorage.removeItem('iqamah_onboarding_completed')
+    localStorage.removeItem('iqamah_user_name')
+    localStorage.removeItem('iqamah_user_g')
+    localStorage.removeItem('iqamah_locale')
+    localStorage.removeItem('iqamah_theme')
+    localStorage.removeItem('iqamah_last_backup')
     useTimingStore().reset()
     router.push('/onboarding')
   }
@@ -376,5 +419,19 @@ const handleReset = () => {
     >
       {{ localeStore.currentLocale === 'bn' ? 'অ্যাপ্লিকেশন রিসেট করুন' : 'Reset Application' }}
     </button>
+
+    <!-- App Version & Release Info -->
+    <div class="text-center space-y-1.5 py-4 text-slate-400 dark:text-slate-500 text-xs">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/60 font-semibold text-slate-700 dark:text-slate-300">
+        <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+        <span>Iqamah · v{{ APP_VERSION }}</span>
+      </div>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400">
+        {{ localeStore.currentLocale === 'bn' ? 'অফলাইন-ফার্স্ট সালাত ও কাজা ট্র্যাকার' : 'Offline-first Salah & Qaza Habit Companion' }}
+      </p>
+      <p class="text-[10px] text-slate-400 dark:text-slate-500">
+        {{ localeStore.currentLocale === 'bn' ? 'বাংলাদেশের সকল ৬৪ জেলার জন্য প্রস্তুত' : 'Calibrated for all 64 districts of Bangladesh' }}
+      </p>
+    </div>
   </div>
 </template>

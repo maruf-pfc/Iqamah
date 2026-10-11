@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 Widget createWebView() {
@@ -80,6 +82,32 @@ class _MobileWebViewState extends State<MobileWebView> with WidgetsBindingObserv
             });
           },
         ),
+      )
+      ..addJavaScriptChannel(
+        'IqamahNative',
+        onMessageReceived: (JavaScriptMessage message) async {
+          try {
+            final data = jsonDecode(message.message) as Map<String, dynamic>;
+            if (data['action'] == 'shareBackup') {
+              final content = data['content'] as String;
+              final filename = data['filename'] as String? ?? 'iqamah_backup.json';
+              final bytes = utf8.encode(content);
+              final xFile = XFile.fromData(
+                bytes,
+                mimeType: 'application/json',
+                name: filename,
+              );
+              // ignore: deprecated_member_use
+              await Share.shareXFiles(
+                [xFile],
+                subject: 'Iqamah Backup Export',
+                text: 'Here is your Iqamah backup file.',
+              );
+            }
+          } catch (_) {
+            // Silently fall back if sharing fails or is cancelled
+          }
+        },
       )
       ..loadFlutterAsset('assets/web/index.html');
   }
