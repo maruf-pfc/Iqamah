@@ -1,6 +1,6 @@
 # إقامة | Iqamah — Salah Habit Establishment Platform
 
-[![Version](https://img.shields.io/badge/version-1.1.2-teal.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.3-teal.svg)](CHANGELOG.md)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-emerald.svg)](https://vuejs.org/)
 [![Flutter](https://img.shields.io/badge/Flutter-Stable-blue.svg)](https://flutter.dev/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
@@ -18,7 +18,7 @@
 
 ## 🏗️ Architecture Overview
 
-As of **v1.1.2**, the platform operates in a **fully offline, hybrid model**. The mobile client wraps the compiled offline-first Vue client inside a native WebView container, achieving 100% feature and design parity.
+As of **v1.1.3**, the platform operates in a **fully offline, hybrid model**. The mobile client wraps the compiled offline-first Vue client inside a native WebView container, achieving 100% feature and design parity.
 
 ```mermaid
 graph TD

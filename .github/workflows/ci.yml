@@ -1,4 +1,4 @@
-name: Iqamah CI/CD — v1.1.1
+name: Iqamah CI/CD — v1.1.3
 
 on:
   push:
@@ -154,20 +154,14 @@ jobs:
 
           ---
 
-          ### 🆕 What's New in v1.1.1
+          ### 🆕 What's New in v1.1.3
 
-          #### 📱 Mobile UI — Parity with Web Client
-          - **Prayer card emoji icons:** Fajr 🌙 Dhuhr ☀️ Asr 🌤️ Maghrib 🌅 Isha 🌃
-          - **Left status indicator strip:** Green (offered) / Red (missed) / Teal (excused) / Grey (unlogged)
-          - **Circular checkbox trailing indicator:** Animated ✓ / ✕ / empty ring on each card
-          - **Visible edit button:** Pencil icon always visible, replacing hidden long-press-only gesture
-          - **Responsive 6-column calendar grid:** Full-width date strip (today + 5 past days), matches web layout
-          - **Reset Application in Settings:** Wipes database + SharedPreferences, returns to Onboarding
-
-          #### 🐛 Fixes
-          - Bengali analytics nav label was showing English `'progress'` — corrected to `'অগ্রগতি'`
-          - Calendar date strip was incorrectly generating future dates — now shows only past 5 days + today
-          - Dashboard greeting now shows 👋 wave emoji on both platforms
+          #### 🕌 Home Dashboard Salah Timetable & 64-District Live Tracker
+          - **Home Timetable:** Daily astronomical Salah timetable elevated directly to Home dashboard with next prayer live countdown.
+          - **64-District Live Waqt Monitor:** Real-time countdown tracking for active and upcoming Wakts across all Bangladesh districts.
+          - **District Search & Division Filters:** Bilingual English/Bengali district search and division filtering.
+          - **Design System Tokens:** Nature-inspired forest/ivory design palette, fluid responsive shell, and bundled offline Bengali typography.
+          - **Strict Testing:** 100% test coverage across web client, Flutter mobile, and .NET backend.
 
           ---
 
