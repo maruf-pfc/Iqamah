@@ -5,6 +5,26 @@ All notable changes to **Iqamah (إقامة)** are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Home timetable with shared adhan calculations, next-prayer countdown, sunrise and full timetable access.
+- Live 64 Bangladesh districts Waqt tracker and real-time countdown showing remaining time on each active and upcoming prayer window, searchable by English/Bengali names and filterable by administrative division.
+- Offline selection of all 64 Bangladesh districts during onboarding and in profile settings; Bangladesh timezone displays.
+- Semantic forest/ivory design foundation, fluid desktop layout, native accessible dialogs and offline Bengali text fonts.
+- Pending/fulfilled Qaza filters and bilingual, denominator-labeled all-time analytics.
+- Record/backup validation and regression tests for district persistence, midnight/resume refresh, all-districts Waqt calculations, and Qaza invariants.
+
+### Fixed
+- Removed silent Dhaka/GPS fallbacks and recalculated tomorrow's astronomical Fajr rather than adding 24 hours.
+- Explicit logging replaces destructive quick toggles; partial edits retain notes and fulfilled debt cannot be recreated or erased.
+- Restore preserves original IDs and Qaza fulfillment, validates before writing, and rejects conflicting/unsupported backups.
+- Mobile CI bundles the current web output, and the Flutter web iframe points to its actual bundled asset path.
+- Optional Docker image builds the web client and exposes the documented port 8080; secret files are excluded from its context.
+
+### Release status
+- Android/iOS device QA, legacy SQLite migration and production signing remain release blockers. See `docs/release-readiness.md`.
+
 ## [1.1.2] — 2026-07-04
 
 ### Added

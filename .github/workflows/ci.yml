@@ -28,7 +28,7 @@ jobs:
     - name: Setup Bun
       uses: oven-sh/setup-bun@v2
       with:
-        bun-version: latest
+        bun-version: '1.4.2'
 
     - name: Install dependencies
       run: bun install --frozen-lockfile
@@ -44,6 +44,12 @@ jobs:
 
     - name: Production Build
       run: bun run build-only
+
+    - name: Upload current offline web bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: iqamah-web
+        path: client/dist/index.html
 
   # ─────────────────────────────────────────────
   # 2. Server (.NET 10) — optional / legacy
@@ -77,11 +83,18 @@ jobs:
   mobile-validate-and-build:
     name: Validate and Build Mobile (Flutter)
     runs-on: ubuntu-latest
+    needs: client-validate
     defaults:
       run:
         working-directory: mobile
     steps:
     - uses: actions/checkout@v4
+
+    - name: Bundle the validated web client
+      uses: actions/download-artifact@v4
+      with:
+        name: iqamah-web
+        path: mobile/assets/web
 
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -93,6 +106,7 @@ jobs:
       uses: subosito/flutter-action@v2
       with:
         channel: 'stable'
+        flutter-version: '3.35.1'
 
     - name: Install dependencies
       run: flutter pub get
@@ -172,7 +186,8 @@ jobs:
           - JSON backup export / import
           - Bengali + English bilingual UI
           - Onboarding — no login or registration needed
-        draft: false
+        # Current Android configuration uses debug signing; require manual release review.
+        draft: true
         prerelease: false
         files: mobile/build/app/outputs/flutter-apk/*.apk
       env:

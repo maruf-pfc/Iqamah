@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/auth'
 describe('App', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    localStorage.clear()
 
     // Set authenticated state so navbar renders in tests
     const authStore = useAuthStore()
@@ -21,6 +22,8 @@ describe('App', () => {
         plugins: [router],
       },
     })
-    expect(wrapper.text()).toContain('আজ')
+    expect(wrapper.text()).toContain('Dashboard')
+    expect(wrapper.text()).toContain('Settings')
+    wrapper.unmount()
   })
 })

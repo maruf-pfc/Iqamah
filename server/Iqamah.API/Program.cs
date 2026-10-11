@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Iqamah.API.Middleware;
+using Iqamah.API.Configuration;
 using Iqamah.Application;
 using Iqamah.Infrastructure;
 using Iqamah.Infrastructure.Auth;
@@ -56,42 +57,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowClient", policy =>
     {
-        var allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "localhost",
-            "127.0.0.1",
-            "iqamaah.vercel.app"
-        };
-
-        var clientUrl = Environment.GetEnvironmentVariable("CLIENT_URL");
-        if (!string.IsNullOrEmpty(clientUrl))
-        {
-            foreach (var url in clientUrl.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            {
-                if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
-                {
-                    allowedHosts.Add(uri.Host);
-                }
-            }
-        }
-
-        policy.SetIsOriginAllowed(origin =>
-        {
-            if (string.IsNullOrEmpty(origin)) return false;
-            try
-            {
-                var uri = new Uri(origin);
-                var host = uri.Host;
-                return allowedHosts.Contains(host) || host.EndsWith(".trycloudflare.com", StringComparison.OrdinalIgnoreCase);
-            }
-            catch
-            {
-                return false;
-            }
-        })
+        var origins = CorsOrigins.Parse(builder.Configuration["CLIENT_URL"], builder.Environment.IsDevelopment());
+        policy.WithOrigins(origins)
         .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        .AllowAnyMethod();
     });
 });
 
@@ -101,7 +70,13 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Configure JWT Authentication
 var jwtOptionsSection = builder.Configuration.GetSection("Jwt");
-builder.Services.Configure<JwtOptions>(jwtOptionsSection);
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(jwtOptionsSection)
+    .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer)
+        && !string.IsNullOrWhiteSpace(options.Audience)
+        && Encoding.UTF8.GetByteCount(options.SecretKey) >= 32,
+        "JWT issuer, audience and a signing key of at least 32 bytes are required.")
+    .ValidateOnStart();
 var jwtOptions = jwtOptionsSection.Get<JwtOptions>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

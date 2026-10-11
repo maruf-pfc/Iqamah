@@ -2,9 +2,15 @@
 **/.github
 **/bin
 **/obj
+**/.env
+**/.env.*
+**/key.properties
+**/*.jks
+**/*.keystore
 **/node_modules
 client/node_modules/
 client/dist/
-docs/
+docs/*
+!docs/third-party-notices.md
 Dockerfile
 .dockerignore

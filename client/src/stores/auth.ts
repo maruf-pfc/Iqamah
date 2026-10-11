@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { readPreference } from '@/services/preferences'
 
 export interface User {
   id: number
@@ -9,9 +10,9 @@ export interface User {
 
 export const useAuthStore = defineStore('auth', () => {
   const getStoredUser = (): User | null => {
-    const completed = localStorage.getItem('iqamah_onboarding_completed') === 'true'
+    const completed = readPreference('iqamah_onboarding_completed') === 'true'
     if (!completed) return null
-    const name = localStorage.getItem('iqamah_user_name') || 'Brother Ahmed'
+    const name = readPreference('iqamah_user_name') || 'Iqamah'
     return {
       id: 1,
       username: name,
@@ -20,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const user = ref<User | null>(getStoredUser())
-  const token = ref<string | null>(localStorage.getItem('iqamah_onboarding_completed') === 'true' ? 'local_offline_token' : null)
+  const token = ref<string | null>(readPreference('iqamah_onboarding_completed') === 'true' ? 'local_offline_token' : null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -47,7 +48,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const completeOnboarding = (userGender: 'male' | 'female', lang: 'en' | 'bn', customName?: string) => {
-    localStorage.setItem('iqamah_onboarding_completed', 'true')
     localStorage.setItem('iqamah_user_g', userGender === 'female' ? 'f' : 'm')
     localStorage.setItem('iqamah_locale', lang)
     
@@ -56,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
       displayName = userGender === 'female' ? 'Sister Ayesha' : 'Brother Ahmed'
     }
     localStorage.setItem('iqamah_user_name', displayName)
+    localStorage.setItem('iqamah_onboarding_completed', 'true')
     
     user.value = {
       id: 1,

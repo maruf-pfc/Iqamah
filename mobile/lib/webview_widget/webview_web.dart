@@ -8,7 +8,7 @@ Widget createWebView() {
   ui_web.platformViewRegistry.registerViewFactory(
     'iqamah-web-view',
     (int viewId) => html.IFrameElement()
-      ..src = 'assets/web/index.html'
+      ..src = 'assets/assets/web/index.html'
       ..style.border = 'none'
       ..style.width = '100%'
       ..style.height = '100%',

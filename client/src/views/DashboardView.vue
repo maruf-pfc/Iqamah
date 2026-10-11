@@ -4,12 +4,22 @@ import { usePrayerStore } from '@/stores/prayer'
 import { useLocaleStore } from '@/stores/locale'
 import { PrayerName, WaqtStatus, MissedReason } from '@/types/prayer.types'
 import type { LogOfferedPrayerRequest, LogMissedPrayerRequest, PrayerLogDto } from '@/types/prayer.types'
+import PrayerTimetable from '@/components/PrayerTimetable.vue'
+import { bangladeshDate, isCalendarDate } from '@/services/calendar'
+import { readLogs } from '@/services/backup'
+import { useTimingStore } from '@/stores/timing'
+import AppDialog from '@/components/AppDialog.vue'
+import { useRoute } from 'vue-router'
+import { readPreference } from '@/services/preferences'
 
 const store = usePrayerStore()
 const localeStore = useLocaleStore()
+const timing = useTimingStore()
+const feedback = ref<'log_saved' | 'log_failed' | null>(null)
+const route = useRoute()
 
 const ARABIC_NAMES = ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء']
-const PRAYER_ICONS = ['🌅', '☀️', '⛅', '🌇', '🌃']
+const PRAYER_ICONS = ['wb_twilight', 'light_mode', 'partly_cloudy_day', 'wb_twilight', 'dark_mode']
 
 const getLocalizedPrayerName = (prayer: number) => {
   const keys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const
@@ -30,11 +40,13 @@ const getLocalizedMissedReason = (reason: number) => {
 }
 
 // Date selection: Default to today
-const selectedDate = ref<string>(new Date().toISOString().split('T')[0] ?? '')
+const selectedDate = ref<string>(bangladeshDate())
 const dailyLogs = ref<Record<number, PrayerLogDto>>({})
 
 // Logging Modal / Bottom Sheet state
 const isModalOpen = ref(false)
+const isPrayerPickerOpen = ref(false)
+const openPrayerPicker = () => { isPrayerPickerOpen.value = true }
 const editingPrayerName = ref<PrayerName | null>(null)
 const logType = ref<'offered' | 'missed' | 'period'>('offered')
 
@@ -50,9 +62,9 @@ const formHasTasbih = ref(false)
 
 // Gender preference
 const isFemale = ref<boolean | null>(
-  localStorage.getItem('iqamah_user_g') === 'f'
+  readPreference('iqamah_user_g') === 'f'
     ? true
-    : localStorage.getItem('iqamah_user_g') === 'm'
+    : readPreference('iqamah_user_g') === 'm'
       ? false
       : null
 )
@@ -61,25 +73,26 @@ const isFemale = ref<boolean | null>(
 const getPastDays = () => {
   const days = []
   for (let i = 5; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
+    const d = new Date(`${timing.today}T12:00:00+06:00`)
+    d.setUTCDate(d.getUTCDate() - i)
     days.push({
-      dateStr: d.toISOString().split('T')[0] ?? '',
-      dayName: d.toLocaleDateString('bn-BD', { weekday: 'short' }),
-      dayNum: d.getDate(),
+      dateStr: bangladeshDate(d),
+      dayName: d.toLocaleDateString(localeStore.currentLocale === 'bn' ? 'bn-BD' : 'en', { timeZone: 'Asia/Dhaka', weekday: 'short' }),
+      dayNum: d.toLocaleDateString(localeStore.currentLocale === 'bn' ? 'bn-BD' : 'en', { timeZone: 'Asia/Dhaka', day: 'numeric' }),
     })
   }
   return days
 }
-const calendarDays = getPastDays()
+const calendarDays = computed(getPastDays)
 
 // Hijri Date display (locally calculated roughly for context)
 const getHijriDateStr = () => {
+  if (!isCalendarDate(selectedDate.value)) return ''
   // Rough Hijri calculation for decoration, SalahTimeView will pull real Hijri date if backend has it.
   const options: Intl.DateTimeFormatOptions = { calendar: 'islamic-umalqura', day: 'numeric', month: 'long', year: 'numeric' }
-  return new Intl.DateTimeFormat('bn-BD-u-ca-islamic-umalqura', options).format(new Date())
+  return new Intl.DateTimeFormat(localeStore.currentLocale === 'bn' ? 'bn-BD-u-ca-islamic-umalqura' : 'en-u-ca-islamic-umalqura', { ...options, timeZone: 'Asia/Dhaka' }).format(new Date(`${selectedDate.value}T12:00:00+06:00`))
 }
-const hijriDate = ref(getHijriDateStr())
+const hijriDate = computed(getHijriDateStr)
 
 const loadDailyLogs = async () => {
   try {
@@ -89,8 +102,8 @@ const loadDailyLogs = async () => {
       mapped[log.prayerName] = log
     })
     dailyLogs.value = mapped
-  } catch (err) {
-    console.error('Failed to load logs', err)
+  } catch {
+    feedback.value = 'log_failed'
   }
 }
 
@@ -98,17 +111,17 @@ const loadDailyLogs = async () => {
 const offeredCount = computed(() => {
   return Object.values(dailyLogs.value).filter(l => l.isOffered).length
 })
+const dailyObligationCount = computed(() => 5 - Object.values(dailyLogs.value).filter(l => !l.isOffered && l.missedReason === MissedReason.ExcusedImpurity).length)
 
 const completionPercentage = computed(() => {
-  return Math.round((offeredCount.value / 5) * 100)
+  return dailyObligationCount.value ? Math.round((offeredCount.value / dailyObligationCount.value) * 100) : 0
 })
 
 // Local streak calculator
 const streakDays = ref(0)
 const loadStreak = () => {
   try {
-    const logsData = localStorage.getItem('iqamah_prayer_logs')
-    const logs: PrayerLogDto[] = logsData ? JSON.parse(logsData) : []
+    const logs = readLogs()
     
     // Group by date to count how many prayers were offered per day
     const daysWithPrayers: Record<string, number> = {}
@@ -123,16 +136,16 @@ const loadStreak = () => {
     
     // Compute streak backwards
     let currentStreak = 0
-    const d = new Date()
+    const d = new Date(`${timing.today}T12:00:00+06:00`)
     // Check today
-    let checkStr = d.toISOString().split('T')[0]
+    let checkStr = bangladeshDate(d)
     
     if (checkStr && daysWithPrayers[checkStr]) {
       currentStreak++
     } else {
       // If not today, check yesterday to see if streak is still alive
-      d.setDate(d.getDate() - 1)
-      const prevStr = d.toISOString().split('T')[0]
+      d.setUTCDate(d.getUTCDate() - 1)
+      const prevStr = bangladeshDate(d)
       if (prevStr && daysWithPrayers[prevStr]) {
         currentStreak++
         checkStr = prevStr
@@ -141,8 +154,8 @@ const loadStreak = () => {
     
     if (currentStreak > 0 && checkStr) {
       while (true) {
-        d.setDate(d.getDate() - 1)
-        const nextStr = d.toISOString().split('T')[0]
+        d.setUTCDate(d.getUTCDate() - 1)
+        const nextStr = bangladeshDate(d)
         if (nextStr && daysWithPrayers[nextStr]) {
           currentStreak++
         } else {
@@ -151,8 +164,7 @@ const loadStreak = () => {
       }
     }
     streakDays.value = currentStreak
-  } catch (err) {
-    console.error('Failed to calculate streak', err)
+  } catch {
     streakDays.value = 0
   }
 }
@@ -160,17 +172,26 @@ const loadStreak = () => {
 watch(selectedDate, () => {
   loadDailyLogs()
 }, { immediate: true })
+watch(() => timing.today, (today, previous) => {
+  if (selectedDate.value === previous) selectedDate.value = today
+  loadStreak()
+})
 
 onMounted(() => {
   loadStreak()
+  if (route.query.log) openPrayerPicker()
+  window.addEventListener('iqamah-open-log', openPrayerPicker)
   window.addEventListener('prayer-logged', loadDailyLogs)
 })
 
 onUnmounted(() => {
   window.removeEventListener('prayer-logged', loadDailyLogs)
+  window.removeEventListener('iqamah-open-log', openPrayerPicker)
 })
 
 const openLoggingModal = (prayer: PrayerName) => {
+  isPrayerPickerOpen.value = false
+  feedback.value = null
   editingPrayerName.value = prayer
   const existing = dailyLogs.value[prayer]
 
@@ -203,48 +224,12 @@ const openLoggingModal = (prayer: PrayerName) => {
   isModalOpen.value = true
 }
 
-const toggleOfferedQuick = async (prayer: PrayerName) => {
-  const existing = dailyLogs.value[prayer]
-  
-  try {
-    if (existing) {
-      // Toggle
-      const payload = {
-        prayerName: prayer,
-        prayerDate: selectedDate.value,
-        isOffered: !existing.isOffered,
-        waqtStatus: WaqtStatus.AwwalAlWaqt,
-        isTraveling: false,
-        isJamaah: false,
-        isJummah: false,
-        isHome: false,
-        hasTasbih: false,
-      }
-      await store.logPrayer(payload)
-    } else {
-      // Create offered
-      const payload = {
-        prayerName: prayer,
-        prayerDate: selectedDate.value,
-        isOffered: true,
-        waqtStatus: WaqtStatus.AwwalAlWaqt,
-        isTraveling: false,
-        isJamaah: false,
-        isJummah: false,
-        isHome: false,
-        hasTasbih: false,
-      }
-      await store.logPrayer(payload)
-    }
-    await loadDailyLogs()
-    loadStreak()
-  } catch (err) {
-    console.error('Quick toggle error', err)
-  }
+const editPrayer = (prayer: PrayerName) => {
+  openLoggingModal(prayer)
 }
 
 const handleSaveLog = async () => {
-  if (editingPrayerName.value === null) return
+  if (editingPrayerName.value === null || store.loading) return
 
   try {
     let payload: LogOfferedPrayerRequest | LogMissedPrayerRequest
@@ -259,7 +244,7 @@ const handleSaveLog = async () => {
         isTraveling: formIsTraveling.value,
         isJummah: formIsJummah.value,
         isHome: formIsHome.value,
-        quranNotes: formQuranNotes.value || undefined,
+        quranNotes: formQuranNotes.value,
         hasTasbih: formHasTasbih.value,
       }
     } else if (logType.value === 'period') {
@@ -284,8 +269,10 @@ const handleSaveLog = async () => {
     await loadDailyLogs()
     loadStreak()
     isModalOpen.value = false
-  } catch (err) {
-    console.error('Error logging prayer:', err)
+    feedback.value = 'log_saved'
+    await store.fetchPendingQazas()
+  } catch {
+    feedback.value = 'log_failed'
   }
 }
 </script>
@@ -297,8 +284,7 @@ const handleSaveLog = async () => {
     <div class="flex items-center justify-between pt-4">
       <div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <span>আসসালামু আলাইকুম</span>
-          <span class="text-glow-emerald">👋</span>
+          <span>{{ localeStore.t('greeting') }}</span>
         </h1>
         <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 mt-1">
           {{ selectedDate }} · {{ hijriDate }}
@@ -306,47 +292,31 @@ const handleSaveLog = async () => {
       </div>
     </div>
 
-    <!-- Circular Progress & Streak Combined Section -->
-    <div class="grid grid-cols-2 gap-4">
-      
-      <!-- Today Completion Dial Card -->
-      <div class="bg-m3-surface dark:bg-m3-dark-surface p-4 rounded-3xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex flex-col items-center justify-center text-center">
-        <div class="relative w-24 h-24 flex items-center justify-center">
-          <svg class="w-full h-full transform -rotate-90">
-            <circle cx="48" cy="48" r="38" fill="transparent" stroke="#E2E8F0" class="dark:stroke-slate-800" stroke-width="8" />
-            <circle cx="48" cy="48" r="38" fill="transparent" stroke="#0F766E" class="dark:stroke-[#5EEAD4] transition-all duration-500" stroke-width="8" :stroke-dasharray="2 * Math.PI * 38" :stroke-dashoffset="2 * Math.PI * 38 - (completionPercentage / 100) * 2 * Math.PI * 38" stroke-linecap="round" />
-          </svg>
-          <div class="absolute flex flex-col items-center">
-            <span class="text-lg font-bold text-slate-900 dark:text-white">{{ offeredCount }} / 5</span>
-            <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{{ completionPercentage }}%</span>
-          </div>
-        </div>
-        <span class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-3">আজকের নামাজ</span>
-      </div>
+    <PrayerTimetable :date="selectedDate" />
+    <p v-if="feedback" role="status" class="iq-secondary">{{ localeStore.t(feedback) }}</p>
 
-      <!-- Streak Motivational Card -->
-      <div class="bg-m3-surface dark:bg-m3-dark-surface p-4 rounded-3xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex flex-col items-center justify-center text-center">
-        <div class="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 dark:text-orange-400 mb-2">
-          <span class="material-symbols-rounded text-3xl">local_fire_department</span>
-        </div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-          {{ streakDays }} দিন
-        </h3>
-        <span class="text-xs font-bold text-slate-600 dark:text-slate-300 mt-1">অবিরাম নামাজ</span>
+    <div class="iq-surface grid grid-cols-2 gap-4">
+      <div>
+        <p class="iq-secondary">{{ localeStore.t('offered') }}</p>
+        <p class="iq-section-heading">{{ dailyObligationCount ? `${offeredCount} / ${dailyObligationCount} · ${completionPercentage}%` : localeStore.t('no_qaza_required') }}</p>
       </div>
-
+      <div>
+        <p class="iq-secondary">{{ localeStore.t('streak') }}</p>
+        <p class="iq-section-heading">{{ localeStore.t('streak_days', { count: streakDays }) }}</p>
+      </div>
     </div>
 
     <!-- Date selector horizontal strip -->
     <div class="bg-m3-surface dark:bg-m3-dark-surface p-3.5 rounded-3xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3">
-      <div class="flex items-center justify-between px-1">
+      <div class="flex items-center justify-between flex-wrap gap-3 px-1">
         <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
           <span class="material-symbols-rounded text-sm">calendar_month</span>
-          তারিখ নির্বাচন করুন
+           {{ localeStore.t('select_date') }}
         </span>
         <input 
           type="date"
           v-model="selectedDate"
+          :aria-label="localeStore.t('select_date')"
           class="bg-slate-100 dark:bg-slate-800 border border-slate-200/30 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 rounded-lg px-2 py-1 outline-none"
         />
       </div>
@@ -367,51 +337,49 @@ const handleSaveLog = async () => {
     <!-- List of Prayer Cards -->
     <div class="space-y-3">
       <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
-        দৈনিক সালাত ট্র্যাকার
+        {{ localeStore.t('daily_prayers') }}
       </h2>
 
       <div 
         v-for="p in [PrayerName.Fajr, PrayerName.Dhuhr, PrayerName.Asr, PrayerName.Maghrib, PrayerName.Isha]"
         :key="p"
-        @click="toggleOfferedQuick(p)"
-        @contextmenu.prevent="openLoggingModal(p)"
-        class="bg-m3-surface dark:bg-m3-dark-surface p-4 rounded-3xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex items-center justify-between hover:scale-[1.01] active:scale-[0.99] transition-all duration-250 cursor-pointer select-none relative overflow-hidden"
+        class="iq-surface prayer-log-row flex items-center justify-between gap-3 relative"
       >
         <!-- Indicator Left bar -->
         <div 
-          :class="[dailyLogs[p]?.isOffered ? 'bg-m3-success' : dailyLogs[p] ? 'bg-m3-error' : 'bg-slate-200 dark:bg-slate-800']"
+          :class="[dailyLogs[p]?.isOffered ? 'bg-m3-success' : dailyLogs[p]?.missedReason === MissedReason.ExcusedImpurity ? 'bg-m3-secondary' : dailyLogs[p] ? 'bg-m3-error' : 'bg-slate-200 dark:bg-slate-800']"
           class="absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300"
         ></div>
 
-        <div class="flex items-center gap-4.5 pl-2">
+        <div class="flex items-center gap-3 pl-2 min-w-0">
           <!-- Icon -->
-          <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl">
-            {{ PRAYER_ICONS[p] }}
+          <div class="prayer-log-icon w-10 h-10 shrink-0 flex items-center justify-center">
+            <span class="material-symbols-rounded" aria-hidden="true">{{ PRAYER_ICONS[p] }}</span>
           </div>
           <!-- Details -->
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <span class="font-bold text-base text-slate-900 dark:text-white">{{ getLocalizedPrayerName(p) }}</span>
-              <span class="font-serif text-xs text-slate-400 dark:text-slate-500">{{ ARABIC_NAMES[p] }}</span>
+               <span lang="ar" class="font-arabic text-sm text-slate-500 dark:text-slate-400">{{ ARABIC_NAMES[p] }}</span>
             </div>
             
             <!-- Metadata badges -->
             <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-              <span v-if="dailyLogs[p]?.isJamaah" class="text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/10">জামায়াত</span>
-              <span v-if="dailyLogs[p]?.isTraveling" class="text-[9px] font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400 px-2 py-0.5 rounded-full border border-sky-500/10">মুসাফির</span>
-              <span v-if="dailyLogs[p]?.isHome" class="text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/10">বাসায়</span>
-              <span v-if="dailyLogs[p]?.hasTasbih" class="text-[9px] font-bold bg-pink-500/10 text-pink-600 dark:text-pink-400 px-2 py-0.5 rounded-full border border-pink-500/10">📿 তাসবীহ</span>
-              <span v-if="dailyLogs[p]?.quranNotes" class="text-[9px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/10">📖 কোরআন</span>
+              <span v-if="dailyLogs[p]?.isJamaah" class="iq-secondary">{{ localeStore.t('jamaah') }} ·</span>
+              <span v-if="dailyLogs[p]?.isTraveling" class="iq-secondary">{{ localeStore.t('traveling') }} ·</span>
+              <span v-if="dailyLogs[p]?.isHome" class="iq-secondary">{{ localeStore.t('prayed_at_home') }} ·</span>
+              <span v-if="dailyLogs[p]?.hasTasbih" class="iq-secondary">{{ localeStore.t('track_tasbih') }} ·</span>
+              <span v-if="dailyLogs[p]?.quranNotes" class="iq-secondary">{{ localeStore.t('quran_notes') }} ·</span>
               
               <!-- Punctuality / Missed Reason text -->
-              <span v-if="dailyLogs[p]?.isOffered" class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 block mt-0.5">
-                {{ getLocalizedWaqt(dailyLogs[p].waqtStatus!) }} ওয়াক্ত
+              <span v-if="dailyLogs[p]?.isOffered" class="iq-secondary block mt-0.5">
+                 {{ localeStore.t('offered') }} · {{ getLocalizedWaqt(dailyLogs[p].waqtStatus!) }}
               </span>
-              <span v-else-if="dailyLogs[p]" class="text-[10px] font-semibold text-rose-500 dark:text-rose-400 block mt-0.5">
+              <span v-else-if="dailyLogs[p]" class="iq-secondary block mt-0.5">
                 {{ getLocalizedMissedReason(dailyLogs[p].missedReason!) }}
               </span>
-              <span v-else class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 block mt-0.5">
-                লিপিবদ্ধ নেই
+              <span v-else class="iq-secondary block mt-0.5">
+                 {{ localeStore.t('not_logged') }}
               </span>
             </div>
           </div>
@@ -424,6 +392,8 @@ const handleSaveLog = async () => {
             :class="[
               dailyLogs[p]?.isOffered 
                 ? 'bg-m3-success text-white' 
+                : dailyLogs[p]?.missedReason === MissedReason.ExcusedImpurity
+                  ? 'bg-m3-secondary text-white'
                 : dailyLogs[p]
                   ? 'bg-m3-error text-white'
                   : 'border-2 border-slate-300 dark:border-slate-700 bg-transparent text-transparent'
@@ -431,35 +401,39 @@ const handleSaveLog = async () => {
             class="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300"
           >
             <span class="material-symbols-rounded text-lg font-bold">
-              {{ dailyLogs[p]?.isOffered ? 'check' : dailyLogs[p] ? 'close' : '' }}
+              {{ dailyLogs[p]?.isOffered ? 'check' : dailyLogs[p]?.missedReason === MissedReason.ExcusedImpurity ? 'remove' : dailyLogs[p] ? 'close' : '' }}
             </span>
           </div>
 
           <!-- Edit button icon -->
           <button 
-            @click.stop="openLoggingModal(p)"
-            class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 cursor-pointer"
-            title="বিস্তারিত সম্পাদনা"
+            @click.stop="editPrayer(p)"
+            class="iq-button iq-button-secondary"
+            :aria-label="localeStore.t('log_salah', { salah: getLocalizedPrayerName(p) })"
           >
-            <span class="material-symbols-rounded text-lg">edit</span>
+            {{ localeStore.t(dailyLogs[p] ? 'edit' : 'log') }}
           </button>
         </div>
       </div>
     </div>
 
+    <AppDialog v-model="isPrayerPickerOpen" :label="localeStore.t('daily_prayers')">
+      <div class="p-6 space-y-4">
+        <h2 class="iq-section-heading">{{ localeStore.t('daily_prayers') }}</h2>
+        <button v-for="(key, index) in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const" :key="key" class="iq-button iq-button-secondary w-full" @click="openLoggingModal(index)">{{ localeStore.t(key) }}</button>
+        <button class="iq-button w-full" @click="isPrayerPickerOpen = false">{{ localeStore.t('close') }}</button>
+      </div>
+    </AppDialog>
+
     <!-- Details/Edit Bottom Sheet Modal -->
-    <div 
-      v-if="isModalOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
-      @click.self="isModalOpen = false"
-    >
-      <div class="bg-m3-surface dark:bg-m3-dark-surface rounded-[32px] w-full max-w-lg overflow-hidden shadow-2xl animate-slide-up border border-slate-200/50 dark:border-slate-800">
+    <AppDialog v-model="isModalOpen" :label="localeStore.t('log_salah', { salah: getLocalizedPrayerName(editingPrayerName ?? 0) })">
+       <div class="bg-m3-surface dark:bg-m3-dark-surface w-full overflow-hidden">
         <!-- Title -->
         <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-          <h3 class="font-bold text-lg text-slate-800 dark:text-slate-200">
-            {{ getLocalizedPrayerName(editingPrayerName!) }} সালাত
+          <h3 id="log-dialog-heading" class="font-bold text-lg text-slate-800 dark:text-slate-200">
+            {{ localeStore.t('log_salah', { salah: getLocalizedPrayerName(editingPrayerName!) }) }}
           </h3>
-          <button @click="isModalOpen = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer">&times;</button>
+          <button @click="isModalOpen = false" :aria-label="localeStore.t('close')" class="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer">&times;</button>
         </div>
 
         <!-- Body -->
@@ -471,14 +445,14 @@ const handleSaveLog = async () => {
               :class="[logType === 'offered' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
               class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
-              আদায় করেছি
+              {{ localeStore.t('offered') }}
             </button>
             <button 
               @click="logType = 'missed'"
               :class="[logType === 'missed' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
               class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
-              ছুটে গেছে
+              {{ localeStore.t('missed') }}
             </button>
             <button 
               v-if="isFemale"
@@ -486,47 +460,50 @@ const handleSaveLog = async () => {
               :class="[logType === 'period' ? 'bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 shadow font-bold' : 'text-slate-700 dark:text-slate-200']"
               class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
-              হায়েজ / নিফাস
+              {{ localeStore.t('period_hayd') }}
             </button>
           </div>
 
           <!-- Offered form fields -->
           <div v-if="logType === 'offered'" class="space-y-4">
             <div>
-              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ওয়াক্তের সময়ানুবর্তিতা</label>
-              <select v-model="formWaqtStatus" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
-                <option :value="WaqtStatus.AwwalAlWaqt">আউয়াল ওয়াক্ত (শুরুতে)</option>
-                <option :value="WaqtStatus.WastAlWaqt">ওয়াসাত ওয়াক্ত (মাঝামাঝি)</option>
-                <option :value="WaqtStatus.AkhirAlWaqt">আখির ওয়াক্ত (শেষের দিকে)</option>
+              <label for="log-waqt" class="block text-sm font-bold mb-2">{{ localeStore.t('waqt_punctuality') }}</label>
+              <select id="log-waqt" v-model="formWaqtStatus" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
+                <option :value="WaqtStatus.AwwalAlWaqt">{{ localeStore.t('awwal') }}</option>
+                <option :value="WaqtStatus.WastAlWaqt">{{ localeStore.t('wast') }}</option>
+                <option :value="WaqtStatus.AkhirAlWaqt">{{ localeStore.t('akhir') }}</option>
               </select>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
               <label class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
                 <input type="checkbox" v-model="formIsJamaah" class="rounded text-teal-600 focus:ring-teal-500" />
-                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">জামায়াত</span>
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ localeStore.t('congregation') }}</span>
               </label>
 
               <label class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
                 <input type="checkbox" v-model="formIsTraveling" class="rounded text-teal-600 focus:ring-teal-500" />
-                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">মুসাফির</span>
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ localeStore.t('traveling') }}</span>
               </label>
 
               <label class="col-span-2 flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
                 <input type="checkbox" v-model="formIsHome" class="rounded text-teal-600 focus:ring-teal-500" />
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">বাসায় আদায় করেছি</span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ localeStore.t('prayed_at_home') }}</span>
               </label>
             </div>
 
+            <label v-if="editingPrayerName === PrayerName.Dhuhr" class="flex items-center gap-3">
+              <input type="checkbox" v-model="formIsJummah" />{{ localeStore.t('friday_prayer') }}
+            </label>
             <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-4">
               <label class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
                 <input type="checkbox" v-model="formHasTasbih" class="rounded text-teal-600 focus:ring-teal-500" />
-                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">সালাতের পর তাসবীহ</span>
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">{{ localeStore.t('track_tasbih') }}</span>
               </label>
 
               <div>
-                <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">কোরআন পাঠের নোট</label>
-                <input type="text" v-model="formQuranNotes" placeholder="যেমন, সূরা আল-বাকারাহ ১-১০, পৃষ্ঠা ৫" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500" />
+                <label for="log-notes" class="block text-sm font-bold mb-2">{{ localeStore.t('quran_notes') }}</label>
+                <input id="log-notes" type="text" v-model="formQuranNotes" :placeholder="localeStore.t('quran_notes_placeholder')" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500" />
               </div>
             </div>
           </div>
@@ -534,43 +511,43 @@ const handleSaveLog = async () => {
           <!-- Missed form fields -->
           <div v-else-if="logType === 'missed'" class="space-y-4">
             <div>
-              <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">ছুটে যাওয়ার কারণ</label>
-              <select v-model="formMissedReason" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
-                <optgroup label="ক্ষমাযোগ্য ওজর (Excused)">
-                  <option :value="MissedReason.ExcusedSleep">ঘুম (নওম)</option>
-                  <option :value="MissedReason.ExcusedForgetfulness">ভুলে যাওয়া (নিসইয়ান)</option>
+              <label for="log-reason" class="block text-sm font-bold mb-2">{{ localeStore.t('reason_missed') }}</label>
+              <select id="log-reason" v-model="formMissedReason" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500">
+                <optgroup :label="localeStore.t('excused_optgroup')">
+                  <option :value="MissedReason.ExcusedSleep">{{ localeStore.t('sleep') }}</option>
+                  <option :value="MissedReason.ExcusedForgetfulness">{{ localeStore.t('forgetfulness') }}</option>
                 </optgroup>
-                <optgroup label="ক্ষমা অযোগ্য (Unexcused)">
-                  <option :value="MissedReason.UnexcusedLaziness">অলসতা (কাসাল)</option>
-                  <option :value="MissedReason.UnexcusedDistraction">উদাসীনতা (গাফলাহ)</option>
-                  <option :value="MissedReason.UnexcusedSituational">ব্যস্ততা / পরিস্থিতিগত</option>
+                <optgroup :label="localeStore.t('unexcused_optgroup')">
+                  <option :value="MissedReason.UnexcusedLaziness">{{ localeStore.t('laziness') }}</option>
+                  <option :value="MissedReason.UnexcusedDistraction">{{ localeStore.t('distraction') }}</option>
+                  <option :value="MissedReason.UnexcusedSituational">{{ localeStore.t('situational') }}</option>
                 </optgroup>
               </select>
             </div>
 
             <label class="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-teal-500/50 transition-all select-none">
               <input type="checkbox" v-model="formIsTraveling" class="rounded text-teal-600 focus:ring-teal-500" />
-              <span class="text-xs font-bold text-slate-800 dark:text-slate-100">সফররত (মুসাফির) ছিলাম</span>
+              <span class="text-sm font-bold">{{ localeStore.t('traveling') }}</span>
             </label>
           </div>
 
           <!-- Period (Excused Impurity) -->
           <div v-else-if="logType === 'period'" class="p-6 bg-teal-500/5 border border-teal-500/10 rounded-2xl text-center space-y-2">
-            <span class="text-3xl block">🌸</span>
-            <h4 class="font-bold text-sm text-teal-700 dark:text-teal-400">হায়েজ / নিফাস অব্যাহতি</h4>
+            <h4 class="font-bold text-sm text-teal-700 dark:text-teal-400">{{ localeStore.t('period_hayd') }}</h4>
             <p class="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
-              মাসিক ঋতুস্রাব বা সন্তান প্রসব পরবর্তী ওজরের কারণে সালাতের বাধ্যবাধকতা সাময়িকভাবে অব্যাহতিপ্রাপ্ত। কোনো কাজার প্রয়োজন নেই।
+              {{ localeStore.t('no_qaza_required') }}
             </p>
           </div>
         </div>
 
         <!-- Actions -->
         <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
-          <button @click="isModalOpen = false" class="text-xs font-bold text-slate-600 dark:text-slate-400 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">বাতিল</button>
-          <button @click="handleSaveLog" class="bg-teal-700 dark:bg-teal-500 text-white dark:text-slate-900 font-bold text-xs px-5 py-2.5 rounded-xl shadow cursor-pointer">সংরক্ষণ করুন</button>
+          <p v-if="feedback === 'log_failed'" role="alert">{{ localeStore.t(feedback) }}</p>
+          <button @click="isModalOpen = false" class="iq-button iq-button-secondary">{{ localeStore.t('cancel') }}</button>
+          <button @click="handleSaveLog" :disabled="store.loading" class="iq-button">{{ localeStore.t('save') }}</button>
         </div>
       </div>
-    </div>
+    </AppDialog>
 
   </div>
 </template>

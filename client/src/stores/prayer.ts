@@ -1,13 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { readLogs, validatePrayerRequest, validateLogs } from '@/services/backup'
 import type {
   PrayerLogDto,
   QazaLogDto,
   AnalyticsResponseDto,
   LogOfferedPrayerRequest,
   LogMissedPrayerRequest,
+  PrayerSpecificStatsDto,
 } from '@/types/prayer.types'
 
+let lastIdTime = 0
 const generateUUID = (): string => {
   if (typeof crypto !== 'undefined') {
     if (crypto.randomUUID) {
@@ -31,26 +34,23 @@ const generateUUID = (): string => {
     }
   }
   // Safe static counter fallback to completely avoid Math.random and satisfy static analysis
-  const ts = Date.now().toString(16).padStart(12, '0')
+  lastIdTime = Math.max(Date.now(), lastIdTime + 1)
+  const ts = lastIdTime.toString(16).padStart(12, '0')
   return `00000000-0000-4000-8000-${ts}`
 }
 
 const loadLogsFromStorage = (): PrayerLogDto[] => {
-  try {
-    const data = localStorage.getItem('iqamah_prayer_logs')
-    return data ? JSON.parse(data) : []
-  } catch {
-    return []
-  }
+  return readLogs()
 }
 
 const saveLogsToStorage = (logs: PrayerLogDto[]) => {
-  localStorage.setItem('iqamah_prayer_logs', JSON.stringify(logs))
+  localStorage.setItem('iqamah_prayer_logs', JSON.stringify(validateLogs(logs)))
 }
 
 export const usePrayerStore = defineStore('prayer', () => {
   const prayerLogs = ref<PrayerLogDto[]>([])
   const pendingQazas = ref<QazaLogDto[]>([])
+  const qazaLogs = ref<QazaLogDto[]>([])
   const analytics = ref<AnalyticsResponseDto | null>(null)
 
   const loading = ref(false)
@@ -89,6 +89,7 @@ export const usePrayerStore = defineStore('prayer', () => {
     loading.value = true
     error.value = null
     try {
+      validatePrayerRequest(request)
       const allLogs = loadLogsFromStorage()
       const existingIndex = allLogs.findIndex(
         (log) => log.prayerDate === request.prayerDate && log.prayerName === request.prayerName
@@ -98,6 +99,9 @@ export const usePrayerStore = defineStore('prayer', () => {
 
       if (existingIndex > -1) {
         const oldLog = allLogs[existingIndex]!
+        if (oldLog.qazaLog?.state === 1 && (request.isOffered || ('missedReason' in request && request.missedReason === 0))) {
+          throw new Error('A fulfilled Qaza is historical evidence and cannot be removed by this edit.')
+        }
         resultId = oldLog.id
 
         // Build updated log
@@ -108,7 +112,7 @@ export const usePrayerStore = defineStore('prayer', () => {
           const missedReq = request as LogMissedPrayerRequest
           const requiresQ = missedReq.missedReason !== 0 // MissedReason.ExcusedImpurity is 0
           if (requiresQ) {
-            if (!updatedQazaLog || updatedQazaLog.state === 1) {
+            if (!updatedQazaLog) {
               updatedQazaLog = {
                 id: generateUUID(),
                 prayerLogId: resultId,
@@ -138,8 +142,8 @@ export const usePrayerStore = defineStore('prayer', () => {
           isTraveling: request.isTraveling ?? false,
           isJummah: request.isOffered ? ((request as LogOfferedPrayerRequest).isJummah ?? false) : false,
           isHome: request.isOffered ? ((request as LogOfferedPrayerRequest).isHome ?? false) : false,
-          quranNotes: request.isOffered ? ((request as LogOfferedPrayerRequest).quranNotes ?? undefined) : undefined,
-          hasTasbih: request.isOffered ? ((request as LogOfferedPrayerRequest).hasTasbih ?? false) : false,
+          quranNotes: request.isOffered ? ((request as LogOfferedPrayerRequest).quranNotes ?? oldLog.quranNotes) : oldLog.quranNotes,
+          hasTasbih: request.isOffered ? ((request as LogOfferedPrayerRequest).hasTasbih ?? oldLog.hasTasbih ?? false) : oldLog.hasTasbih ?? false,
           loggedAt: oldLog.loggedAt,
           qazaLog: updatedQazaLog,
         }
@@ -202,6 +206,7 @@ export const usePrayerStore = defineStore('prayer', () => {
     try {
       const allLogs = loadLogsFromStorage()
       const pending: QazaLogDto[] = []
+      qazaLogs.value = allLogs.flatMap(log => log.qazaLog ? [log.qazaLog] : [])
       for (const log of allLogs) {
         if (log.qazaLog && log.qazaLog.state === 0) {
           pending.push(log.qazaLog)
@@ -229,6 +234,7 @@ export const usePrayerStore = defineStore('prayer', () => {
       if (existingIndex > -1) {
         const log = allLogs[existingIndex]!
         if (log.qazaLog) {
+          if (log.qazaLog.state !== 0) throw new Error('This Qaza has already been fulfilled.')
           const nowStr = new Date().toISOString()
           const createdTime = new Date(log.qazaLog.createdAt).getTime()
           const fulfilledTime = new Date(nowStr).getTime()
@@ -262,6 +268,8 @@ export const usePrayerStore = defineStore('prayer', () => {
           allLogs[existingIndex] = updatedLog
           saveLogsToStorage(allLogs)
         }
+      } else {
+        throw new Error('Qaza obligation not found.')
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'An error occurred while fulfilling Qaza.'
@@ -337,8 +345,7 @@ export const usePrayerStore = defineStore('prayer', () => {
       }
 
       const prayerNamesList = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      const prayerStats: Record<string, any> = {}
+      const prayerStats: Record<string, PrayerSpecificStatsDto> = {}
 
       for (let i = 0; i < 5; i++) {
         const pNameStr = prayerNamesList[i] || 'fajr'
@@ -414,6 +421,7 @@ export const usePrayerStore = defineStore('prayer', () => {
   return {
     prayerLogs,
     pendingQazas,
+    qazaLogs,
     analytics,
     loading,
     error,

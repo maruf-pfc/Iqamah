@@ -1,3 +1,12 @@
+# Build the optional server's bundled web client from the same source.
+FROM oven/bun:1.4.2 AS client-build
+WORKDIR /client
+COPY client/package.json client/bun.lock ./
+RUN bun install --frozen-lockfile --ignore-scripts
+COPY client/ ./
+COPY docs/third-party-notices.md /docs/third-party-notices.md
+RUN bun run build
+
 # Stage 1: Build the .NET 10 API backend
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS server-build
 WORKDIR /app
@@ -18,6 +27,7 @@ COPY server/ ./
 
 # Build and publish release
 RUN dotnet publish Iqamah.API/Iqamah.API.csproj -c Release -o out
+COPY --from=client-build /client/dist/index.html /app/out/wwwroot/index.html
 
 # Stage 2: Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
@@ -25,8 +35,8 @@ WORKDIR /app
 COPY --from=server-build /app/out .
 
 # Expose default ASP.NET Core port
-EXPOSE 5229
-ENV ASPNETCORE_URLS=http://+:5229
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "Iqamah.API.dll"]

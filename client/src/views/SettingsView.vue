@@ -4,6 +4,12 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
 import { usePrayerStore } from '@/stores/prayer'
+import PrayerCalculationSettings from '@/components/PrayerCalculationSettings.vue'
+import { readLogs, mergeBackup } from '@/services/backup'
+import { bangladeshDate } from '@/services/calendar'
+import { readPreference } from '@/services/preferences'
+import { useTimingStore } from '@/stores/timing'
+import notices from '@/data/notices'
 
 defineProps<{
   isDark: boolean
@@ -20,9 +26,9 @@ const store = usePrayerStore()
 
 // Gender selection state
 const isFemale = ref<boolean | null>(
-  localStorage.getItem('iqamah_user_g') === 'f'
+  readPreference('iqamah_user_g') === 'f'
     ? true
-    : localStorage.getItem('iqamah_user_g') === 'm'
+    : readPreference('iqamah_user_g') === 'm'
       ? false
       : null
 )
@@ -45,17 +51,15 @@ const triggerExport = async () => {
   isExporting.value = true
   statusMessage.value = null
   try {
-    // Fetch logs for the past 5 years to ensure we get everything
-    const todayStr = new Date().toISOString().split('T')[0] ?? ''
-    await store.fetchPrayerLogs('2021-01-01', todayStr)
-    await store.fetchPendingQazas()
+    const todayStr = bangladeshDate()
+    const logs = readLogs().sort((a, b) => a.prayerDate.localeCompare(b.prayerDate) || a.prayerName - b.prayerName)
 
     const backupData = {
       version: '1.1.0',
       exportedAt: new Date().toISOString(),
       username: authStore.user?.username || 'user',
-      prayerLogs: store.prayerLogs,
-      pendingQazas: store.pendingQazas,
+      prayerLogs: logs,
+      pendingQazas: logs.flatMap(log => log.qazaLog?.state === 0 ? [log.qazaLog] : []),
       gender: isFemale.value ? 'female' : 'male'
     }
 
@@ -87,69 +91,29 @@ const handleImportFile = async (event: Event) => {
 
   const file = target.files[0]
   if (!file) return
-  const reader = new FileReader()
-
   isImporting.value = true
   importProgress.value = 0
   statusMessage.value = null
-
-  reader.onload = async (e) => {
     try {
-      const data = JSON.parse(e.target?.result as string)
-      if (!data.prayerLogs || !Array.isArray(data.prayerLogs)) {
-        throw new Error('Invalid backup file structure.')
-      }
-
-      const logsToImport = data.prayerLogs
-      importTotal.value = logsToImport.length
-      
-      if (data.gender) {
-        setGender(data.gender === 'female')
-      }
-
-      // Restore prayer logs sequentially
-      for (let i = 0; i < logsToImport.length; i++) {
-        const log = logsToImport[i]
-        // Map data structures back to API payload format
-        const payload = log.isOffered 
-          ? {
-              prayerName: log.prayerName,
-              prayerDate: log.prayerDate,
-              isOffered: true,
-              waqtStatus: log.waqtStatus ?? 0,
-              isJamaah: log.isJamaah || false,
-              isTraveling: log.isTraveling || false,
-              isJummah: log.isJummah || false,
-              isHome: log.isHome || false,
-              quranNotes: log.quranNotes || undefined,
-              hasTasbih: log.hasTasbih || false,
-            }
-          : {
-              prayerName: log.prayerName,
-              prayerDate: log.prayerDate,
-              isOffered: false,
-              missedReason: log.missedReason ?? 4,
-              isTraveling: log.isTraveling || false,
-            }
-        
-        await store.logPrayer(payload)
-        importProgress.value = i + 1
-      }
+      if (file.size > 20 * 1024 * 1024) throw new Error('Backup exceeds 20 MB.')
+      const data: unknown = JSON.parse(await file.text())
+      const merged = mergeBackup(readLogs(), data)
+      localStorage.setItem('iqamah_prayer_logs', JSON.stringify(merged))
+      importTotal.value = merged.length
+      importProgress.value = merged.length
+      await store.fetchPendingQazas()
 
       statusMessage.value = localeStore.currentLocale === 'bn' 
         ? `সফলভাবে ${importTotal.value}টি রেকর্ড রিস্টোর করা হয়েছে!` 
         : `Successfully restored ${importTotal.value} records!`
       isSuccessStatus.value = true
     } catch {
-      statusMessage.value = localeStore.currentLocale === 'bn' ? 'ফাইল ইম্পোর্ট ব্যর্থ হয়েছে। অনুগ্রহ করে সঠিক ফাইল নির্বাচন করুন।' : 'Import failed. Invalid file format.'
+      statusMessage.value = localeStore.currentLocale === 'bn' ? 'ইম্পোর্ট ব্যর্থ। ফাইল অবৈধ, সংস্করণ অসমর্থিত অথবা বর্তমান রেকর্ডের সাথে বিরোধ আছে। আগের রেকর্ড রাখা হয়েছে।' : 'Import failed: invalid file, unsupported version, storage failure, or conflicting records. Existing records were preserved.'
       isSuccessStatus.value = false
     } finally {
       isImporting.value = false
       target.value = '' // Clear input
     }
-  }
-
-  reader.readAsText(file)
 }
 
 const handleReset = () => {
@@ -161,6 +125,7 @@ const handleReset = () => {
   if (confirmed) {
     authStore.logout()
     localStorage.removeItem('iqamah_prayer_logs')
+    useTimingStore().reset()
     router.push('/onboarding')
   }
 }
@@ -289,6 +254,8 @@ const handleReset = () => {
       </div>
     </div>
 
+    <PrayerCalculationSettings />
+
     <!-- Data Management Group -->
     <div class="space-y-3">
       <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-1">
@@ -351,7 +318,7 @@ const handleReset = () => {
     <!-- Information & Guide Group -->
     <div class="space-y-3">
       <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-1">
-        {{ localeStore.currentLocale === 'bn' ? 'তথ্য ও নির্দেশিকা' : 'Guides & Timings' }}
+        {{ localeStore.currentLocale === 'bn' ? 'তথ্য ও নির্দেশিকা' : 'Guidance & Reference' }}
       </h2>
 
       <div class="rounded-3xl bg-m3-surface dark:bg-m3-dark-surface border border-slate-200/50 dark:border-slate-800/80 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-sm">
@@ -396,6 +363,11 @@ const handleReset = () => {
 
       </div>
     </div>
+
+    <details class="iq-surface">
+      <summary class="cursor-pointer font-semibold">{{ localeStore.t('third_party_notices') }}</summary>
+      <pre class="whitespace-pre-wrap break-words text-sm mt-4 font-sans">{{ notices }}</pre>
+    </details>
 
     <!-- Reset button -->
     <button 

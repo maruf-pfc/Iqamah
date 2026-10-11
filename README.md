@@ -8,7 +8,9 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-**Iqamah (إقامة)** is a premium, offline-first Salah (Namaz) habit establishment platform for Muslims. It helps you build and maintain consistent prayer habits with granular punctuality tracking, make-up (Qaza) debt management, and motivational analytics — entirely on your own device, with no account or internet required.
+**Iqamah (إقامة)** is a local-first Salah habit companion for users in Bangladesh. It tracks prayer punctuality, missed prayers, Qaza obligations and analytics without an account or a mandatory server. Select one of Bangladesh's 64 districts during onboarding or in Settings to calculate district-center prayer estimates offline.
+
+**Current implementation work is unreleased, not an unconditional release-readiness certification.** See [release verification and blockers](docs/release-readiness.md) and [design system](docs/design-system.md).
 
 ![Iqamah Platform Preview](assets/cover.png)
 
@@ -30,16 +32,17 @@ graph TD
 
 ### 1. Web Client (Vue 3 + Vite)
 A local-first Single Page Application:
-- **Tailwind CSS v4:** Material Design 3-inspired color system with full light/dark mode.
+- **Tailwind CSS v4:** Forest-green/ivory semantic tokens, class-based light/dark themes and a fluid responsive shell.
 - **Pinia Store (`usePrayerStore`):** All prayer logs, Qaza records, streaks, and analytics computed and persisted in `localStorage`. No HTTP calls.
-- **adhan (JS):** Offline prayer time calculation based on the user's GPS coordinates.
-- **OnboardingView:** Replaces the login screen. Captures name, language, and gender — stored locally.
+- **adhan (JS):** One shared astronomical calculation service for Home and the full timetable. District coordinates are bundled; no GPS permission is requested. Displays use `Asia/Dhaka` (UTC+06:00).
+- **OnboardingView:** Captures optional name, language, gender and required district — stored locally. Existing profiles can select their district in Settings without restarting onboarding.
 
 ### 2. Mobile Client (Flutter)
 A lightweight Flutter WebView shell:
 - **webview_flutter:** Serves the compiled Vue 3 Single Page Application locally via asset bundler, ensuring 100% UI/UX parity.
 - **Platform-Safe Wrapper:** Uses Dart conditional imports (`webview_stub.dart`, `webview_mobile.dart`, `webview_web.dart`) to safely load platform-specific WebViews across Android, iOS, Web (Chrome), and Desktop.
-- **System Theme Integration:** Sets native status bar and system navigation bar coloring (`#030A09`) to blend seamlessly with the app's dark visual design.
+- **Native shell:** Bundles `mobile/assets/web/index.html`, handles resume/back/load errors and uses dark forest-green native chrome. Native chrome does not yet synchronize with the web light theme.
+- **Persistence:** Active Android/iOS screens use WebView LocalStorage, **not SQLite**. The older Dart providers/SQLite service remain dormant and are not automatically migrated or synchronized. Existing SQLite files are not deleted.
 
 ### 3. Server (ASP.NET Core 10) — Optional / Legacy
 The original server implementation remains in `server/` for reference or self-hosted use. It is no longer required by the web or mobile clients in their default configuration.
@@ -50,33 +53,34 @@ The original server implementation remains in `server/` for reference or self-ho
 
 | Feature | Web | Mobile |
 |---------|-----|--------|
-| 5-prayer daily tracker with quick log (tap) | ✅ | ✅ |
+| 5-prayer daily tracker with explicit Log/Edit form | ✅ | Shared web UI |
 | Detailed log sheet (Waqt, Jamaah, Tasbih, Quran notes) | ✅ | ✅ |
-| Swipe gestures (delete / mark missed) | — | ✅ |
-| Qaza ledger with fulfill action | ✅ | ✅ |
+| Swipe gestures (delete / mark missed) | Not implemented | Not in active WebView UI |
+| Pending/fulfilled Qaza ledger, prayer filters and fulfill action | ✅ | Shared web UI |
 | Streak counter | ✅ | ✅ |
 | Analytics (punctuality split, missed reasons) | ✅ | ✅ |
-| Salah time schedule + Makruh windows | ✅ | ✅ |
-| Hijri date display | ✅ | — |
+| Home timetable, next-prayer countdown and district preferences | ✅ | Bundled; device verification pending |
+| Approximate caution windows (not universal religious boundaries) | ✅ | Shared web UI |
+| Hijri date display (Intl estimate, not local moon-sighting authority) | ✅ | Shared web UI |
 | JSON backup export / import | ✅ | ✅ |
 | Reset Application (wipe all data) | ✅ | ✅ |
 | Bilingual (Bengali / English) | ✅ | ✅ |
 | Gender-aware Hayd/Nifas logging | ✅ | ✅ |
 | Offline — no internet required | ✅ | ✅ |
-| Light + Dark mode | ✅ | ✅ (Dark) |
+| Light + Dark web theme | ✅ | Web theme; native chrome remains dark |
 
 ---
 
 ## 💻 Web Client — Quick Start
 
 ### Prerequisites
-- [Node.js v20+ or v22+](https://nodejs.org/)
-- [Bun](https://bun.sh/) (recommended) or npm
+- [Node.js 24](https://nodejs.org/) for the current toolchain
+- [Bun 1.4.2](https://bun.sh/) (the committed lockfile is `client/bun.lock`; there is no npm lockfile)
 
 ### Setup
 ```bash
 cd client
-bun install
+bun install --frozen-lockfile --ignore-scripts
 bun run dev
 ```
 The app opens at `http://localhost:5173`. No backend needed.
@@ -84,7 +88,7 @@ The app opens at `http://localhost:5173`. No backend needed.
 ### Production Build
 ```bash
 bun run build      # TypeScript check + Vite build
-bun run test:unit -- --run   # Run Vitest suite (7 tests)
+bun run test:unit -- --run   # Run the full Vitest suite
 bun run lint       # ESLint + Oxlint
 ```
 
@@ -103,13 +107,20 @@ flutter pub get
 flutter run          # Connect an Android/iOS device or emulator
 ```
 
+**First rebuild the embedded web asset from the repository root:**
+```bash
+bash scripts/build-mobile-web.sh
+```
+CI downloads the current validated web bundle before Flutter builds. A stale committed
+HTML file must not be treated as evidence that current Vue changes are present on mobile.
+
 ### Supported Platforms
 | Platform | Status |
 |----------|--------|
-| Android | ✅ Primary target |
-| iOS | ✅ Supported |
-| Web (WASM SQLite) | ✅ `flutter run -d chrome` |
-| Linux Desktop | ✅ `flutter run -d linux` |
+| Android | Primary WebView target; physical-device QA/signing required |
+| iOS | WebView implementation present; Xcode/macOS verification required |
+| Web | Flutter iframe shell; standard JS release build (not WASM SQLite) |
+| Linux/Desktop | Informational fallback; no working desktop WebView |
 
 ---
 
@@ -125,9 +136,10 @@ Iqamah/
 │       └── router/            # Route guards
 ├── mobile/                    # Flutter offline companion
 │   └── lib/
-│       ├── main.dart          # All widgets, screens, navigation
-│       ├── providers/         # PrayerProvider, SalahTimeProvider
-│       ├── services/          # DatabaseHelper (SQLite)
+│       ├── main.dart          # Native shell and safe areas
+│       ├── webview_widget/    # Active platform wrappers
+│       ├── providers/         # Legacy, not wired into active shell
+│       ├── services/          # Legacy DatabaseHelper (SQLite)
 │       └── l10n/              # strings.dart (Bengali + English)
 ├── server/                    # ASP.NET Core 10 API (optional/legacy)
 ├── docs/                      # Domain model documentation
@@ -156,7 +168,9 @@ flutter analyze
 
 ## 🐳 Self-Hosted Server (Optional)
 
-The original full-stack mode (Vue → ASP.NET Core → PostgreSQL) is still supported for users who want server-side multi-device sync.
+The optional API contains server-side prayer/user operations, but the current Vue client
+does **not** call it or perform multi-device synchronization. Docker serves the freshly
+built local-first Vue application alongside the API on port 8080.
 
 ```bash
 # Build the Docker image
@@ -172,6 +186,28 @@ docker run -p 8080:8080 \
 ```
 
 See [docs/domain-model.md](docs/domain-model.md) for the full server-side domain model.
+
+### Backup and restore
+
+Settings exports the existing `version: "1.1.0"` JSON format with all stored dates,
+stable IDs, notes and embedded pending/fulfilled Qaza. Restore validates the whole file
+before a single LocalStorage write and merges only new or identical records. Unsupported
+versions, invalid relationships and conflicting records are rejected without replacing
+existing records. Export current data before restoring a different history. Profile
+district/theme/language settings are not included in this prayer-record backup.
+
+Legacy Dart SQLite backups (`version: 1`, integer) are a different format and are not
+accepted by the web restore flow. Migration between those formats is not implemented.
+LocalStorage is unencrypted, scoped to the browser/WebView origin, and may be lost on
+uninstall, clearing site data or changing the origin. Keep external backups.
+
+### Hosting and offline behavior
+
+Serve `client/dist/` on a static host. Hash routes (`/#/qaza`, etc.) need no per-route
+server rewrites. The JS, CSS and required Bengali/icon fonts are inlined into `index.html`;
+no Google Fonts requests are needed. A hosted page still needs its first HTML download:
+there is no service worker guaranteeing offline cold starts for hosted web pages. The
+Android/iOS shell instead starts from its bundled HTML asset.
 
 ---
 

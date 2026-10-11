@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
+import DistrictSelect from '@/components/DistrictSelect.vue'
+import { useTimingStore } from '@/stores/timing'
+import { readPreference } from '@/services/preferences'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -11,14 +14,17 @@ const localeStore = useLocaleStore()
 const selectedGender = ref<'male' | 'female'>('male')
 const selectedLanguage = ref<'en' | 'bn'>('en')
 const username = ref('')
+const timing = useTimingStore()
+const districtId = ref(timing.districtId)
+const onboardingError = ref(false)
 
 // Initialize from existing local state if any
-const existingGender = localStorage.getItem('iqamah_user_g')
+const existingGender = readPreference('iqamah_user_g')
 if (existingGender === 'm' || existingGender === 'f') {
   selectedGender.value = existingGender === 'f' ? 'female' : 'male'
 }
 
-const existingLang = localStorage.getItem('iqamah_locale')
+const existingLang = readPreference('iqamah_locale')
 if (existingLang === 'en' || existingLang === 'bn') {
   selectedLanguage.value = existingLang
   localeStore.setLocale(existingLang)
@@ -34,13 +40,16 @@ const selectGender = (gender: 'male' | 'female') => {
 }
 
 const handleStart = () => {
-  authStore.completeOnboarding(selectedGender.value, selectedLanguage.value, username.value)
-  router.push('/')
+  try {
+    timing.selectDistrict(districtId.value)
+    authStore.completeOnboarding(selectedGender.value, selectedLanguage.value, username.value)
+    router.push('/')
+  } catch { onboardingError.value = true }
 }
 </script>
 
 <template>
-  <div class="px-6 py-10 min-h-[750px] flex flex-col justify-between max-w-md mx-auto">
+  <div class="px-6 py-8 flex flex-col justify-between max-w-md mx-auto">
     <!-- Top Header / Branding -->
     <div class="space-y-6 text-center mt-6">
       <div class="w-24 h-24 mx-auto rounded-[32px] bg-teal-500/10 dark:bg-teal-500/20 flex items-center justify-center text-teal-650 dark:text-teal-400 shadow-inner">
@@ -130,6 +139,9 @@ const handleStart = () => {
             : 'Menstruation exemption settings are tailored specifically based on this selection.' }}
         </p>
       </div>
+
+      <DistrictSelect v-model="districtId" />
+      <p v-if="onboardingError" role="alert" class="iq-secondary">{{ localeStore.t('settings_error') }}</p>
 
       <!-- Optional Name Field -->
       <div class="space-y-2">

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 Widget createWebView() {
@@ -33,25 +34,48 @@ class MobileWebView extends StatefulWidget {
   State<MobileWebView> createState() => _MobileWebViewState();
 }
 
-class _MobileWebViewState extends State<MobileWebView> {
+class _MobileWebViewState extends State<MobileWebView> with WidgetsBindingObserver {
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool _hasError = false;
+  String? _assetUrl;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFF030A09))
+      ..setBackgroundColor(const Color(0xFF111C18))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
+            if (!mounted) return;
+            _assetUrl ??= url.split('#').first;
             setState(() {
               _isLoading = true;
+              _hasError = false;
             });
           },
           onPageFinished: (String url) {
+            if (!mounted) return;
             setState(() {
+              _isLoading = false;
+            });
+          },
+          onNavigationRequest: (request) {
+            final uri = Uri.tryParse(request.url);
+            if (uri != null && uri.scheme == 'file' &&
+                (_assetUrl == null || request.url.split('#').first == _assetUrl)) {
+              return NavigationDecision.navigate;
+            }
+            // Do not load untrusted remote pages into the app's JavaScript-enabled WebView.
+            return NavigationDecision.prevent;
+          },
+          onWebResourceError: (error) {
+            if (!mounted || error.isForMainFrame != true) return;
+            setState(() {
+              _hasError = true;
               _isLoading = false;
             });
           },
@@ -61,17 +85,57 @@ class _MobileWebViewState extends State<MobileWebView> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _controller.runJavaScript(
+        "window.dispatchEvent(new Event('iqamah-resume'));",
+      ).catchError((Object _) { /* Loading errors are handled by the delegate. */ });
+    }
+  }
+
+  Future<void> _handleBack() async {
+    final closedDialog = await _controller.runJavaScriptReturningResult(
+      "(() => { const dialog = document.querySelector('dialog[open]'); if (dialog) { dialog.close(); return true; } return false; })()",
+    );
+    if (closedDialog == true || closedDialog.toString() == 'true') return;
+    if (await _controller.canGoBack()) {
+      await _controller.goBack();
+    } else if (Platform.isAndroid) {
+      await SystemNavigator.pop();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        try { await _handleBack(); } catch (_) { /* Keep the current screen on controller failure. */ }
+      },
+      child: Stack(children: [
         WebViewWidget(controller: _controller),
+        if (_hasError)
+          Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('অ্যাপ লোড করা যায়নি / Unable to load app'),
+            TextButton(
+              onPressed: () => _controller.loadFlutterAsset('assets/web/index.html'),
+              child: const Text('আবার চেষ্টা করুন / Retry'),
+            ),
+          ])),
         if (_isLoading)
           const Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5EEAD4)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF91D5B4)),
             ),
           ),
-      ],
+      ]),
     );
   }
 }

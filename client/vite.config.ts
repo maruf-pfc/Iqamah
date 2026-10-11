@@ -14,7 +14,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueJsx(),
-    vueDevTools(),
+    ...(process.env.NODE_ENV === 'production' ? [] : [vueDevTools()]),
     tailwindcss(),
     viteSingleFile(),
   ],
@@ -22,7 +22,9 @@ export default defineConfig({
     cssCodeSplit: false,
   },
   server: {
-    allowedHosts: true,
+    fs: {
+      allow: ['..'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5229',

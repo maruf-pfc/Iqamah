@@ -14,7 +14,7 @@ void main() {
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
     statusBarBrightness: Brightness.dark,
-    systemNavigationBarColor: Color(0xFF030A09), // Match index.html theme-color
+    systemNavigationBarColor: Color(0xFF111C18),
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
@@ -31,7 +31,7 @@ class IqamahMobileApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF030A09),
+        scaffoldBackgroundColor: const Color(0xFF111C18),
       ),
       home: const IqamahWebViewScreen(),
     );
@@ -44,10 +44,10 @@ class IqamahWebViewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030A09),
+      backgroundColor: const Color(0xFF111C18),
       body: SafeArea(
         top: true,
-        bottom: false, // Let web app handle bottom navigation styling all the way down
+        bottom: true,
         child: createWebView(),
       ),
     );
