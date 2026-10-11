@@ -44,9 +44,6 @@ A lightweight Flutter WebView shell:
 - **Native shell:** Bundles `mobile/assets/web/index.html`, handles resume/back/load errors and uses dark forest-green native chrome. Native chrome does not yet synchronize with the web light theme.
 - **Persistence:** Active Android/iOS screens use WebView LocalStorage, **not SQLite**. The older Dart providers/SQLite service remain dormant and are not automatically migrated or synchronized. Existing SQLite files are not deleted.
 
-### 3. Server (ASP.NET Core 10) — Optional / Legacy
-The original server implementation remains in `server/` for reference or self-hosted use. It is no longer required by the web or mobile clients in their default configuration.
-
 ---
 
 ## ✨ Features
@@ -141,8 +138,7 @@ Iqamah/
 │       ├── providers/         # Legacy, not wired into active shell
 │       ├── services/          # Legacy DatabaseHelper (SQLite)
 │       └── l10n/              # strings.dart (Bengali + English)
-├── server/                    # ASP.NET Core 10 API (optional/legacy)
-├── docs/                      # Domain model documentation
+├── docs/                      # Domain model & design system documentation
 ├── CHANGELOG.md               # Version history
 └── README.md
 ```
@@ -166,26 +162,17 @@ flutter analyze
 
 ---
 
-## 🐳 Self-Hosted Server (Optional)
+## 🐳 Docker Deployment
 
-The optional API contains server-side prayer/user operations, but the current Vue client
-does **not** call it or perform multi-device synchronization. Docker serves the freshly
-built local-first Vue application alongside the API on port 8080.
+The application can be built and deployed as a lightweight static web container:
 
 ```bash
 # Build the Docker image
 docker build -t iqamah-app .
 
-# Run with PostgreSQL credentials
-docker run -p 8080:8080 \
-  -e ConnectionStrings__DefaultConnection="Host=your_host;Database=your_db;Username=user;Password=pass;SSL Mode=Require;" \
-  -e Jwt__Issuer="IqamahServer" \
-  -e Jwt__Audience="IqamahClient" \
-  -e Jwt__SecretKey="your_secure_secret_at_least_32_chars" \
-  iqamah-app
+# Run the container
+docker run -p 8080:80 iqamah-app
 ```
-
-See [docs/domain-model.md](docs/domain-model.md) for the full server-side domain model.
 
 ### Backup and restore
 

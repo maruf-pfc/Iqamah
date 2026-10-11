@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mobile CI bundles the current web output, and the Flutter web iframe points to its actual bundled asset path.
 - Optional Docker image builds the web client and exposes the documented port 8080; secret files are excluded from its context.
 
+### Removed
+- **Server:** Completely removed the legacy ASP.NET Core 10 backend (`server/`), CI validation jobs, and dev server proxy configurations in favor of a 100% offline-first architecture.
+
 ### Release status
 - Android/iOS device QA, legacy SQLite migration and production signing remain release blockers. See `docs/release-readiness.md`.
 

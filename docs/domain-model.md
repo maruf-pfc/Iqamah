@@ -2,7 +2,7 @@
 
 > **Audience:** New engineers onboarding to the project.  
 > **Last Updated:** 2026-10-11 · **v1.1.3**  
-> **Layer:** `Iqamah.Domain` (server) · `mobile/lib/` (Flutter) · `client/src/stores/` (Vue)
+> **Layer:** `client/src/` (Vue 3 / TypeScript) · `mobile/lib/` (Flutter / Dart)
 
 ---
 
@@ -203,7 +203,7 @@ Domain enumerations are mirrored in `mobile/lib/main.dart`:
 - `WaqtStatus` — AwwalAlWaqt, WastAlWaqt, AkhirAlWaqt
 - `MissedReason` — ExcusedImpurity, ExcusedSleep, ExcusedForgetfulness, UnexcusedSituational, UnexcusedLaziness, UnexcusedDistraction
 
-All integer values **must** stay in sync across C#, TypeScript, and Dart definitions.
+All integer values **must** stay in sync across TypeScript and Dart definitions.
 
 ---
 

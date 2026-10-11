@@ -21,41 +21,40 @@ By participating in this project, you agree to abide by our Code of Conduct (det
 
 ### Submitting Pull Requests
 1. **Fork the Repository:** Create a personal copy of the repository on GitHub.
-2. **Create a Branch:** Name your branch descriptively (e.g., `feature/analytics-export` or `bugfix/jwt-expiration`).
-3. **Write Tests:** Ensure your changes are covered by unit tests (both in C# and Vitest).
-4. **Code Quality:** Ensure all client checks pass by running `npm run lint` and `npm run type-check`. Ensure the server compiles without warnings.
+2. **Create a Branch:** Name your branch descriptively (e.g., `feature/analytics-export`).
+3. **Write Tests:** Ensure your changes are covered by automated unit tests (Vitest / Flutter).
+4. **Code Quality:** Ensure all client checks pass by running `bun run lint` and `bun run type-check`.
 5. **Commit Messages:** Follow standard conventional commit formats (e.g., `feat: ...`, `fix: ...`, `docs: ...`, `refactor: ...`).
 6. **Submit PR:** Target the `main` branch. Provide a detailed description of the changes.
 
 ## 💻 Development Setup
 
-Please refer to the **Getting Started** section in the [README.md](README.md) to set up the client and server development environments.
+Please refer to the **Quick Start** section in [README.md](README.md) to set up the client and mobile development environments.
 
 ## 🎨 Coding Standards
 
-### Backend (.NET)
-* Follow clean architecture and domain-driven design principles.
-* Use CQRS patterns (via MediatR) for application commands and queries.
-* Name classes and variables according to standard C# casing guidelines (PascalCase for classes/methods, camelCase for local variables/parameters).
-* Keep controllers thin; domain logic belongs in the domain/application layers.
-
 ### Frontend (Vue 3 / TypeScript)
 * Use the Composition API with `<script setup lang="ts">`.
-* Use Tailwind CSS v4 variables and theme configuration rather than ad-hoc inline styles.
+* Use Tailwind CSS v4 variables and semantic theme tokens (`--iq-*`) rather than ad-hoc inline styles.
 * Strictly enforce type safety. Avoid using `any` types.
 * Keep components reusable and well-documented.
+
+### Mobile (Flutter / Dart)
+* Follow clean widget composition principles.
+* Use `super.key` constructors and adherence to `flutter_lints`.
 
 ## 🧪 Testing Checklist
 Before submitting a pull request, run the following:
 
 ```bash
-# Server tests
-cd server
-dotnet test
-
 # Client validation
 cd client
-npm run lint
-npm run type-check
-npm run test:unit -- --run
+bun run lint
+bun run type-check
+bun run test:unit -- --run
+
+# Mobile validation
+cd ../mobile
+flutter analyze
+flutter test
 ```
