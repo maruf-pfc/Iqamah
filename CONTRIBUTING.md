@@ -13,7 +13,7 @@ By participating in this project, you agree to abide by our Code of Conduct (det
 ### Reporting Bugs
 * **Check existing issues:** Before opening a new issue, search the issue tracker to see if the problem has already been reported.
 * **Be specific:** Provide as much detail as possible, including steps to reproduce, expected vs. actual behavior, screenshots, and logs.
-* **Environment details:** State the client framework version, .NET version, browser, and OS you are using.
+* **Environment details:** State the Vue/Flutter versions, Android version, WebView/browser, and OS you are using. The .NET backend is retired.
 
 ### Requesting Features
 * **Describe the need:** Explain why this feature is useful and what problem it solves.

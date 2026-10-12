@@ -3,10 +3,12 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
-import { usePrayerStore } from '@/stores/prayer'
 import PrayerCalculationSettings from '@/components/PrayerCalculationSettings.vue'
-import { readLogs, mergeBackup, extractPreferences, backupChecksum, CURRENT_BACKUP_VERSION, APP_VERSION } from '@/services/backup'
-import { bangladeshDate } from '@/services/calendar'
+import { readLogs, CURRENT_BACKUP_VERSION, APP_VERSION } from '@/services/backup'
+import { previewRestore, restoreBackup } from '@/services/restore'
+import { shareBackupFile } from '@/services/backupFile'
+import { pickNativeBackup } from '@/services/backupPicker'
+import AppDialog from '@/components/AppDialog.vue'
 import { readPreference } from '@/services/preferences'
 import { useTimingStore } from '@/stores/timing'
 import notices from '@/data/notices'
@@ -22,7 +24,6 @@ const emit = defineEmits<{
 const router = useRouter()
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
-const store = usePrayerStore()
 const timing = useTimingStore()
 
 // Gender selection state
@@ -35,8 +36,13 @@ const isFemale = ref<boolean | null>(
 )
 
 const setGender = (female: boolean) => {
-  isFemale.value = female
-  localStorage.setItem('iqamah_user_g', female ? 'f' : 'm')
+  try {
+    localStorage.setItem('iqamah_user_g', female ? 'f' : 'm')
+    isFemale.value = female
+  } catch {
+    statusMessage.value = localeStore.t('settings_error')
+    isSuccessStatus.value = false
+  }
 }
 
 // Backup & Restore states
@@ -47,51 +53,47 @@ const importTotal = ref(0)
 const fileInput = ref<HTMLInputElement | null>(null)
 const statusMessage = ref<string | null>(null)
 const isSuccessStatus = ref(true)
+const restoreOpen = ref(false)
+const pendingBackup = ref<unknown>(null)
+const restoreMode = ref<'merge' | 'replace'>('merge')
+const lastBackup = ref(readPreference('iqamah_last_backup'))
 
 const triggerExport = async () => {
+  if (isExporting.value || isImporting.value) return
   isExporting.value = true
   statusMessage.value = null
   try {
-    const todayStr = bangladeshDate()
     const logs = readLogs().sort((a, b) => a.prayerDate.localeCompare(b.prayerDate) || a.prayerName - b.prayerName)
 
     const backupData = {
       version: CURRENT_BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
       appVersion: APP_VERSION,
-      checksum: '',
       username: authStore.user?.username || 'user',
       prayerLogs: logs,
       pendingQazas: logs.flatMap(log => log.qazaLog?.state === 0 ? [log.qazaLog] : []),
       preferences: {
+        username: readPreference('iqamah_user_name') ?? '',
         language: localeStore.currentLocale,
         theme: props.isDark ? 'dark' : 'light',
-        gender: isFemale.value ? 'female' : 'male',
+        ...(isFemale.value === null ? {} : { gender: isFemale.value ? 'female' : 'male' }),
         districtId: timing.districtId,
         method: timing.config?.method ?? 'Karachi',
         madhab: timing.config?.madhab ?? 'Hanafi',
       },
     }
-    backupData.checksum = backupChecksum(backupData)
 
+    previewRestore(backupData, 'replace')
     const backupJson = JSON.stringify(backupData, null, 2)
-    const fileName = `iqamah_backup_${todayStr}.json`
-
-    const nativeChannel = (window as unknown as { IqamahNative?: { postMessage: (msg: string) => void } }).IqamahNative
-    if (nativeChannel && typeof nativeChannel.postMessage === 'function') {
-      nativeChannel.postMessage(JSON.stringify({ action: 'shareBackup', content: backupJson, filename: fileName }))
-    } else {
-      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(backupJson)
-      const downloadAnchor = document.createElement('a')
-      downloadAnchor.setAttribute('href', dataStr)
-      downloadAnchor.setAttribute('download', fileName)
-      document.body.appendChild(downloadAnchor)
-      downloadAnchor.click()
-      downloadAnchor.remove()
+    const fileName = `iqamah_backup_v${CURRENT_BACKUP_VERSION}_${backupData.exportedAt.replace(/[:]/g, '-')}.json`
+    const result = await shareBackupFile(backupJson, fileName)
+    if (result === 'success') {
+      lastBackup.value = backupData.exportedAt
+      try { localStorage.setItem('iqamah_last_backup', backupData.exportedAt) } catch { /* Metadata is optional. */ }
     }
-
-    localStorage.setItem('iqamah_last_backup', new Date().toISOString())
-    statusMessage.value = localeStore.currentLocale === 'bn' ? 'ব্যাকআপ ফাইল সফলভাবে ডাউনলোড হয়েছে।' : 'Backup file downloaded successfully.'
+    statusMessage.value = localeStore.currentLocale === 'bn'
+      ? result === 'success' ? 'ব্যাকআপ শেয়ার করা হয়েছে। অ্যাপের বাইরে ফাইলটি রাখুন।' : result === 'cancelled' ? 'ব্যাকআপ শেয়ার বাতিল করা হয়েছে।' : 'ডাউনলোডের অনুরোধ করা হয়েছে। ফাইলটি সংরক্ষিত হয়েছে কিনা যাচাই করুন।'
+      : result === 'success' ? 'Backup shared. Keep the file outside the app.' : result === 'cancelled' ? 'Backup sharing cancelled.' : 'Download requested. Check that the file was saved.'
     isSuccessStatus.value = true
   } catch {
     statusMessage.value = localeStore.currentLocale === 'bn' ? 'ব্যাকআপ তৈরি ব্যর্থ হয়েছে।' : 'Export failed.'
@@ -101,8 +103,25 @@ const triggerExport = async () => {
   }
 }
 
-const triggerImportClick = () => {
-  fileInput.value?.click()
+const reviewBackup = (content: string) => {
+  const data: unknown = JSON.parse(content)
+  importTotal.value = previewRestore(data, 'replace').logs.length
+  pendingBackup.value = data
+  restoreMode.value = 'merge'
+  restoreOpen.value = true
+}
+
+const triggerImportClick = async () => {
+  if (isImporting.value || isExporting.value) return
+  isImporting.value = true
+  try {
+    const content = await pickNativeBackup()
+    if (content === undefined) fileInput.value?.click()
+    else if (content !== null) reviewBackup(content)
+  } catch {
+    statusMessage.value = localeStore.currentLocale === 'bn' ? 'ব্যাকআপ পড়া যায়নি। বর্তমান ডেটা বদলায়নি।' : 'Unable to read backup. Current data is unchanged.'
+    isSuccessStatus.value = false
+  } finally { isImporting.value = false }
 }
 
 const handleImportFile = async (event: Event) => {
@@ -116,34 +135,7 @@ const handleImportFile = async (event: Event) => {
   statusMessage.value = null
     try {
       if (file.size > 20 * 1024 * 1024) throw new Error('Backup exceeds 20 MB.')
-      const data: unknown = JSON.parse(await file.text())
-      const merged = mergeBackup(readLogs(), data)
-      localStorage.setItem('iqamah_prayer_logs', JSON.stringify(merged))
-      const prefs = extractPreferences(data)
-      if (prefs) {
-        if (prefs.language === 'bn' || prefs.language === 'en') localeStore.setLocale(prefs.language)
-        if (prefs.theme === 'light' || prefs.theme === 'dark') {
-          localStorage.setItem('iqamah_theme', prefs.theme)
-        }
-        if (prefs.gender === 'female' || prefs.gender === 'male') {
-          localStorage.setItem('iqamah_user_g', prefs.gender === 'female' ? 'f' : 'm')
-        }
-        if (typeof prefs.districtId === 'string' && prefs.districtId) {
-          const { methods } = await import('@/services/prayerTimes')
-          const method = typeof prefs.method === 'string' && (methods as readonly string[]).includes(prefs.method)
-            ? (prefs.method as typeof methods[number])
-            : 'Karachi'
-          timing.selectDistrict(prefs.districtId, method, prefs.madhab === 'Shafi' ? 'Shafi' : 'Hanafi')
-        }
-      }
-      importTotal.value = merged.length
-      importProgress.value = merged.length
-      await store.fetchPendingQazas()
-
-      statusMessage.value = localeStore.currentLocale === 'bn' 
-        ? `সফলভাবে ${importTotal.value}টি রেকর্ড রিস্টোর করা হয়েছে!` 
-        : `Successfully restored ${importTotal.value} records!`
-      isSuccessStatus.value = true
+      reviewBackup(await file.text())
     } catch {
       statusMessage.value = localeStore.currentLocale === 'bn' ? 'ইম্পোর্ট ব্যর্থ। ফাইল অবৈধ, সংস্করণ অসমর্থিত অথবা বর্তমান রেকর্ডের সাথে বিরোধ আছে। আগের রেকর্ড রাখা হয়েছে।' : 'Import failed: invalid file, unsupported version, storage failure, or conflicting records. Existing records were preserved.'
       isSuccessStatus.value = false
@@ -151,6 +143,18 @@ const handleImportFile = async (event: Event) => {
       isImporting.value = false
       target.value = '' // Clear input
     }
+}
+
+const commitRestore = () => {
+  try {
+    restoreBackup(pendingBackup.value, restoreMode.value)
+    window.location.reload()
+  } catch {
+    statusMessage.value = localeStore.currentLocale === 'bn' ? 'রিস্টোর ব্যর্থ। আগের ডেটা বা পুনরুদ্ধারের কপি রাখা হয়েছে।' : 'Restore failed. Previous data or its recovery journal has been retained.'
+    isSuccessStatus.value = false
+    restoreOpen.value = false
+    if (readPreference('iqamah_restore_journal')) window.location.reload()
+  }
 }
 
 const handleReset = () => {
@@ -182,7 +186,7 @@ const handleReset = () => {
         {{ localeStore.currentLocale === 'bn' ? 'ব্যাকআপ ও সেটিংস' : 'Settings & Backup' }}
       </h1>
       <span class="text-xs px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 font-bold">
-        v1.1.0
+        v{{ APP_VERSION }}
       </span>
     </div>
 
@@ -190,7 +194,7 @@ const handleReset = () => {
     <div 
       v-if="statusMessage"
       :class="[isSuccessStatus ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-800 dark:text-emerald-300' : 'bg-rose-500/10 border-rose-500/20 text-rose-800 dark:text-rose-300']"
-      class="p-4 rounded-2xl border text-sm font-medium transition-all"
+      class="p-4 rounded-2xl border text-sm font-medium transition-all" role="status"
     >
       {{ statusMessage }}
     </div>
@@ -232,6 +236,7 @@ const handleReset = () => {
           </div>
           <button 
             @click="emit('toggle-theme')"
+            role="switch" :aria-checked="isDark" :aria-label="localeStore.t('toggle_theme')"
             class="w-12 h-6.5 rounded-full p-1 transition-colors duration-200 outline-none cursor-pointer"
             :class="[isDark ? 'bg-m3-primary dark:bg-m3-dark-primary' : 'bg-slate-300 dark:bg-slate-700']"
           >
@@ -317,7 +322,7 @@ const handleReset = () => {
             <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">download_for_offline</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
-                {{ localeStore.currentLocale === 'bn' ? 'ব্যাকআপ ডাউনলোড (JSON)' : 'Export Backup (JSON)' }}
+                {{ localeStore.currentLocale === 'bn' ? 'আমার ডেটার ব্যাকআপ নিন' : 'Back Up My Data' }}
               </span>
               <span class="text-xs text-slate-500 dark:text-slate-300 block">
                 {{ localeStore.currentLocale === 'bn' ? 'আপনার নামাজের সকল রেকর্ড ফাইল হিসেবে সংরক্ষণ করুন' : 'Export your prayer records to local storage' }}
@@ -329,7 +334,7 @@ const handleReset = () => {
 
         <!-- Import Backup -->
         <button 
-          @click="triggerImportClick"
+          @click="triggerImportClick" :disabled="isImporting || isExporting"
           class="w-full text-left p-4 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 cursor-pointer transition-colors duration-150"
         >
           <div class="flex items-center gap-3">
@@ -361,43 +366,24 @@ const handleReset = () => {
     <!-- Information & Guide Group -->
     <div class="space-y-3">
       <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-1">
-        {{ localeStore.currentLocale === 'bn' ? 'তথ্য ও নির্দেশিকা' : 'Guidance & Reference' }}
+        {{ localeStore.currentLocale === 'bn' ? 'ইতিহাস ও পরিসংখ্যান' : 'History & Insights' }}
       </h2>
 
       <div class="rounded-3xl bg-m3-surface dark:bg-m3-dark-surface border border-slate-200/50 dark:border-slate-800/80 divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden shadow-sm">
         
-        <!-- Salah Times -->
+        <!-- Analytics is available here instead of the bottom navigation. -->
         <RouterLink 
-          to="/salah-time"
+          to="/analytics"
           class="p-4 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors duration-150"
         >
           <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">schedule</span>
+            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">insights</span>
             <div>
               <span class="font-semibold block text-slate-800 dark:text-slate-200">
-                {{ localeStore.currentLocale === 'bn' ? 'সালাতের সময়সূচী' : 'Salah Timings' }}
+                {{ localeStore.t('analytics') }}
               </span>
               <span class="text-xs text-slate-500 dark:text-slate-300 block">
-                {{ localeStore.currentLocale === 'bn' ? 'ওয়াক্ত ও হারাম সময়সমূহের লাইভ হিসাব' : 'Live prayer timings & forbidden zones lookup' }}
-              </span>
-            </div>
-          </div>
-          <span class="material-symbols-rounded text-slate-500 dark:text-slate-300">chevron_right</span>
-        </RouterLink>
-
-        <!-- Islamic Guide -->
-        <RouterLink 
-          to="/guide"
-          class="p-4 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors duration-150"
-        >
-          <div class="flex items-center gap-3">
-            <span class="material-symbols-rounded text-slate-600 dark:text-slate-300 text-2xl">import_contacts</span>
-            <div>
-              <span class="font-semibold block text-slate-800 dark:text-slate-200">
-                {{ localeStore.currentLocale === 'bn' ? 'সালাত ও কাজার নিয়মাবলী' : 'Salah & Qaza Rules' }}
-              </span>
-              <span class="text-xs text-slate-500 dark:text-slate-300 block">
-                {{ localeStore.currentLocale === 'bn' ? 'ইকামা ট্র্যাকিংয়ের পেছনের ফিকহী নীতিমালা' : 'Islamic jurisprudence regarding missed prayers' }}
+                {{ localeStore.currentLocale === 'bn' ? 'আপনার সালাতের ইতিহাস ও পরিসংখ্যান দেখুন' : 'View your prayer history and statistics' }}
               </span>
             </div>
           </div>
@@ -421,17 +407,35 @@ const handleReset = () => {
     </button>
 
     <!-- App Version & Release Info -->
-    <div class="text-center space-y-1.5 py-4 text-slate-400 dark:text-slate-500 text-xs">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/60 font-semibold text-slate-700 dark:text-slate-300">
-        <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+    <div class="text-center space-y-1.5 py-4 iq-secondary">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--iq-secondary-surface)] font-semibold text-[var(--iq-text)]">
         <span>Iqamah · v{{ APP_VERSION }}</span>
       </div>
-      <p class="text-[11px] text-slate-500 dark:text-slate-400">
+      <p>
         {{ localeStore.currentLocale === 'bn' ? 'অফলাইন-ফার্স্ট সালাত ও কাজা ট্র্যাকার' : 'Offline-first Salah & Qaza Habit Companion' }}
       </p>
-      <p class="text-[10px] text-slate-400 dark:text-slate-500">
-        {{ localeStore.currentLocale === 'bn' ? 'বাংলাদেশের সকল ৬৪ জেলার জন্য প্রস্তুত' : 'Calibrated for all 64 districts of Bangladesh' }}
+      <p>
+        {{ localeStore.currentLocale === 'bn' ? '৬৪ জেলার আনুমানিক হিসাব; সরকারি সময়সূচি হিসেবে যাচাইকৃত নয়' : 'Estimates for 64 districts; not verified as official timetables' }}
       </p>
     </div>
+    <p class="iq-secondary">{{ localeStore.currentLocale === 'bn' ? 'ব্যাকআপে ব্যক্তিগত নোট থাকতে পারে। অ্যাপ আনইনস্টল করলে স্থানীয় ডেটা হারাতে পারে।' : 'Backups may contain private notes. Uninstalling can destroy local data.' }}</p>
+    <p v-if="lastBackup" class="iq-secondary">{{ localeStore.currentLocale === 'bn' ? 'সর্বশেষ নিশ্চিত শেয়ার:' : 'Last confirmed share:' }} {{ lastBackup }}</p>
+    <AppDialog v-model="restoreOpen" :label="localeStore.currentLocale === 'bn' ? 'ব্যাকআপ পর্যালোচনা' : 'Review backup'">
+      <div class="space-y-4 p-5">
+        <h2 class="iq-section-heading">{{ localeStore.currentLocale === 'bn' ? 'ব্যাকআপ পর্যালোচনা' : 'Review backup' }} · {{ importTotal }}</h2>
+        <label class="iq-field">{{ localeStore.currentLocale === 'bn' ? 'রিস্টোর পদ্ধতি' : 'Restore mode' }}
+          <select v-model="restoreMode">
+            <option value="merge">{{ localeStore.currentLocale === 'bn' ? 'বিরোধহীন রেকর্ড যোগ করুন' : 'Merge compatible records' }}</option>
+            <option value="replace">{{ localeStore.currentLocale === 'bn' ? 'রেকর্ড প্রতিস্থাপন করুন' : 'Replace all prayer records' }}</option>
+          </select>
+        </label>
+        <p class="iq-secondary">{{ localeStore.currentLocale === 'bn' ? 'প্রতিস্থাপনে সব নামাজের রেকর্ড ও ব্যাকআপে থাকা সেটিংস বদলাবে। অনুপস্থিত পুরোনো সেটিংস রাখা হবে। মার্জে সেটিংস বদলাবে না; বিরোধ থাকলে বাতিল হবে। আগে বর্তমান ডেটার ব্যাকআপ নিন।' : 'Replace changes all prayer records and settings present in the backup; absent historical settings are retained. Merge keeps your settings and rejects conflicting records. Back up your current data first.' }}</p>
+        <button class="iq-button-secondary" :disabled="isExporting" @click="triggerExport">{{ localeStore.currentLocale === 'bn' ? 'আগে বর্তমান ডেটার ব্যাকআপ নিন' : 'Back up current data first' }}</button>
+        <div class="flex flex-wrap gap-3">
+          <button class="iq-button" :disabled="isExporting" @click="commitRestore">{{ localeStore.currentLocale === 'bn' ? 'নিশ্চিত করে রিস্টোর করুন' : 'Confirm restore' }}</button>
+          <button class="iq-button-secondary" @click="restoreOpen = false">{{ localeStore.currentLocale === 'bn' ? 'বাতিল' : 'Cancel' }}</button>
+        </div>
+      </div>
+    </AppDialog>
   </div>
 </template>

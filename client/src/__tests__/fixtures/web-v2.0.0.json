@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0", "appVersion": "1.1.4-beta.1",
+  "exportedAt": "2026-10-13T12:00:00Z",
+  "preferences": { "username": "পরীক্ষা", "language": "bn", "theme": "light", "gender": "female", "districtId": "47", "method": "Karachi", "madhab": "Hanafi" },
+  "prayerLogs": [{
+    "id": "web-prayer", "userId": 1, "prayerName": 0,
+    "prayerDate": "2026-10-10", "isOffered": true,
+    "waqtStatus": 0, "missedReason": null,
+    "isJamaah": true, "isTraveling": false, "isJummah": false, "isHome": false,
+    "hasTasbih": true, "quranNotes": "কুরআন নোট",
+    "loggedAt": "2026-10-10T06:00:00Z", "qazaLog": null
+  }]
+}

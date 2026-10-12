@@ -54,6 +54,15 @@ export function timingState(schedule: ReturnType<typeof calculateSchedule>, now:
   return { next, current, seconds: Math.max(0, Math.ceil((next.start.getTime() - now.getTime()) / 1000)) }
 }
 
+/** Approximate advisory only: an active interval takes priority over the next one. */
+export function cautionState(schedule: ReturnType<typeof calculateSchedule>, now: Date) {
+  const zone = schedule.zones.find(zone => now >= zone.start && now < zone.end)
+    ?? schedule.zones.find(zone => zone.start > now)
+  if (!zone) return null
+  const active = now >= zone.start && now < zone.end
+  return { zone, active, minutes: Math.max(1, Math.ceil(((active ? zone.end : zone.start).getTime() - now.getTime()) / 60000)) }
+}
+
 export interface DistrictWaktPrayer {
   key: typeof prayerKeys[number]
   start: Date

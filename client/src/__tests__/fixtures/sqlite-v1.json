@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "exportedAt": "2026-10-11T12:00:00Z",
+  "prayer_logs": [{
+    "id": "legacy-prayer", "userId": 1, "prayerName": 0,
+    "prayerDate": "2026-10-10", "isOffered": 0,
+    "waqtStatus": null, "missedReason": 1,
+    "isJamaah": 0, "isTraveling": 0, "isJummah": 0, "isHome": 1,
+    "hasTasbih": 0, "quranNotes": "ব্যক্তিগত নোট — إقامة",
+    "loggedAt": "2026-10-10T06:00:00Z", "updatedAt": "2026-10-10T06:00:00Z"
+  }],
+  "qaza_logs": [{
+    "id": "legacy-qaza", "prayerLogId": "legacy-prayer", "userId": 1,
+    "prayerName": 0, "originalPrayerDate": "2026-10-10", "state": 1,
+    "createdAt": "2026-10-10T06:00:00Z", "fulfilledAt": "2026-10-10T07:00:00Z",
+    "timeToResolutionSeconds": 3600
+  }]
+}

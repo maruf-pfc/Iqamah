@@ -13,6 +13,7 @@ const now = ref(new Date())
 const searchQuery = ref('')
 const selectedDivision = ref('all')
 const sortBy = ref<'name' | 'timeLeft'>('name')
+const selectionFailed = ref(false)
 const targetDate = computed(() => props.date || timing.today)
 
 let timer: ReturnType<typeof setInterval>
@@ -113,9 +114,10 @@ const filteredSummaries = computed(() => {
 
 const handleSetDistrict = (id: string) => {
   try {
-    timing.selectDistrict(id)
+    timing.selectDistrict(id, timing.config?.method ?? 'Karachi', timing.config?.madhab ?? 'Hanafi')
+    selectionFailed.value = false
   } catch {
-    /* Safe ignore if quota fails */
+    selectionFailed.value = true
   }
 }
 </script>
@@ -133,7 +135,7 @@ const handleSetDistrict = (id: string) => {
       </div>
       <div class="flex items-center gap-2">
         <label class="iq-secondary text-xs flex items-center gap-1.5 font-semibold">
-          <span>Sort:</span>
+          <span>{{ locale.currentLocale === 'bn' ? 'সাজান:' : 'Sort:' }}</span>
           <select v-model="sortBy" class="bg-inherit border border-current/20 rounded px-2 py-1 text-xs">
             <option value="name">{{ locale.currentLocale === 'bn' ? 'নাম অনুযায়ী' : 'Alphabetical' }}</option>
             <option value="timeLeft">{{ locale.currentLocale === 'bn' ? 'অবশিষ্ট সময় অনুযায়ী' : 'Time Left' }}</option>
@@ -158,12 +160,13 @@ const handleSetDistrict = (id: string) => {
       </div>
 
       <!-- Division Filter Buttons -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs" role="toolbar" :aria-label="locale.t('filter_by_division')">
+      <div class="flex flex-wrap items-center gap-1.5 pb-1 text-xs" role="group" :aria-label="locale.t('filter_by_division')">
         <button
           type="button"
           class="px-2.5 py-1.5 rounded-md font-medium whitespace-nowrap transition-colors"
           :class="selectedDivision === 'all' ? 'bg-[var(--iq-brand)] text-[var(--iq-on-brand)]' : 'bg-[var(--iq-secondary-surface)] text-[var(--iq-secondary)] hover:text-[var(--iq-text)] border border-[var(--iq-border)]'"
           @click="selectedDivision = 'all'"
+          :aria-pressed="selectedDivision === 'all'"
         >
           {{ locale.t('all_divisions') }} (64)
         </button>
@@ -174,6 +177,7 @@ const handleSetDistrict = (id: string) => {
           class="px-2.5 py-1.5 rounded-md font-medium whitespace-nowrap transition-colors"
           :class="selectedDivision === div.en ? 'bg-[var(--iq-brand)] text-[var(--iq-on-brand)]' : 'bg-[var(--iq-secondary-surface)] text-[var(--iq-secondary)] hover:text-[var(--iq-text)] border border-[var(--iq-border)]'"
           @click="selectedDivision = div.en"
+          :aria-pressed="selectedDivision === div.en"
         >
           {{ locale.currentLocale === 'bn' ? div.bn : div.en }}
         </button>
@@ -181,6 +185,7 @@ const handleSetDistrict = (id: string) => {
     </div>
 
     <!-- Empty search result -->
+    <p v-if="selectionFailed" role="status" class="iq-secondary">{{ locale.t('settings_error') }}</p>
     <div v-if="filteredSummaries.length === 0" class="py-8 text-center text-sm text-[var(--iq-secondary)]">
       <p>{{ locale.t('no_districts_found') }}</p>
     </div>
@@ -195,7 +200,7 @@ const handleSetDistrict = (id: string) => {
       >
         <!-- District Header -->
         <div>
-          <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start justify-between gap-2 flex-wrap">
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="font-bold text-base text-[var(--iq-text)]">
@@ -216,7 +221,7 @@ const handleSetDistrict = (id: string) => {
             <button
               v-if="item.district.id !== timing.districtId"
               type="button"
-              class="text-xs font-semibold text-[var(--iq-brand)] underline hover:no-underline whitespace-nowrap"
+              class="text-sm font-semibold text-[var(--iq-brand)] underline hover:no-underline text-left"
               @click="handleSetDistrict(item.district.id)"
             >
               {{ locale.t('set_as_my_district') }}
@@ -263,7 +268,7 @@ const handleSetDistrict = (id: string) => {
           <div
             v-for="p in item.prayers"
             :key="p.key"
-            class="flex items-center justify-between py-1 px-2 rounded transition-colors"
+            class="district-prayer-row flex items-center justify-between py-1 px-2 rounded transition-colors"
             :class="p.status === 'current' ? 'bg-[var(--iq-accent)] text-[var(--iq-brand)] font-semibold' : 'text-[var(--iq-text)]'"
           >
             <!-- Wakt Name & Window -->

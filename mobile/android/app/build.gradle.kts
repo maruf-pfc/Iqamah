@@ -33,10 +33,26 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Never silently produce a public release signed with a debug certificate.
+            // The previous distribution certificate must be verified before providing these values.
+            val keyPath = System.getenv("IQAMAH_KEYSTORE_PATH")
+            if (!keyPath.isNullOrBlank()) {
+                val releaseSigning = signingConfigs.create("release") {
+                    storeFile = file(keyPath)
+                    storePassword = System.getenv("IQAMAH_STORE_PASSWORD")
+                    keyAlias = System.getenv("IQAMAH_KEY_ALIAS")
+                    keyPassword = System.getenv("IQAMAH_KEY_PASSWORD")
+                }
+                signingConfig = releaseSigning
+            }
         }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it.name.contains("Release") } &&
+        listOf("IQAMAH_KEYSTORE_PATH", "IQAMAH_STORE_PASSWORD", "IQAMAH_KEY_ALIAS", "IQAMAH_KEY_PASSWORD").any { System.getenv(it).isNullOrBlank() }) {
+        throw GradleException("Release blocked: supply the existing verified signing identity via IQAMAH_* environment variables. Debug signing is not a release fallback.")
     }
 }
 

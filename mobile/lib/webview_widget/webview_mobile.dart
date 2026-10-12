@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../services/backup_bridge.dart';
 
 Widget createWebView() {
   if (Platform.isAndroid || Platform.isIOS) {
@@ -86,26 +88,34 @@ class _MobileWebViewState extends State<MobileWebView> with WidgetsBindingObserv
       ..addJavaScriptChannel(
         'IqamahNative',
         onMessageReceived: (JavaScriptMessage message) async {
-          try {
-            final data = jsonDecode(message.message) as Map<String, dynamic>;
-            if (data['action'] == 'shareBackup') {
-              final content = data['content'] as String;
-              final filename = data['filename'] as String? ?? 'iqamah_backup.json';
-              final bytes = utf8.encode(content);
-              final xFile = XFile.fromData(
-                bytes,
-                mimeType: 'application/json',
-                name: filename,
-              );
+          final result = await BackupBridge.handle(
+            message: message.message,
+            assetUrl: _assetUrl,
+            currentUrl: await _controller.currentUrl(),
+            pick: () async {
+              final picked = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json'], withData: false);
+              if (picked == null || picked.files.isEmpty) return null;
+              final selected = picked.files.single;
+              if (selected.size > BackupBridge.maxBytes || selected.path == null) throw const FormatException('Invalid backup file');
+              final file = File(selected.path!);
+              if (await file.length() > BackupBridge.maxBytes) throw const FormatException('File too large');
+              return file.readAsString();
+            },
+            share: (content, filename) async {
               // ignore: deprecated_member_use
-              await Share.shareXFiles(
-                [xFile],
+              final shared = await Share.shareXFiles(
+                [XFile.fromData(utf8.encode(content), mimeType: 'application/json')],
+                fileNameOverrides: [filename],
                 subject: 'Iqamah Backup Export',
-                text: 'Here is your Iqamah backup file.',
               );
-            }
-          } catch (_) {
-            // Silently fall back if sharing fails or is cancelled
+              return shared.status == ShareResultStatus.success ? 'success'
+                  : shared.status == ShareResultStatus.dismissed ? 'cancelled' : 'error';
+            },
+          );
+          if (result['requestId'] != null && mounted) {
+            final detail = jsonEncode(result);
+            await _controller.runJavaScript("window.dispatchEvent(new CustomEvent('iqamah-backup-result', {detail: $detail}));")
+                .catchError((Object _) {});
           }
         },
       )

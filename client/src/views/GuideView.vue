@@ -9,7 +9,7 @@ const activeTab = ref<'qaza-rules' | 'timing-accuracy' | 'punctuality' | 'app-us
 </script>
 
 <template>
-  <div class="px-6 space-y-6 pb-12">
+  <div class="iq-help px-6 space-y-6 pb-12">
     <!-- Header with Back Button -->
     <div class="flex items-center gap-3 pt-4">
       <button 
@@ -139,15 +139,15 @@ const activeTab = ref<'qaza-rules' | 'timing-accuracy' | 'punctuality' | 'app-us
               {{ locale.currentLocale === 'bn' ? 'নামাজের সময় ও হিসাবের ভিত্তি' : 'Prayer Times & Calculation Methodology' }}
             </h2>
             <p class="text-[11px] text-slate-400 dark:text-slate-500 font-semibold">
-              {{ locale.currentLocale === 'bn' ? 'ইসলামিক ফাউন্ডেশন বাংলাদেশ ও জ্যোতির্বৈজ্ঞানিক হিসাব' : 'Islamic Foundation Bangladesh & Solar Mathematics' }}
+              {{ locale.currentLocale === 'bn' ? 'অফলাইন জ্যোতির্বৈজ্ঞানিক আনুমানিক হিসাব' : 'Offline astronomical estimates' }}
             </p>
           </div>
         </div>
 
         <p class="text-slate-600 dark:text-slate-350 text-xs leading-relaxed">
           {{ locale.currentLocale === 'bn'
-            ? 'ইকামা অ্যাপে বাংলাদেশের সকল ৬৪টি জেলার জেলা সদরের সঠিক অক্ষাংশ ও দ্রাঘিমাংশ ব্যবহার করে সম্পূর্ণ অফলাইনে প্রতিটি ওয়াক্ত নির্ধারণ করা হয়।'
-            : 'Iqamah calculates prayer timetables 100% offline using validated district-center coordinates for all 64 administrative districts of Bangladesh.' }}
+            ? 'ইকামা ৬৪ জেলার কমিউনিটি-উৎসের রেফারেন্স স্থানাঙ্ক দিয়ে অফলাইনে আনুমানিক সময় হিসাব করে। সরকারি উৎসের সাথে সব স্থানাঙ্ক ও সময় যাচাই এখনও সম্পূর্ণ হয়নি।'
+            : 'Iqamah calculates offline estimates using community-sourced reference coordinates for 64 districts. Official coordinate and timetable verification is not complete.' }}
         </p>
 
         <div class="space-y-3">
@@ -157,19 +157,19 @@ const activeTab = ref<'qaza-rules' | 'timing-accuracy' | 'punctuality' | 'app-us
             </span>
             <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
               {{ locale.currentLocale === 'bn'
-                ? 'ফজর ও ইশার জন্য ইসলামিক ফাউন্ডেশন বাংলাদেশ (IFB) স্বীকৃত ১৮° সৌর কোণ ব্যবহৃত হয় (করাচি মেথড কনভেনশন)। আসরের ওয়াক্তের জন্য বাংলাদেশে প্রচলিত হানাফী মাজহাবের দ্বিগুণ ছায়া (Shadow factor 2) মান্য করা হয়।'
-                : 'Fajr and Isha use an 18° solar angle conforming with Islamic Foundation Bangladesh standards (Karachi method). Asr is calculated using the Hanafi shadow multiplier (factor 2).' }}
+                ? 'ডিফল্ট করাচি পদ্ধতিতে ফজর ও ইশার জন্য ১৮° কোণ এবং হানাফী আসরের জন্য ছায়ার গুণক ২ ব্যবহৃত হয়। সেটিংসে পদ্ধতি বদলানো যায়। এটি IFB অনুমোদিত বা সরকারি সময়সূচির সাথে মিলেছে—এমন দাবি করা হচ্ছে না।'
+                : 'The default Karachi method uses 18° for Fajr and Isha; Hanafi Asr uses shadow factor 2. Settings can change the method. IFB approval or agreement with official timetables has not been established.' }}
             </p>
           </div>
 
           <div class="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/15">
             <span class="text-xs font-bold text-amber-700 dark:text-amber-400">
-              {{ locale.currentLocale === 'bn' ? '২. নিষিদ্ধ ও সতর্কতামূলক সময় (Caution Windows)' : '2. Caution Windows (Forbidden Zones)' }}
+              {{ locale.currentLocale === 'bn' ? '২. আনুমানিক সতর্কতার সময়' : '2. Approximate caution windows' }}
             </span>
             <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
               {{ locale.currentLocale === 'bn'
-                ? 'সূর্যোদয়ের পর ১৫ মিনিট, দ্বিপ্রহরে সূর্য মধ্যাকাশে থাকার সময় (জাওয়াল এর ১০ মিনিট পূর্বে) এবং সূর্যাস্তের পূর্বের ২০ মিনিট—এই সময়গুলোতে যেকোনো নফল ও সাধারণ সালাত আদায় থেকে বিরত থাকার সতর্কতামূলক ব্যবধান দেখানো হয়।'
-                : 'Caution intervals highlight periods where voluntary prayers are discouraged: 15 mins after sunrise, 10 mins before Dhuhr (solar noon), and 20 mins before sunset.' }}
+                ? 'সূর্যোদয়ের পর ১৫ মিনিট, হিসাবকৃত যোহরের আগে ১০ মিনিট এবং সূর্যাস্তের আগে ২০ মিনিট দেখানো হয়। এগুলো অ্যাপের আনুমানিক সতর্কতার ব্যবধান, সর্বসম্মত ধর্মীয় সীমা নয়। বিভিন্ন সালাতের বিধান জানতে যোগ্য আলেমের পরামর্শ নিন।'
+                : 'The app shows 15 minutes after sunrise, 10 minutes before calculated Dhuhr and 20 minutes before sunset. These are approximate advisory intervals, not universally agreed religious boundaries. Ask a qualified scholar about the rulings for different prayers.' }}
             </p>
           </div>
 
@@ -179,8 +179,8 @@ const activeTab = ref<'qaza-rules' | 'timing-accuracy' | 'punctuality' | 'app-us
             </span>
             <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
               {{ locale.currentLocale === 'bn'
-                ? 'যেহেতু হিসাবটি জেলা সদরের ভৌগোলিক কেন্দ্রবিন্দুর ওপর ভিত্তি করে করা হয়, তাই আপনার নির্দিষ্ট উপজেলা বা মহল্লার মসজিদের ওয়াক্তের সাথে ১-২ মিনিটের সামান্য পার্থক্য দেখা যেতে পারে।'
-                : 'Because calculations rely on district-headquarters coordinates, local sub-district mosques may vary by 1–2 minutes depending on municipal boundaries and rounding.' }}
+                ? 'আপনার সঠিক অবস্থান, হিসাব পদ্ধতি ও প্রকাশিত সময়সূচির কারণে পার্থক্য হতে পারে। পার্থক্যের সর্বোচ্চ সীমা এখনও যাচাই করা হয়নি। স্থানীয় নির্ভরযোগ্য সময়সূচির সাথে মিলিয়ে নিন।'
+                : 'Exact location, calculation convention and publication rules can cause differences. No verified maximum difference has been established. Compare with a trusted local timetable.' }}
             </p>
           </div>
         </div>
@@ -207,8 +207,8 @@ const activeTab = ref<'qaza-rules' | 'timing-accuracy' | 'punctuality' | 'app-us
             </span>
             <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
               {{ locale.currentLocale === 'bn'
-                ? 'ওয়াক্ত শুরু হওয়ার সাথে সাথে প্রথম অংশে নামাজ আদায় করা সর্বোত্তম আমল ও সর্বোচ্চ সাওয়াব অর্জনের মাধ্যম।'
-                : 'Offering prayer near the start of its prescribed window carries the greatest merit and reward.' }}
+                ? 'অ্যাপে এটি আপনার নির্বাচিত শুরুর দিকের সময়ানুবর্তিতার লেবেল। কোনো নির্দিষ্ট মিনিটকে সর্বোচ্চ সাওয়াবের সর্বজনীন সীমা হিসেবে ধরা হয় না; সালাতভেদে উপযুক্ত সময়ের জন্য আলেমের নির্দেশনা নিন।'
+                : 'This is your selected early punctuality label. The app does not define a universal minute cutoff or measure religious reward; seek scholarly guidance about preferred times for each prayer.' }}
             </p>
           </div>
 
@@ -327,8 +327,8 @@ const activeTab = ref<'qaza-rules' | 'timing-accuracy' | 'punctuality' | 'app-us
             </span>
             <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
               {{ locale.currentLocale === 'bn'
-                ? 'সেটিংস পেজে গিয়ে যেকোনা সময় \'ব্যাকআপ ফাইল ডাউনলোড\' বোতামে চাপ দিয়ে আপনার সকল রেকর্ড একটি ফাইলে সংরক্ষণ করুন এবং ফাইলটি গুগল ড্রাইভ বা অন্য নিরাপদ স্থানে রেখে দিন।'
-                : 'In Settings, tap "Export Backup" anytime to download a verified JSON snapshot. Save this file to Google Drive or safe storage in case your device is lost or reset.' }}
+                ? 'সেটিংসে “আমার ডেটার ব্যাকআপ নিন” চাপুন। মোবাইলে শেয়ার মেনু দিয়ে ফাইলটি অ্যাপের বাইরে নিরাপদ স্থানে রাখুন। ওয়েবে ডাউনলোড সম্পন্ন হয়েছে কিনা যাচাই করুন। ব্যাকআপে ব্যক্তিগত নোট থাকে; অনলাইন সেবা ব্যবহার সম্পূর্ণ আপনার পছন্দ।'
+                : 'In Settings, tap “Back Up My Data”. On mobile, use the share sheet to keep the file safely outside the app. On web, check the download completed. Backups include private notes; using an online service is entirely your choice.' }}
             </p>
           </div>
 
@@ -338,13 +338,18 @@ const activeTab = ref<'qaza-rules' | 'timing-accuracy' | 'punctuality' | 'app-us
             </span>
             <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-1 leading-relaxed">
               {{ locale.currentLocale === 'bn'
-                ? 'নতুন সংস্করণ ইনস্টল করার সময় পূর্বের অ্যাপ আনইনস্টল করবেন না। সরাসরি আপডেট দিলে আপনার সংরক্ষিত সকল নামাজ ও কাজার রেকর্ড স্বয়ংক্রিয়ভাবে বজায় থাকবে।'
-                : 'Install app updates directly over existing installations without uninstalling first to preserve your local records.' }}
+                ? 'সামঞ্জস্যপূর্ণ আপডেটে অ্যাপ আনইনস্টল করার কথা নয়। একই প্যাকেজ ও সাইনিং পরিচয় দরকার; এই বেটার প্রকৃত আপগ্রেড পরীক্ষা এখনও হয়নি। আগে ব্যাকআপ নিন। সেটিংসে সংস্করণ দেখুন। পুনরুদ্ধার ত্রুটি হলে ডেটা মুছবেন না; স্টোরেজ খালি করে আবার খুলুন।'
+                : 'Compatible updates should not require uninstalling. The same package and signing identity are required; an actual upgrade test for this beta is still pending. Back up first and check the version in Settings. On recovery errors, do not clear app data; free storage and reopen.' }}
             </p>
           </div>
         </div>
 
         <!-- Scholarly Disclaimer -->
+        <div class="iq-surface space-y-3">
+          <h3 class="iq-section-heading">{{ locale.currentLocale === 'bn' ? 'ডেটা কোথায় থাকে ও কীভাবে রিস্টোর করবেন' : 'Storage and restoration' }}</h3>
+          <p>{{ locale.currentLocale === 'bn' ? 'বর্তমান মোবাইল অ্যাপের ডেটা WebView LocalStorage-এ থাকে; পুরোনো SQLite ডেটা স্বয়ংক্রিয়ভাবে একত্র করা হয় না। আনইনস্টল, ডিভাইস রিসেট বা হারিয়ে গেলে ডেটা নষ্ট হতে পারে।' : 'The active mobile app stores data in WebView LocalStorage. Historical SQLite data is not automatically merged. Uninstalling, device reset or device loss can destroy local records.' }}</p>
+          <p>{{ locale.currentLocale === 'bn' ? 'সেটিংসে ব্যাকআপ রিস্টোর করুন চাপুন, JSON ফাইল বেছে নিন ও পর্যালোচনা করুন। মার্জে বিরোধহীন রেকর্ড যোগ হয়। প্রতিস্থাপন সব নামাজের রেকর্ড বদলায়; আগে বর্তমান ডেটার ব্যাকআপ নিন। নিশ্চিত করার পর অ্যাপ আবার লোড হবে।' : 'Tap Restore Backup in Settings, select the JSON file and review it. Merge adds compatible records; Replace changes all prayer records. Back up current data before replacement. After confirmation, the app reloads.' }}</p>
+        </div>
         <div class="p-4 rounded-2xl bg-slate-500/10 border border-slate-500/20 mt-4">
           <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
             <span>📖</span> {{ locale.currentLocale === 'bn' ? 'শরয়ী ও আইনি সতর্কতা' : 'Scholarly & Religious Disclaimer' }}

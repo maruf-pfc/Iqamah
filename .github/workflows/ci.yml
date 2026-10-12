@@ -1,4 +1,4 @@
-name: Iqamah CI/CD — v1.1.3
+name: Iqamah CI — v1.1.4 Beta
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -91,75 +91,20 @@ jobs:
     - name: Run Unit & Widget Tests
       run: flutter test
 
-    - name: Build Universal APK
-      run: flutter build apk
+    - name: Build verification APK (not distributable)
+      run: flutter build apk --debug
 
-    - name: Build Split APKs (per ABI)
-      run: flutter build apk --split-per-abi
+    - name: Reject stale bundled web assets
+      run: python3 ../scripts/verify-mobile-apk.py build/app/outputs/flutter-apk/app-debug.apk
+
 
     - name: Upload APK Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: iqamah-apks-${{ github.run_number }}
+        name: iqamah-debug-verification-${{ github.run_number }}
         path: mobile/build/app/outputs/flutter-apk/*.apk
 
-    - name: Create Git Tag for Release
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: |
-        VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
-        TAG="v${VERSION}+${{ github.run_number }}"
-        echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
-        echo "RELEASE_VERSION=v${VERSION}" >> $GITHUB_ENV
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git tag "$TAG"
-        git push origin "$TAG"
-
-    - name: Create GitHub Release with APKs
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ env.RELEASE_TAG }}
-        name: "Iqamah ${{ env.RELEASE_VERSION }}"
-        body: |
-          🕌 **Iqamah ${{ env.RELEASE_VERSION }}** — Offline-First Salah Habit Platform
-
-          Built from `main` · commit `${{ github.sha }}`
-
-          ---
-
-          ### 🆕 What's New in v1.1.3
-
-          #### 🕌 Home Dashboard Salah Timetable & 64-District Live Tracker
-          - **Home Timetable:** Daily astronomical Salah timetable elevated directly to Home dashboard with next prayer live countdown.
-          - **64-District Live Waqt Monitor:** Real-time countdown tracking for active and upcoming Wakts across all Bangladesh districts.
-          - **District Search & Division Filters:** Bilingual English/Bengali district search and division filtering.
-          - **Design System Tokens:** Nature-inspired forest/ivory design palette, fluid responsive shell, and bundled offline Bengali typography.
-          - **Strict Testing:** 100% test coverage across web client, Flutter mobile, and .NET backend.
-
-          ---
-
-          ### 📦 Downloads
-          - **`app-release.apk`** — Universal APK (all devices)
-          - **`app-arm64-v8a-release.apk`** — ARM64 (most modern phones)
-          - **`app-armeabi-v7a-release.apk`** — ARM32 (older devices)
-          - **`app-x86_64-release.apk`** — x86_64 (emulators)
-
-          ### ✨ Core Features
-          - 100% offline — no account, no internet required
-          - Local SQLite storage (mobile) + localStorage (web)
-          - Offline Salah times via `adhan` library (Karachi method)
-          - Hayd / Nifas logging (female users only)
-          - Qaza debt tracking and fulfillment
-          - JSON backup export / import
-          - Bengali + English bilingual UI
-          - Onboarding — no login or registration needed
-        # Current Android configuration uses debug signing; require manual release review.
-        draft: true
-        prerelease: false
-        files: mobile/build/app/outputs/flutter-apk/*.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Public release is intentionally manual and blocked on signing/accuracy/upgrade evidence.
 
   # ─────────────────────────────────────────────
   # 4. Deploy Web Client to Coolify

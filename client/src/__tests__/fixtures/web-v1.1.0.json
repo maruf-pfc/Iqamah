@@ -1,0 +1,14 @@
+{
+  "version": "1.1.0",
+  "exportedAt": "2026-10-11T12:00:00Z",
+  "username": "পরীক্ষা",
+  "gender": "female",
+  "prayerLogs": [{
+    "id": "web-prayer", "userId": 1, "prayerName": 0,
+    "prayerDate": "2026-10-10", "isOffered": true,
+    "waqtStatus": 0, "missedReason": null,
+    "isJamaah": true, "isTraveling": false, "isJummah": false, "isHome": false,
+    "hasTasbih": true, "quranNotes": "কুরআন নোট",
+    "loggedAt": "2026-10-10T06:00:00Z", "qazaLog": null
+  }]
+}

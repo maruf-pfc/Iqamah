@@ -103,7 +103,8 @@
 .iq-section-heading { font-size: 18px; line-height: 1.6; font-weight: 700; }
 .iq-secondary { font-size: 14px; color: var(--iq-secondary); line-height: 1.7; }
 .iq-link { color: var(--iq-brand); font-size: 14px; text-decoration: underline; text-underline-offset: 4px; }
-.iq-button { min-height: 44px; padding: 10px 16px; border-radius: 10px; background: var(--iq-brand); color: var(--iq-on-brand); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.iq-button, .iq-button-secondary { min-height: 44px; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.iq-button { background: var(--iq-brand); color: var(--iq-on-brand); }
 .iq-button:hover { filter: brightness(.94); }
 .iq-button:active { filter: brightness(.88); }
 .iq-button-secondary { background: var(--iq-secondary-surface); color: var(--iq-text); border: 1px solid var(--iq-border); }
@@ -118,6 +119,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .iq-nav-log { display: none; }
 .iq-floating-log { position: fixed; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 39; box-shadow: 0 2px 8px rgb(0 0 0 / .15); }
 .timing-next { margin-block: 16px; padding-block: 12px; border-block: 1px solid var(--iq-border); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.timing-caution { margin-top: 16px; padding: 12px; border: 1px solid var(--iq-border); border-inline-start: 3px solid var(--iq-secondary); background: var(--iq-secondary-surface); overflow-wrap: anywhere; }
+.timing-caution-active { border-inline-start-color: var(--iq-warning); }
 .timing-countdown { font-size: 22px; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--iq-brand); }
 .timing-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-block: 12px; gap: 4px; }
 .timing-row { padding: 12px 8px; border-radius: 8px; font-size: 14px; }
@@ -137,6 +140,17 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .timing-status:empty { display: none; }
   .prayer-log-row { padding: 16px 12px; }
   .prayer-log-icon { display: none; }
+  .iq-app-header { padding-inline: 16px; }
+  .iq-main :where(button, select, input:not([type="checkbox"]):not([type="radio"])) { min-height: 44px; }
+  .iq-main button { min-width: 44px; }
+  .iq-main select { max-width: 100%; }
+  .district-prayer-row { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; }
+  .district-prayer-row dd:first-of-type { text-align: right; }
+  .district-prayer-row dd:last-child { grid-column: 1 / -1; }
+  .iq-help :where(p, li) { font-size: 14px; line-height: 1.8; color: var(--iq-secondary); }
+}
+@media (max-width: 360px) {
+  .prayer-date-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (min-width: 768px) {
   .iq-nav-item { flex-direction: row; gap: 10px; font-size: 14px; }

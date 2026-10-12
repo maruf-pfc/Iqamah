@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useLocaleStore } from '@/stores/locale'
 import { useTimingStore } from '@/stores/timing'
-import { timingState } from '@/services/prayerTimes'
+import { cautionState, timingState } from '@/services/prayerTimes'
 
 const props = defineProps<{ date?: string; detailed?: boolean }>()
 const locale = useLocaleStore()
@@ -10,6 +10,7 @@ const timing = useTimingStore()
 const schedule = computed(() => timing.scheduleFor(props.date || timing.today))
 const isToday = computed(() => !props.date || props.date === timing.today)
 const state = computed(() => schedule.value && isToday.value ? timingState(schedule.value, timing.now) : null)
+const caution = computed(() => schedule.value && isToday.value ? cautionState(schedule.value, timing.now) : null)
 const countdown = computed(() => {
   const seconds = state.value?.seconds ?? 0
   return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
@@ -63,6 +64,13 @@ onUnmounted(() => {
         <p>{{ locale.t('sunrise') }} · {{ format(schedule.sunrise) }}</p>
         <RouterLink to="/settings#prayer-calculation" class="iq-link">{{ timing.config?.method }} · {{ timing.config?.madhab }}</RouterLink>
       </div>
+      <aside v-if="caution" class="timing-caution" :class="{ 'timing-caution-active': caution.active }" :aria-label="locale.t('advisory_windows')">
+        <div class="flex justify-between gap-3 flex-wrap">
+          <strong>{{ locale.t('advisory_windows') }} · {{ locale.t(caution.zone.key) }}</strong>
+          <span class="tabular-nums">{{ caution.minutes.toLocaleString(locale.currentLocale === 'bn' ? 'bn-BD' : 'en') }} {{ locale.t(caution.active ? 'caution_minutes_left' : 'caution_minutes_until') }}</span>
+        </div>
+        <p class="iq-secondary mt-2">{{ format(caution.zone.start) }} – {{ format(caution.zone.end) }} · {{ locale.t('caution_short_note') }}</p>
+      </aside>
       <div v-if="detailed" class="mt-5 space-y-3">
         <h3 class="iq-section-heading">{{ locale.t('advisory_windows') }}</h3>
         <p class="iq-secondary">{{ locale.t('timing_qualification') }}</p>

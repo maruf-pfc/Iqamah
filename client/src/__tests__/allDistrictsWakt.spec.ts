@@ -115,7 +115,7 @@ describe('All 64 districts Waqt calculation and real-time tracker', () => {
     const wrapper = mount(AllDistrictsWaktTracker)
 
     // Find Sylhet division button (Sylhet division has 4 districts: Sylhet, Moulvibazar, Habiganj, Sunamganj)
-    const divisionButtons = wrapper.findAll('div[role="toolbar"] button')
+    const divisionButtons = wrapper.findAll('div[role="group"] button')
     const sylhetBtn = divisionButtons.find(b => b.text().includes('Sylhet') || b.text().includes('সিলেট'))
     expect(sylhetBtn).toBeDefined()
 

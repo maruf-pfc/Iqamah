@@ -116,7 +116,7 @@ export const usePrayerStore = defineStore('prayer', () => {
               updatedQazaLog = {
                 id: generateUUID(),
                 prayerLogId: resultId,
-                userId: 1,
+                userId: oldLog.userId,
                 prayerName: request.prayerName,
                 originalPrayerDate: request.prayerDate,
                 state: 0, // QazaState.Pending
@@ -131,8 +131,9 @@ export const usePrayerStore = defineStore('prayer', () => {
         }
 
         const updatedLog: PrayerLogDto = {
+          ...oldLog,
           id: resultId,
-          userId: 1,
+          userId: oldLog.userId,
           prayerName: request.prayerName,
           prayerDate: request.prayerDate,
           isOffered: request.isOffered,
@@ -248,6 +249,7 @@ export const usePrayerStore = defineStore('prayer', () => {
           }
 
           const updatedLog: PrayerLogDto = {
+            ...log,
             id: log.id,
             userId: log.userId,
             prayerName: log.prayerName,

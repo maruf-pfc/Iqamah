@@ -320,7 +320,7 @@ const handleSaveLog = async () => {
           class="bg-slate-100 dark:bg-slate-800 border border-slate-200/30 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 rounded-lg px-2 py-1 outline-none"
         />
       </div>
-      <div class="grid grid-cols-6 gap-2">
+      <div class="prayer-date-grid grid grid-cols-6 gap-2">
         <button 
           v-for="day in calendarDays"
           :key="day.dateStr"
@@ -345,13 +345,7 @@ const handleSaveLog = async () => {
         :key="p"
         class="iq-surface prayer-log-row flex items-center justify-between gap-3 relative"
       >
-        <!-- Indicator Left bar -->
-        <div 
-          :class="[dailyLogs[p]?.isOffered ? 'bg-m3-success' : dailyLogs[p]?.missedReason === MissedReason.ExcusedImpurity ? 'bg-m3-secondary' : dailyLogs[p] ? 'bg-m3-error' : 'bg-slate-200 dark:bg-slate-800']"
-          class="absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300"
-        ></div>
-
-        <div class="flex items-center gap-3 pl-2 min-w-0">
+        <div class="flex items-center gap-3 min-w-0">
           <!-- Icon -->
           <div class="prayer-log-icon w-10 h-10 shrink-0 flex items-center justify-center">
             <span class="material-symbols-rounded" aria-hidden="true">{{ PRAYER_ICONS[p] }}</span>

@@ -16,7 +16,7 @@ const themeError = ref(false)
 const navigation = [
   { to: '/', icon: 'home', key: 'dashboard' },
   { to: '/qaza', icon: 'history', key: 'qaza' },
-  { to: '/analytics', icon: 'insights', key: 'analytics' },
+  { to: '/guide', icon: 'menu_book', key: 'guide' },
   { to: '/settings', icon: 'settings', key: 'settings' },
 ] as const
 const showNavigation = computed(() => auth.isAuthenticated && route.name !== 'onboarding')

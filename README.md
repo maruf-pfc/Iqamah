@@ -10,7 +10,7 @@
 
 **Iqamah (إقامة)** is a local-first Salah habit companion for users in Bangladesh. It tracks prayer punctuality, missed prayers, Qaza obligations and analytics without an account or a mandatory server. Select one of Bangladesh's 64 districts during onboarding or in Settings to calculate district-center prayer estimates offline.
 
-**Current implementation is v1.1.4-beta.1.** See [release verification and blockers](docs/release-readiness.md) and [design system](docs/design-system.md).
+**Current implementation is v1.1.4-beta.1; public release remains blocked.** See [release verification and blockers](docs/release-readiness.md), [backup and recovery](docs/backup-and-recovery.md), and [design system](docs/design-system.md).
 
 ![Iqamah Platform Preview](assets/cover.png)
 
@@ -18,7 +18,7 @@
 
 ## 🏗️ Architecture Overview
 
-As of **v1.1.4-beta.1**, the platform operates in a **fully offline, hybrid model**. The mobile client wraps the compiled offline-first Vue client inside a native WebView container, achieving 100% feature and design parity.
+As of **v1.1.4-beta.1**, the mobile client wraps the compiled offline-first Vue client inside a native WebView container. Native file operations and lifecycle behavior require their own device testing.
 
 ```mermaid
 graph TD
@@ -39,7 +39,7 @@ A local-first Single Page Application:
 
 ### 2. Mobile Client (Flutter)
 A lightweight Flutter WebView shell:
-- **webview_flutter:** Serves the compiled Vue 3 Single Page Application locally via asset bundler, ensuring 100% UI/UX parity.
+- **webview_flutter:** Serves the compiled Vue 3 Single Page Application locally. The main screens share one implementation; native behavior is tested separately.
 - **Platform-Safe Wrapper:** Uses Dart conditional imports (`webview_stub.dart`, `webview_mobile.dart`, `webview_web.dart`) to safely load platform-specific WebViews across Android, iOS, Web (Chrome), and Desktop.
 - **Native shell:** Bundles `mobile/assets/web/index.html`, handles resume/back/load errors and uses dark forest-green native chrome. Native chrome does not yet synchronize with the web light theme.
 - **Persistence:** Active Android/iOS screens use WebView LocalStorage, **not SQLite**. The older Dart providers/SQLite service remain dormant and are not automatically migrated or synchronized. Existing SQLite files are not deleted.
@@ -59,8 +59,8 @@ A lightweight Flutter WebView shell:
 | Home timetable, next-prayer countdown and district preferences | ✅ | Bundled; device verification pending |
 | Approximate caution windows (not universal religious boundaries) | ✅ | Shared web UI |
 | Hijri date display (Intl estimate, not local moon-sighting authority) | ✅ | Shared web UI |
-| JSON backup export / import | ✅ | ✅ |
-| Reset Application (wipe all data) | ✅ | ✅ |
+| JSON backup export / import | Implemented; confirm downloaded file | Implemented; native device verification pending |
+| Reset active WebView data (not dormant SQLite) | Implemented | Shared web UI; device QA pending |
 | Bilingual (Bengali / English) | ✅ | ✅ |
 | Gender-aware Hayd/Nifas logging | ✅ | ✅ |
 | Offline — no internet required | ✅ | ✅ |
@@ -176,15 +176,20 @@ docker run -p 8080:80 iqamah-app
 
 ### Backup and restore
 
-Settings exports the existing `version: "1.1.0"` JSON format with all stored dates,
-stable IDs, notes and embedded pending/fulfilled Qaza. Restore validates the whole file
-before a single LocalStorage write and merges only new or identical records. Unsupported
-versions, invalid relationships and conflicting records are rejected without replacing
-existing records. Export current data before restoring a different history. Profile
-district/theme/language settings are not included in this prayer-record backup.
+Settings exports schema `"2.0.0"`: complete prayer history, stable IDs, notes,
+Tasbih completion flags, pending/fulfilled Qaza, profile and calculation preferences.
+Native share/picker operations provide acknowledged feedback; device QA remains pending.
+Imports support historical integer SQLite v1 and canonical web formats, with validation,
+preview and explicitly confirmed merge/replace. Journaled multi-key writes recover the
+previous dataset after failure or interruption. See [schema and recovery](docs/backup-and-recovery.md).
 
-Legacy Dart SQLite backups (`version: 1`, integer) are a different format and are not
-accepted by the web restore flow. Migration between those formats is not implemented.
+After every APK build, reject stale bundled assets with:
+
+```bash
+python3 scripts/verify-mobile-apk.py mobile/build/app/outputs/flutter-apk/app-debug.apk
+```
+
+If the check fails, run `flutter clean` in `mobile/`, rebuild and verify again.
 LocalStorage is unencrypted, scoped to the browser/WebView origin, and may be lost on
 uninstall, clearing site data or changing the origin. Keep external backups.
 
